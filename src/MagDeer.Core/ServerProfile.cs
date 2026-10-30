@@ -14,6 +14,9 @@ public sealed class ServerProfile
     public double ServerOffsetHours { get; set; } = -1;
     public int LogoutWarningMinutes { get; set; } = 10;
     public int KickWarningMinutes { get; set; } = 5;
+    public bool? KickBeforeRestart { get; set; }
+    public bool CountdownToKick { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public bool HasKnownKick => KickPlan.Known(KickBeforeRestart, IpAddress, GamePort, QueryPort);
     public override string ToString() => $"{Name} · {IpAddress}:{GamePort}" + (ServerIdentity.UsesMagName(Name) && ServerIdentity.MagSource(IpAddress, GamePort) is null ? " · " + L.Text("AddressUnverifiedShort") : "");
     public void ApplyTo(MonitorSettings settings)
     {
@@ -21,13 +24,15 @@ public sealed class ServerProfile
         settings.RestartTimes = (string[])RestartTimes.Clone(); settings.ScheduleConfirmed = ScheduleConfirmed;
         settings.RestartEveryHours = RestartEveryHours; settings.RestartAnchor = RestartAnchor; settings.ServerOffsetHours = ServerOffsetHours;
         settings.LogoutWarningMinutes = LogoutWarningMinutes; settings.KickWarningMinutes = KickWarningMinutes;
+        settings.KickBeforeRestart = KickBeforeRestart; settings.CountdownToKick = CountdownToKick;
     }
     public static ServerProfile From(MonitorSettings settings) => new()
     {
         Name = settings.ServerName, IpAddress = settings.IpAddress, GamePort = settings.GamePort, QueryPort = settings.QueryPort,
         RestartTimes = (string[])settings.RestartTimes.Clone(), ScheduleConfirmed = settings.ScheduleConfirmed,
         RestartEveryHours = settings.RestartEveryHours, RestartAnchor = settings.RestartAnchor, ServerOffsetHours = settings.ServerOffsetHours,
-        LogoutWarningMinutes = settings.LogoutWarningMinutes, KickWarningMinutes = settings.KickWarningMinutes
+        LogoutWarningMinutes = settings.LogoutWarningMinutes, KickWarningMinutes = settings.KickWarningMinutes,
+        KickBeforeRestart = settings.KickBeforeRestart, CountdownToKick = settings.CountdownToKick
     };
     public void Validate()
     {

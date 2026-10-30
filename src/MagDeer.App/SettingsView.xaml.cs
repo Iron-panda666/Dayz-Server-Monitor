@@ -16,10 +16,16 @@ public partial class SettingsView : UserControl
         var choices = Sections.Items.Cast<TabItem>().Select(item => new PageChoice(item.Header?.ToString() ?? "")).ToArray();
         Navigation.ItemsSource = CompactNavigation.ItemsSource = choices;
         Sections.SelectedIndex = 0;
+        CustomWallpaperPanel.Visibility = Visibility.Collapsed;
     }
     private void ForwardAction(object sender, RoutedEventArgs e)
     { if (sender is FrameworkElement { Tag: string action }) ActionRequested?.Invoke(this, new(action, sender, e)); }
-    private void ForwardSelection(object sender, SelectionChangedEventArgs e) => ForwardAction(sender, e);
+    private void ForwardSelection(object sender, SelectionChangedEventArgs e)
+    {
+        if (ReferenceEquals(sender, WallpaperBox)) CustomWallpaperPanel.Visibility = WallpaperBox.SelectedItem is DashboardArtwork.Choice { Id: "Custom" } ? Visibility.Visible : Visibility.Collapsed;
+        if (ReferenceEquals(sender, ThemeBox)) AeroGlassBox.IsEnabled = ThemeBox.SelectedItem is ThemeManager.ThemeChoice { Id: "Aero" };
+        ForwardAction(sender, e);
+    }
     private void ForwardMinutes(object sender, KeyEventArgs e) => ActionRequested?.Invoke(this, new("MinutesKeyDown", sender, e));
     private void GoToRestarts(object sender, RoutedEventArgs e) => Sections.SelectedIndex = 1;
     private void ViewSizeChanged(object sender, SizeChangedEventArgs e)

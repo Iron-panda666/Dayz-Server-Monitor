@@ -6,6 +6,8 @@ namespace MagDeer.App;
 public partial class SettingsWindow : Window
 {
     public MonitorSettings? Result { get; private set; }
+    public event Action<MonitorSettings>? AppearancePreviewRequested;
+    private bool appearanceReady;
     public bool ConfirmOffline => Editor.OfflineBox.IsChecked == true;
     private readonly MonitorSettings original;
     private readonly List<ServerProfile> profiles;
@@ -42,6 +44,7 @@ public partial class SettingsWindow : Window
         Editor.FailuresBox.Text = settings.FailureThreshold.ToString(); Editor.RetentionBox.Text = settings.HistoryRetentionDays.ToString();
         Editor.EveryHoursBox.Text = settings.RestartEveryHours.ToString(); Editor.AnchorBox.Text = settings.RestartAnchor;
         Editor.LogoutMinutesBox.Text = settings.LogoutWarningMinutes.ToString(); Editor.KickMinutesBox.Text = settings.KickWarningMinutes.ToString();
+        Editor.KickKnownBox.IsChecked = settings.HasKnownKick; Editor.KickTargetBox.IsChecked = settings.CountdownToKick && settings.HasKnownKick;
         Editor.OffsetBox.Text = settings.ServerOffsetHours.ToString(CultureInfo.CurrentCulture);
         Editor.ServerClockBox.IsChecked = settings.ShowServerTime; Editor.Clock24Box.IsChecked = settings.Use24HourClock;
         Editor.GameSessionBox.IsChecked = settings.ShowGameSession;
@@ -53,6 +56,10 @@ public partial class SettingsWindow : Window
         Editor.NotifyBox.IsChecked = settings.WindowsNotifications; Editor.StartupBox.IsChecked = settings.StartWithWindows;
         Editor.ThemeBox.ItemsSource = ThemeManager.Choices;
         Editor.ThemeBox.SelectedItem = ThemeManager.Choices.FirstOrDefault(x => x.Id == settings.Theme) ?? ThemeManager.Choices[0];
+        Editor.WallpaperBox.ItemsSource = DashboardArtwork.Choices;
+        Editor.WallpaperBox.SelectedItem = DashboardArtwork.Choices.First(x => x.Id == settings.BackgroundStyle);
+        Editor.WallpaperPathBox.Text = settings.BackgroundImagePath;
+        Editor.AeroGlassBox.IsChecked = settings.AeroGlass; Editor.WidgetBox.IsChecked = settings.WidgetMode;
         Editor.DisplayProfileBox.ItemsSource = DisplayProfiles.All;
         Editor.DisplayProfileBox.SelectedItem = DisplayProfiles.All.First(x => x.Id == settings.DisplayProfile);
         Editor.MinimizeCloseBox.IsChecked = settings.MinimizeOnClose;
@@ -74,6 +81,8 @@ public partial class SettingsWindow : Window
         Editor.ScheduleBox.TextChanged += (_, _) => Editor.ConfirmedBox.IsChecked = false;
         Editor.IpBox.TextChanged += (_, _) => { Editor.ConfirmedBox.IsChecked = false; Editor.OfflineBox.IsChecked = false; };
         Editor.QueryPortBox.TextChanged += (_, _) => { Editor.ConfirmedBox.IsChecked = false; Editor.OfflineBox.IsChecked = false; };
+        foreach (var box in new[] { Editor.IpBox, Editor.GamePortBox, Editor.QueryPortBox })
+            box.TextChanged += (_, _) => { Editor.KickKnownBox.IsChecked = false; Editor.KickTargetBox.IsChecked = false; };
         foreach (var zone in TimeZoneInfo.GetSystemTimeZones().Concat(WorldClock.Presets.Select(x => x.ResolveZone())).GroupBy(x => x.Id).Select(x => x.First()).OrderBy(x => x.BaseUtcOffset).ThenBy(x => x.Id))
             AddZone(zone);
         Editor.TimeZoneBox.ItemsSource = zones;
@@ -83,6 +92,8 @@ public partial class SettingsWindow : Window
         editedProfile = profiles.FirstOrDefault(p => p.Name == settings.ServerName && p.IpAddress == settings.IpAddress && p.QueryPort == settings.QueryPort);
         RefreshProfiles();
         Editor.WorldClockEditor.IsExpanded = false;
+        appearanceReady = true;
+        Closed += (_, _) => { if (Result is null && AppearancePreviewRequested is null) ThemeManager.Apply(original.Theme); };
         if (snapshots is not null)
         {
             var statusTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
@@ -103,6 +114,8 @@ public partial class SettingsWindow : Window
         switch (ev.Name)
         {
             case "ProfileSelected": ProfileSelected(ev.Sender, (SelectionChangedEventArgs)ev.Arguments); break;
+            case "PreviewAppearance": PreviewAppearance(); break;
+            case "ChooseImage": ChooseImage(); break;
             case "LoadProfileClick": LoadProfileClick(ev.Sender, ev.Arguments); break;
             case "NewProfileClick": NewProfileClick(ev.Sender, ev.Arguments); break;
             case "DeleteProfileClick": DeleteProfileClick(ev.Sender, ev.Arguments); break;
@@ -122,6 +135,30 @@ public partial class SettingsWindow : Window
     }
 
     private static int Number(TextBox box, string name) => int.TryParse(box.Text.Trim(), out var value) ? value : throw new ArgumentException(L.Text("IntegerError", L.Text(name)));
+    private void ReadAppearance(MonitorSettings draft)
+    {
+        draft.Theme = (Editor.ThemeBox.SelectedItem as ThemeManager.ThemeChoice)?.Id ?? "Light";
+        draft.BackgroundStyle = (Editor.WallpaperBox.SelectedItem as DashboardArtwork.Choice)?.Id ?? "Theme";
+        draft.BackgroundImagePath = Editor.WallpaperPathBox.Text;
+        draft.AeroGlass = Editor.AeroGlassBox.IsChecked == true;
+    }
+    private void PreviewAppearance()
+    {
+        if (!appearanceReady) return;
+        var draft = original.Copy(); ReadAppearance(draft);
+        if (AppearancePreviewRequested is { } apply) apply(draft); else ThemeManager.Apply(draft.Theme);
+        if (IsLoaded) DesktopServices.TitleBarTheme(this, ThemeManager.IsDark(draft.Theme));
+    }
+    private void ChooseImage()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "Images (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg", CheckFileExists = true };
+        if (dialog.ShowDialog(this) != true) return;
+        var draft = original.Copy(); draft.BackgroundStyle = "Custom"; draft.BackgroundImagePath = dialog.FileName;
+        if (DashboardArtwork.Resolve(draft) is null) { ShowError(new ArgumentException("BackgroundInvalid")); return; }
+        Editor.WallpaperPathBox.Text = dialog.FileName;
+        Editor.WallpaperBox.SelectedItem = DashboardArtwork.Choices.First(x => x.Id == "Custom");
+        PreviewAppearance();
+    }
     private MonitorSettings ReadForm()
     {
             var s = original.Copy();
@@ -139,7 +176,7 @@ public partial class SettingsWindow : Window
             s.VisualAlerts = Editor.VisualBox.IsChecked == true; s.SoundAlerts = Editor.SoundBox.IsChecked == true;
             s.WindowsNotifications = Editor.NotifyBox.IsChecked == true; s.StartWithWindows = Editor.StartupBox.IsChecked == true;
             s.MonitorDevice = (Editor.MonitorBox.SelectedItem as DisplayOption)?.Device ?? "";
-            s.Theme = (Editor.ThemeBox.SelectedItem as ThemeManager.ThemeChoice)?.Id ?? "Light";
+            ReadAppearance(s); s.WidgetMode = Editor.WidgetBox.IsChecked == true;
             s.DisplayProfile = (Editor.DisplayProfileBox.SelectedItem as DisplayProfile)?.Id ?? "Auto";
             s.MinimizeOnClose = Editor.MinimizeCloseBox.IsChecked == true;
             s.MinimizeTarget = (Editor.MinimizeTargetBox.SelectedItem as CloseOption)?.Id ?? "Tray";
@@ -205,7 +242,8 @@ public partial class SettingsWindow : Window
             GamePort = Number(Editor.GamePortBox, "GamePort"), QueryPort = Number(Editor.QueryPortBox, "QueryPort"),
             RestartTimes = Editor.ScheduleBox.Text.Split([',', ';', '\r', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Order().ToArray(),
             ScheduleConfirmed = Editor.ConfirmedBox.IsChecked == true, RestartEveryHours = Number(Editor.EveryHoursBox, "EveryHours"), RestartAnchor = Editor.AnchorBox.Text.Trim(),
-            LogoutWarningMinutes = Number(Editor.LogoutMinutesBox, "LogoutMinutes"), KickWarningMinutes = Number(Editor.KickMinutesBox, "KickMinutes"), ServerOffsetHours = offset
+            LogoutWarningMinutes = Number(Editor.LogoutMinutesBox, "LogoutMinutes"), KickWarningMinutes = Number(Editor.KickMinutesBox, "KickMinutes"), ServerOffsetHours = offset,
+            KickBeforeRestart = Editor.KickKnownBox.IsChecked == true, CountdownToKick = Editor.KickTargetBox.IsChecked == true && Editor.KickKnownBox.IsChecked == true
         };
     }
     private void KeepProfileDraft()
@@ -225,6 +263,7 @@ public partial class SettingsWindow : Window
         Editor.ScheduleBox.Text = string.Join(", ", p.RestartTimes); Editor.EveryHoursBox.Text = p.RestartEveryHours.ToString(); Editor.AnchorBox.Text = p.RestartAnchor;
         Editor.OffsetBox.Text = p.ServerOffsetHours.ToString(CultureInfo.CurrentCulture);
         Editor.LogoutMinutesBox.Text = p.LogoutWarningMinutes.ToString(); Editor.KickMinutesBox.Text = p.KickWarningMinutes.ToString();
+        Editor.KickKnownBox.IsChecked = p.HasKnownKick; Editor.KickTargetBox.IsChecked = p.HasKnownKick && p.CountdownToKick;
         Editor.ConfirmedBox.IsChecked = p.ScheduleConfirmed;
         Editor.ErrorText.Visibility = Visibility.Collapsed;
     }
@@ -236,6 +275,7 @@ public partial class SettingsWindow : Window
         editedProfile = null;
         Editor.DeleteServerButton.IsEnabled = false;
         Editor.BackgroundBox.IsChecked = false;
+        Editor.KickKnownBox.IsChecked = false; Editor.KickTargetBox.IsChecked = false;
         Editor.NameBox.Text = ""; Editor.IpBox.Text = ""; Editor.GamePortBox.Text = "2302"; Editor.QueryPortBox.Text = "2303";
         Editor.ConfirmedBox.IsChecked = false; Editor.OfflineBox.IsChecked = false; Editor.NameBox.Focus();
         Editor.ErrorText.Visibility = Visibility.Collapsed;

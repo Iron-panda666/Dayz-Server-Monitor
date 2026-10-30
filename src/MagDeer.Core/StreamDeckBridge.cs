@@ -20,6 +20,10 @@ public sealed record DeckSnapshot
     public bool ScheduleConfirmed { get; init; }
     public int LogoutWarningMinutes { get; init; }
     public int KickWarningMinutes { get; init; }
+    public bool KickBeforeRestart { get; init; }
+    public bool CountdownToKick { get; init; }
+    public bool Use24HourClock { get; init; } = true;
+    public bool VisualAlerts { get; init; } = true;
     public DateTimeOffset? LastQueryAt { get; init; }
     public DateTimeOffset? LastSuccessAt { get; init; }
     public bool QuerySuccess { get; init; }

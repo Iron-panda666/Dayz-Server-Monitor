@@ -7,14 +7,18 @@ Settings in 1.9.1 have seven sections. The list is on the left; below 680 logica
 | Section | Contents |
 |---|---|
 | Servers | Saved profiles, New/Delete, name, IP and ports, background monitoring |
-| Restarts & alerts | Selected server's Prague schedule, confirmation, logout/kick reminders and notification style |
+| Restarts & alerts | Selected server's Prague schedule, confirmation, known kick lead, countdown target and notification style |
 | Monitoring & data | Poll intervals, timeout/failure rules, offline confirmation, local session and history |
-| Appearance | Theme, language, display/size preset, compact mode and always on top |
+| Appearance | Live theme/background preview, glass option, language, display/size preset, widget mode, compact mode and always on top |
 | Time & clocks | 12/24-hour format, offset display, NTP and world clocks |
 | Integrations | Stream Deck setup notes, service checks and Grafana/Home Assistant export |
 | App behavior | Close-to-tray/taskbar and startup with Windows |
 
 The profile name above Servers and Restarts identifies the server being edited. Poll intervals and notification style are shared settings. Restart times use Europe/Prague.
+
+Kick settings belong to that server. MAG DEER starts with a user-reported 5-minute lead; other endpoints remain unknown. Editing an address clears the kick choice, so it is not copied to another server by accident. Count down to player kick is available only when the kick lead is known. The actual restart schedule and export restart timestamp do not move.
+
+Theme and wallpaper changes preview as soon as selected. Save settings keeps them; Cancel restores the previous appearance. Custom image controls appear only for Local image. System glass applies only to Glass/Aero without a wallpaper, on supported Windows 11 builds. A palette fallback remains available.
 
 ## Editing profiles
 

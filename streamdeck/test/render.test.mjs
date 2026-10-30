@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Resvg } from '@resvg/resvg-js';
-import { countdown, estimatedGameClock, normalizeSettings, renderKey, keyImageDataUrl, sessionDuration } from '../src/render.mjs';
+import { countdown, estimatedGameClock, normalizeSettings, renderKey, keyImageDataUrl, sessionDuration, restartAppearance } from '../src/render.mjs';
 import { KeyGesture } from '../src/gesture.mjs';
 import { BridgeClient, validDiscovery, validSnapshot } from '../src/bridge-client.mjs';
 import { OptionGroup } from '@elgato/utils';
@@ -33,6 +33,33 @@ test('oversized constrained arrays are rejected before validating their elements
 const state = { protocolVersion: 1, now: '2026-10-30T12:00:00Z', nextRestartAt: '2026-10-30T14:30:00Z',
   lastQueryAt: '2026-10-30T12:00:00Z', serverName: 'MAG #2', querySuccess: true, players: 39, capacity: 121, rttMs: 87,
   logoutWarningMinutes: 10, kickWarningMinutes: 5, queryIntervalSeconds: 300, scheduleConfirmed: false, history: [] };
+test('game key has no phase question mark and supports app or per-key 12/24-hour formats', () => {
+  const snapshot = { ...state, use24HourClock: false, gameClock: { hour: 0, minute: 5 } };
+  assert.equal(estimatedGameClock(snapshot).text, '12:05 AM');
+  snapshot.gameClock.hour = 12; assert.equal(estimatedGameClock(snapshot).text, '12:05 PM');
+  assert.equal(estimatedGameClock(snapshot, normalizeSettings({ clockFormat: '24h' })).text, '12:05');
+  snapshot.gameClock.hour = 19;
+  const svg = renderKey(snapshot, 'game', { autoWarnings: false });
+  assert.match(svg, />PM</); assert.match(svg, /NIGHT/); assert.match(svg, /EST/); assert.ok(!svg.includes('?'));
+});
+test('restart key shifts only a known kick target and logout remains anchored to the real restart', () => {
+  const snapshot = { ...state, nextRestartAt: '2026-10-30T12:20:00Z', kickBeforeRestart: true, countdownToKick: true };
+  assert.match(renderKey(snapshot, 'restart'), /PLAYER KICK/); assert.match(renderKey(snapshot, 'restart'), />15:00</);
+  assert.match(renderKey(snapshot, 'logout', { autoWarnings: false }), />10:00</);
+  assert.match(renderKey({ ...snapshot, kickBeforeRestart: false }, 'restart'), /RESTART/);
+  assert.match(renderKey({ ...snapshot, kickBeforeRestart: false }, 'restart'), />20:00</);
+});
+test('restart key colors and gentle pulse have the same boundaries as the desktop', () => {
+  assert.equal(restartAppearance(901, 1001000).color, '#90e8ff');
+  assert.equal(restartAppearance(900, 1001000).color, '#ffda58');
+  assert.equal(restartAppearance(600, 1001000).color, '#ff9a3d');
+  assert.equal(restartAppearance(165, 1001000).color, '#ff7b48');
+  assert.deepEqual(restartAppearance(30, 1001000), { color: '#ff5b52', opacity: .78 });
+  assert.equal(restartAppearance(0, 1001000).opacity, 1);
+  const pulse = { ...state, now: '2026-10-30T12:00:01Z', nextRestartAt: '2026-10-30T12:00:26Z' };
+  assert.match(renderKey(pulse, 'restart'), /<g opacity="0.78">/);
+  assert.ok(!renderKey({ ...pulse, visualAlerts: false }, 'restart').includes('opacity="0.78"'));
+});
 test('service keys distinguish provider report, web reachability and an unknown check without restart overrides', () => {
   const service = { state: 'Degraded', scope: 'ProviderStatus' };
   const snapshot = { ...state, serverName: 'Discord', service, nextRestartAt: state.now, restartExpected: true };
@@ -65,7 +92,7 @@ test('short presses cycle once; a one-second hold refreshes once and never cycle
 });
 test('game clock uses the product of night and base speed, with marked assumed day/night boundaries', () => {
   const snapshot = { ...state, gameClock: { hour: 19, minute: 0, dayMultiplier: 4, nightMultiplier: 4 }, now: '2026-10-30T12:01:00Z' };
-  assert.deepEqual(estimatedGameClock(snapshot), { text: '~19:16', phase: 'NIGHT?', speed: 16, predicted: true });
+  assert.deepEqual(estimatedGameClock(snapshot), { text: '~19:16', displayTime: '~19:16', period: '', phase: 'NIGHT', speed: 16, predicted: true });
   snapshot.gameClock.hour = 17; snapshot.gameClock.minute = 59;
   assert.equal(estimatedGameClock(snapshot).text, '~18:12');
   snapshot.gameClock = { hour: 23, minute: 59, dayMultiplier: 4, nightMultiplier: 4 };
@@ -79,12 +106,12 @@ test('rendering missing replies, absent monitor and missing game fields never in
   assert.match(renderKey({ ...state, querySuccess: false, players: null }, 'players'), />N\/A</);
   assert.match(renderKey(state, 'game'), /NOT PUBLISHED/);
   assert.match(renderKey({ ...state, lastQueryAt: '2026-10-30T10:00:00Z' }, 'players'), /STALE/);
-  assert.match(renderKey(state, 'restart'), /PLAN\?/);
+  assert.match(renderKey(state, 'restart'), /UNCONFIRMED/);
   assert.match(renderKey({ ...state, refreshRemainingSeconds: 20 }, 'players'), /WAIT 20s/);
 });
 test('restart warning overrides are optional and use configured thresholds', () => {
   const urgent = { ...state, nextRestartAt: '2026-10-30T12:04:00Z' };
-  assert.match(renderKey(urgent, 'players'), /RESTART/); assert.match(renderKey(urgent, 'players'), /#ffaaa0/);
+  assert.match(renderKey(urgent, 'players'), /RESTART/); assert.match(renderKey(urgent, 'players'), /#ff8c42/);
   assert.match(renderKey(urgent, 'players', { autoWarnings: false }), /PLAYERS/);
   assert.equal(countdown(9000), '2h30m'); assert.equal(countdown(65), '01:05'); assert.equal(countdown(-5), '00:00');
 });

@@ -24,6 +24,42 @@ public static class DesktopServices
             DwmSetWindowAttribute(handle, 19, ref value, sizeof(int));
     }
     public static Forms.Screen[] Screens => Forms.Screen.AllScreens;
+    public static bool ApplyGlass(Window window, bool requested)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
+        bool supported = OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621) && !SystemParameters.HighContrast;
+        bool enabled = false;
+        if (handle != IntPtr.Zero && supported)
+        {
+            int backdrop = requested ? 3 : 1;
+            enabled = DwmSetWindowAttribute(handle, 38, ref backdrop, sizeof(int)) == 0 && requested;
+        }
+        var chrome = System.Windows.Shell.WindowChrome.GetWindowChrome(window);
+        if (chrome is not null)
+        {
+            var copy = (System.Windows.Shell.WindowChrome)chrome.CloneCurrentValue();
+            copy.GlassFrameThickness = new Thickness(enabled ? -1 : 0);
+            System.Windows.Shell.WindowChrome.SetWindowChrome(window, copy);
+        }
+        if (enabled)
+        {
+            window.Background = Brushes.Transparent;
+            if (PresentationSource.FromVisual(window) is HwndSource source) source.CompositionTarget.BackgroundColor = Colors.Transparent;
+        }
+        else window.SetResourceReference(Control.BackgroundProperty, "BackgroundBrush");
+        return enabled;
+    }
+    public static bool IsInteractive(DependencyObject? source)
+    {
+        while (source is not null)
+        {
+            if (source is System.Windows.Controls.Primitives.ButtonBase or System.Windows.Controls.Primitives.Selector
+                or System.Windows.Controls.Primitives.TextBoxBase or System.Windows.Controls.Primitives.RangeBase
+                or System.Windows.Controls.Primitives.Thumb or PasswordBox or System.Windows.Documents.Hyperlink) return true;
+            source = source is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
+        }
+        return false;
+    }
     public static void OpenFolder(string path) => Process.Start(new ProcessStartInfo("explorer.exe", path) { UseShellExecute = true });
     public static void SetStartup(bool enabled)
     {

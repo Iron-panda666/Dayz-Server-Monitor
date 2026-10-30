@@ -17,9 +17,16 @@ public sealed class MonitorSettings
     public string RestartAnchor { get; set; } = "03:00";
     public int LogoutWarningMinutes { get; set; } = 10;
     public int KickWarningMinutes { get; set; } = 5;
+    public bool? KickBeforeRestart { get; set; }
+    public bool CountdownToKick { get; set; }
+    [JsonIgnore] public bool HasKnownKick => KickPlan.Known(KickBeforeRestart, IpAddress, GamePort, QueryPort);
     public List<ServerProfile> SavedServers { get; set; } = [];
     public int ServerCatalogVersion { get; set; }
     public string Theme { get; set; } = "Light";
+    public string BackgroundStyle { get; set; } = "Theme";
+    public string BackgroundImagePath { get; set; } = "";
+    public bool AeroGlass { get; set; } = true;
+    public bool WidgetMode { get; set; }
     public string DisplayProfile { get; set; } = "Auto";
     public bool MinimizeOnClose { get; set; }
     public string MinimizeTarget { get; set; } = "Tray";
@@ -84,6 +91,8 @@ public sealed class MonitorSettings
             throw new ArgumentException("Interval restartu musí být 1–24 hodin a výchozí čas ve formátu HH:mm.");
         if (Theme is not ("Light" or "Dark" or "Orange" or "Spotify" or "Ocean" or "XP" or "Aero" or "Anime" or "Matrix" or "Violet"))
             throw new ArgumentException("ThemeInvalid");
+        if (BackgroundStyle is not ("Theme" or "None" or "Sakura" or "Fuji" or "Custom") || BackgroundImagePath is null || BackgroundImagePath.Length > 1024)
+            throw new ArgumentException("BackgroundInvalid");
         if (!DisplayProfiles.All.Any(x => x.Id == DisplayProfile)) throw new ArgumentException("ProfileInvalid");
         if (MinimizeTarget is not ("Tray" or "Taskbar")) throw new ArgumentException("CloseTargetInvalid");
         if (Language is not ("en" or "cs" or "pl" or "de" or "es")) throw new ArgumentException("LanguageInvalid");

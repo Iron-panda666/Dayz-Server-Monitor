@@ -29,7 +29,7 @@ public sealed class ServiceMonitoring : IDisposable
     {
         this.utcNow = utcNow; this.guard = guard;
         http = handler is null ? new(new SocketsHttpHandler { AllowAutoRedirect = false, AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate }) : new(handler);
-        http.Timeout = TimeSpan.FromSeconds(8); http.DefaultRequestHeaders.UserAgent.ParseAdd("DayzServerMonitor/1.10.1");
+        http.Timeout = TimeSpan.FromSeconds(8); http.DefaultRequestHeaders.UserAgent.ParseAdd("DayzServerMonitor/1.11.0");
     }
     public void Configure(bool value)
     { if (enabled == value) return; enabled = value; generation++; states.Clear(); attempted = null; }

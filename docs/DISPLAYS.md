@@ -15,6 +15,8 @@ Choose More -> Display size preset or Settings -> Appearance. There are 27 prese
 
 Fullscreen hides the title bar. It also hides below 260 logical pixels wide; the context menu remains available. Settings move to a larger connected screen when the secondary LCD is too small.
 
+Double-click a dashboard area outside buttons, selectors or input controls to toggle borderless widget mode. The content gains the title bar's 32 logical pixels without changing the outer window size. Drag a display area to move the widget. F10 toggles the mode; Esc exits fullscreen first, then restores the title bar on a second press if widget mode is still active. Right-click keeps the menu available. Widget mode is saved with the window settings.
+
 ## Panel references
 
 These manufacturer references were used for layout targets. No physical panel acceptance has been recorded for this app. Portrait dimensions assume rotation in Windows.

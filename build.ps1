@@ -50,6 +50,11 @@ foreach ($preview in @("theme-comparison.png", "world-clocks.png", "query-chart.
     }
 }
 $version = ([xml](Get-Content -LiteralPath "src\MagDeer.App\MagDeer.App.csproj" -Raw)).Project.PropertyGroup.Version
+if (Test-Path -LiteralPath "artifacts\previews") {
+    Get-ChildItem -LiteralPath "artifacts\previews" -File | Where-Object { $_.Name -match '^(theme-(light|dark|orange|spotify|ocean|xp|aero|anime|matrix|violet)|wallpaper-fuji|countdown-stages|layout-wide-large)\.png$' } | ForEach-Object {
+        Copy-Item -LiteralPath $_.FullName -Destination (Join-Path "docs\images" $_.Name) -Force
+    }
+}
 $pluginPackage = Join-Path $PSScriptRoot "artifacts\Dayz-Server-Monitor-$version.streamDeckPlugin"
 if (-not $SkipStreamDeck) {
     Move-Item -LiteralPath "artifacts\com.iron-panda666.dayz-server-monitor.streamDeckPlugin" -Destination $pluginPackage -Force

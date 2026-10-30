@@ -6,7 +6,7 @@ The source and original T/R icon are MIT-licensed. That license does not cover t
 
 Minecraft, Rust, Counter-Strike, PlanetSide 2, Project Zomboid, WARDOGS, Spotify, Discord, WhatsApp, Steam, Grafana and Home Assistant identify games, protocols or integration targets. Their names do not imply endorsement. Public status endpoints remain external services.
 
-The app ships no DayZ/MAG/Sunnyvale logos, game assets, music, maps, fonts or Elgato artwork. Key graphics use the project's own text, shapes and graphs. The Luna/XP, Glass/Aero, Sakura/anime and Terminal/Matrix names describe visual references; the palettes and controls are original, without third-party artwork.
+The app ships no DayZ/MAG/Sunnyvale logos, game assets, music, maps, fonts or Elgato artwork. Key graphics use the project's own text, shapes and graphs. The Luna/XP, Glass/Aero, Sakura/anime and Terminal/Matrix names describe visual references. Palettes, controls and the Sakura landscape are original. The optional Fuji photo is separately licensed from Unsplash; see docs/licenses/FUJI-PHOTO.md. No Alpha Coders or anime character wallpaper is redistributed.
 
 A server's name may contain OFFICIAL. That is its self-description, not an ownership check or an official status for this app.
 

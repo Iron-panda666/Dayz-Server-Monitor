@@ -58,6 +58,8 @@ internal static class SettingsChecks
             var view = Demo(); string? action = null; view.ActionRequested += (_, e) => action = e.Name;
             ((Button)view.FindName("SaveButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             assert(action == "SaveClick", "Save action disconnected from window controller");
+            var theme = (ComboBox)view.FindName("ThemeBox"); theme.ItemsSource = ThemeManager.Choices; theme.SelectedIndex = 0;
+            action = null; theme.SelectedIndex = 1; assert(action == "PreviewAppearance", "Theme selection waits for Save instead of previewing");
             var sections = (TabControl)view.FindName("Sections"); sections.SelectedIndex = 5; Layout(view, 940, 760);
             var export = (CheckBox)view.FindName("ExportBox"); var address = (TextBox)view.FindName("ExportAddressBox");
             var details = (Expander)view.FindName("ExportDetails");
@@ -92,6 +94,9 @@ internal static class SettingsChecks
         foreach (var (name, value) in values) ((TextBox)view.FindName(name)).Text = value;
         var profiles = ServerCatalog.Create(); var list = (ComboBox)view.FindName("ProfilesBox"); list.ItemsSource = profiles; list.SelectedIndex = 1;
         Set("ThemeBox", ThemeManager.Choices); Set("LanguageBox", L.Languages); Set("DisplayProfileBox", DisplayProfiles.All);
+        Set("WallpaperBox", DashboardArtwork.Choices);
+        ((CheckBox)view.FindName("AeroGlassBox")).IsChecked = true;
+        ((CheckBox)view.FindName("KickKnownBox")).IsChecked = true;
         Set("MonitorBox", new[] { new { Label = "1. Main display · 1920 × 1080" } });
         Set("MinimizeTargetBox", new[] { new { Label = "System tray · beside the clock" } });
         ((CheckBox)view.FindName("Clock24Box")).IsChecked = true; ((CheckBox)view.FindName("ServerClockBox")).IsChecked = true;

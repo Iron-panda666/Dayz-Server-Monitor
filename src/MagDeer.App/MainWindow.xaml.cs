@@ -50,6 +50,7 @@ public partial class MainWindow : Window
     private DateTimeOffset? lastTickUtc;
     private long lastTickTimestamp;
     private bool polling, closing, allowClose, fullscreen, configuring;
+    private string visualTheme = "Light";
     private Rect normalBounds;
     private WindowState normalState;
     private string RuntimePath => Path.Combine(App.DataRoot, "data", "session.json");
@@ -83,6 +84,7 @@ public partial class MainWindow : Window
         ledger = new(runtime.Alerts ?? []);
         runtime.Recoveries ??= [];
         timer.Tick += (_, _) => Tick();
+        Dashboard.MouseLeftButtonDown += DashboardPointerDown;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -136,7 +138,7 @@ public partial class MainWindow : Window
             SaveRuntime();
             string title = alert.Minutes == 0 ? L.Text("RestartNow") : L.Text("RestartNotice", alert.Minutes);
             string body = alert.Minutes == 0 ? L.Text("WarnExpected") : alert.Minutes == settings.KickWarningMinutes
-                ? L.Text("WarnKick", alert.Minutes) : L.Text("WarnLogout", alert.Minutes);
+                ? L.Text(settings.HasKnownKick ? "WarnKick" : "WarnRestartSoon", alert.Minutes) : L.Text("WarnLogout", alert.Minutes);
             notifications.Show(settings, title + (settings.ScheduleConfirmed ? "" : L.Text("UnconfirmedSuffix")), body);
         }
         int interval = schedule.PollInterval(settings, now, tracker.RestartGap && tracker.ConfirmedQueryGap);
@@ -221,18 +223,21 @@ public partial class MainWindow : Window
         var expected = since < TimeSpan.FromMinutes(5) && (tracker.LastSuccess is null || tracker.LastSuccess < schedule.Previous(now));
         Dashboard.CountdownLabel.Text = L.Text(expected ? "CountdownExpected" : "Countdown");
         // Recompute from UTC instants each tick, never decrement a stored counter.
-        var seconds = Math.Max(0, (long)Math.Ceiling(remaining.TotalSeconds));
+        var target = KickPlan.Target(settings, next);
+        var shownRemaining = expected ? TimeSpan.Zero : target - now;
+        if (!expected && settings.CountdownToKick && settings.HasKnownKick) Dashboard.CountdownLabel.Text = L.Text("CountdownKick");
+        var seconds = Math.Max(0, (long)Math.Ceiling(shownRemaining.TotalSeconds));
         Dashboard.CountdownText.Text = $"{seconds / 3600:00}:{seconds / 60 % 60:00}:{seconds % 60:00}";
-        var accent = expected || remaining <= TimeSpan.FromMinutes(settings.KickWarningMinutes) ? Red : remaining <= TimeSpan.FromMinutes(settings.LogoutWarningMinutes) ? Yellow : Mint;
-        Dashboard.CountdownText.Foreground = settings.VisualAlerts ? accent : Mint;
+        var visual = CountdownVisuals.Evaluate(shownRemaining.TotalSeconds, now);
+        var accent = Dashboard.ApplyCountdownVisual(visual, ThemeManager.IsDark(visualTheme), settings.VisualAlerts);
         Dashboard.NextRestartText.Text = LocalTime(next);
         Dashboard.CompactNextRestart.Text = L.Text("NextRestart") + " · " + LocalTime(next);
         Dashboard.NextDateText.Text = RestartSchedule.CzechTime(next).ToString("d MMM · zzz", L.Culture);
         Dashboard.LogoutText.Text = L.Text("LogoutAt", LocalTime(next.AddMinutes(-settings.LogoutWarningMinutes)));
-        Dashboard.KickText.Text = L.Text("KickAt", LocalTime(next.AddMinutes(-settings.KickWarningMinutes)));
+        Dashboard.KickText.Text = settings.HasKnownKick ? L.Text("KickAt", LocalTime(next.AddMinutes(-settings.KickWarningMinutes))) : L.Text("KickUnknown");
         Dashboard.WarningText.Foreground = settings.VisualAlerts ? accent : Muted;
         Dashboard.WarningText.Text = expected ? L.Text("WarnExpected")
-            : remaining <= TimeSpan.FromMinutes(settings.KickWarningMinutes) ? L.Text("WarnKick", settings.KickWarningMinutes)
+            : remaining <= TimeSpan.FromMinutes(settings.KickWarningMinutes) ? L.Text(settings.HasKnownKick ? "WarnKick" : "WarnRestartSoon", settings.KickWarningMinutes)
             : remaining <= TimeSpan.FromMinutes(settings.LogoutWarningMinutes) ? L.Text("WarnLogout", settings.LogoutWarningMinutes)
             : L.Text("WarnNormal");
         var status = tracker.Status(now, schedule, settings.FailureThreshold);
@@ -281,6 +286,8 @@ public partial class MainWindow : Window
             Now = now, ServerName = settings.ServerName, Endpoint = settings.EndpointKey, Status = status.ToString(),
             NextRestartAt = next, RestartExpected = expected, ScheduleConfirmed = settings.ScheduleConfirmed,
             LogoutWarningMinutes = settings.LogoutWarningMinutes, KickWarningMinutes = settings.KickWarningMinutes,
+            KickBeforeRestart = settings.HasKnownKick, CountdownToKick = settings.CountdownToKick && settings.HasKnownKick,
+            Use24HourClock = settings.Use24HourClock, VisualAlerts = settings.VisualAlerts,
             LastQueryAt = latest?.At, LastSuccessAt = tracker.LastSuccess, QuerySuccess = latest?.Success == true,
             Players = info?.Players, Capacity = info?.MaxPlayers, Queue = info?.Queue, RttMs = info is null ? null : latest?.RttMs,
             GameClock = info?.GameClock, Polling = polling, RefreshRemainingSeconds = refreshGuard.RemainingSeconds,
@@ -297,7 +304,7 @@ public partial class MainWindow : Window
         services.Configure(settings.MonitorOnlineServices);
         ConfigureExporter();
         Localization.Apply(settings.Language);
-        ThemeManager.Apply(settings.Theme);
+        ApplyVisuals(settings);
         Dashboard.WorldClocksPanel.Configure(settings.WorldClocks);
         Topmost = settings.AlwaysOnTop;
         Dashboard.Configure(settings);
@@ -380,7 +387,11 @@ public partial class MainWindow : Window
     private async void SettingsClick(object sender, RoutedEventArgs e)
     {
         var dialog = new SettingsWindow(settings, tracker.Failures >= settings.FailureThreshold, tracker.ManualOffline, () => Volatile.Read(ref monitoredSnapshots)) { Owner = this };
-        if (dialog.ShowDialog() != true) return;
+        var preview = new AppearancePreviewSession(settings, ApplyVisuals);
+        dialog.AppearancePreviewRequested += preview.Preview;
+        bool accepted = dialog.ShowDialog() == true;
+        preview.Finish(accepted);
+        if (!accepted) return;
         configuring = true;
         RefreshButton.IsEnabled = false;
         // Finish the current endpoint's observation before replacing its configuration.
@@ -401,7 +412,7 @@ public partial class MainWindow : Window
             JsonStorage.Write(App.ConfigPath, next);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
-        { MessageBox.Show(this, L.Text("SaveError", L.Error(ex)), "Dayz Server Monitor", MessageBoxButton.OK, MessageBoxImage.Warning); configuring = false; UpdateRefreshButton(); return; }
+        { ApplyVisuals(settings); MessageBox.Show(this, L.Text("SaveError", L.Error(ex)), "Dayz Server Monitor", MessageBoxButton.OK, MessageBoxImage.Warning); configuring = false; UpdateRefreshButton(); return; }
         settings = next;
         ConfigureClock();
         schedule = new(settings.RestartTimes);
@@ -514,7 +525,7 @@ public partial class MainWindow : Window
     private void UpdateCaption()
     {
         if (CaptionRow is null) return;
-        bool hidden = fullscreen || ActualWidth < 260;
+        bool hidden = fullscreen || settings.WidgetMode || ActualWidth < 260;
         CaptionRow.Height = new GridLength(hidden ? 0 : 32);
         CaptionBar.Visibility = hidden ? Visibility.Collapsed : Visibility.Visible;
         CaptionTitle.Visibility = ActualWidth < 470 ? Visibility.Collapsed : Visibility.Visible;
@@ -545,6 +556,7 @@ public partial class MainWindow : Window
         Add(L.Text("Settings"), () => SettingsClick(this, new RoutedEventArgs()));
         Add(L.Text("Compact"), () => CompactClick(this, new RoutedEventArgs()), true, settings.CompactMode);
         Add(L.Text("Fullscreen"), () => FullscreenClick(this, new RoutedEventArgs()), true, fullscreen);
+        Add(L.Text("WidgetMode"), ToggleWidget, true, settings.WidgetMode);
         Add(L.Text("AlwaysTop"), () => { settings.AlwaysOnTop = !settings.AlwaysOnTop; Topmost = settings.AlwaysOnTop; SaveSettings(); }, true, settings.AlwaysOnTop);
         var profiles = new MenuItem { Header = L.Text("DisplayProfile") };
         foreach (var profile in DisplayProfiles.All)
@@ -590,7 +602,30 @@ public partial class MainWindow : Window
         if (e.Key == Key.F5) { RefreshClick(sender, e); e.Handled = true; }
         if (e.Key == Key.OemComma && Keyboard.Modifiers == ModifierKeys.Control) { SettingsClick(sender, e); e.Handled = true; }
         if (e.Key == Key.F11) { FullscreenClick(sender, e); e.Handled = true; }
+        if (e.Key == Key.F10 && Keyboard.Modifiers == ModifierKeys.None) { ToggleWidget(); e.Handled = true; }
         if (e.Key == Key.Escape && fullscreen) { ExitFullscreen(); SaveSettings(); e.Handled = true; }
+        else if (e.Key == Key.Escape && settings.WidgetMode) { ToggleWidget(); e.Handled = true; }
+    }
+    private void ApplyVisuals(MonitorSettings appearance)
+    {
+        visualTheme = appearance.Theme;
+        bool glass = DesktopServices.ApplyGlass(this, appearance.Theme == "Aero" && appearance.AeroGlass && DashboardArtwork.Resolve(appearance) is null);
+        DashboardArtwork.Apply(Dashboard, appearance, glass);
+        Dashboard.FontFamily = new FontFamily(appearance.Theme == "Matrix" ? "Consolas" : "Segoe UI");
+        if (started && !closing) UpdateDisplay(clock.UtcNow);
+    }
+    private void ToggleWidget()
+    {
+        if (fullscreen) ExitFullscreen();
+        settings.WidgetMode = !settings.WidgetMode;
+        UpdateCaption(); SaveSettings();
+    }
+    private void DashboardPointerDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.Handled || DesktopServices.IsInteractive(e.OriginalSource as DependencyObject)) return;
+        if (e.ClickCount == 2) { ToggleWidget(); e.Handled = true; }
+        else if (settings.WidgetMode && !fullscreen && WindowState == WindowState.Normal && e.LeftButton == MouseButtonState.Pressed)
+        { DragMove(); SaveSettings(); e.Handled = true; }
     }
     private void DragHeader(object sender, MouseButtonEventArgs e)
     {

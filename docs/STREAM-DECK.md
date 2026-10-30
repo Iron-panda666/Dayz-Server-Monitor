@@ -8,7 +8,7 @@ The plugin uses Elgato's SDK and renders for 72 x 72-pixel MK.2 keys. It needs W
 
 1. Unpack the Windows ZIP. Keep `config.json` and `data` when upgrading.
 2. Start `DayzServerMonitor.exe` and select a server. It can stay minimized.
-3. Install `Dayz-Server-Monitor-1.10.1.streamDeckPlugin`, included in the ZIP and ReleasePackages folder.
+3. Install `Dayz-Server-Monitor-1.11.0.streamDeckPlugin`, included in the ZIP and ReleasePackages folder.
 4. Drag Cycle server information or Pinned server information from the Dayz Server Monitor action list onto a key.
 
 Direct installation needs no Marketplace account or extra driver. Run both apps under the same Windows account, without elevation. The plugin does not launch the monitor. A custom key image/title can cover its generated display.
@@ -38,7 +38,11 @@ The session page is local DayZ process runtime, including menus. It is the same 
 
 DayZ may publish `etm`, `entm` and a game clock in its A2S keywords. `etm` is the base speed; `entm` multiplies it at night. Base 4x and night 4x therefore give 16x night speed under standard server settings.
 
-The plugin extrapolates between replies and marks that time with `~`. DAY?/NIGHT? use assumed in-game daytime hours, initially 06:00-18:00, editable per key. Map, date and server scripts can change the actual sunrise and time behavior.
+The plugin extrapolates between replies and marks that time with ~. DAY/NIGHT with EST use assumed in-game daytime hours, initially 06:00-18:00, editable per key. Map, date and server scripts can change the actual sunrise and time behavior. The phase label has no question mark. Game clock format can follow the app or use a per-key 12-hour AM/PM or 24-hour override.
+
+Restart digits turn yellow at 15 minutes and orange at 10 minutes. During the last 5 minutes the color moves towards red, reaching red at 30 seconds. Only the digits gently pulse in the last 30 seconds. Disabling visual alerts in the app also disables these colors and pulse on the key.
+
+The key follows the chosen countdown target for its server. Known player kick can be a separate target without changing the real restart plan. The MAG DEER endpoint has a user-reported 5-minute kick lead. Other community servers remain unknown until configured. Logout reminders stay anchored to the real restart time.
 
 A missing multiplier leaves the published time without extrapolation. A missing game clock gives N/A. The desktop offset clock is calculated separately. [Bohemia server configuration](https://community.bohemia.net/wiki/DayZ:Server_Configuration).
 
@@ -64,7 +68,7 @@ UDP silence does not prove a game outage. Failed/stale readings are not displaye
 
 `./build.ps1` builds/tests the app and plugin, validates it with Elgato CLI and creates the installer. `./build.ps1 -SkipStreamDeck` builds only the Windows monitor. Node.js 24+ and .NET 10 SDK are build requirements.
 
-Version 1.10.1 keeps Elgato SDK 3.0.4 and overrides its @elgato/utils dependency to Zod 4.6.7. The SDK imports zod/v4-mini, which remains available in Zod 4. The override addresses [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). npm audit runs during packaging and stops the build on known High/Critical dependency findings. It does not replace testing or a code review.
+Version 1.11.0 keeps Elgato SDK 3.0.4 and overrides its @elgato/utils dependency to Zod 4.6.7. The SDK imports zod/v4-mini, which remains available in Zod 4. The override addresses [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). npm audit runs during packaging and stops the build on known High/Critical dependency findings. It does not replace testing or a code review.
 
 The SDK integration fixture uses a simulated Stream Deck host and C# pipe fixture. Physical MK.2 output was confirmed on 30 October 2026 after the image repair; new multi-server/session/service workflows still need hands-on checks. [Validation record](VALIDATION.md).
 

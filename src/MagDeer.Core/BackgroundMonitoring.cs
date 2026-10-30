@@ -30,7 +30,7 @@ public sealed class BackgroundMonitoring
         Func<string, int, TimeSpan, CancellationToken, Task<QueryResult>>? query = null, Func<string, QueryRefreshGuard>? getGuard = null)
     { this.utcNow = utcNow; this.query = query ?? new A2sClient().QueryAsync; this.getGuard = getGuard ?? (_ => new()); }
 
-    private static string SignatureOf(MonitorSettings s) => JsonSerializer.Serialize(new { s.ServerName, s.RestartTimes, s.ScheduleConfirmed, s.LogoutWarningMinutes, s.KickWarningMinutes });
+    private static string SignatureOf(MonitorSettings s) => JsonSerializer.Serialize(new { s.ServerName, s.RestartTimes, s.ScheduleConfirmed, s.LogoutWarningMinutes, s.KickWarningMinutes, s.KickBeforeRestart, s.CountdownToKick, s.Use24HourClock, s.VisualAlerts });
     public void Configure(MonitorSettings settings, HistoryStore history)
     {
         historyStore = history;
@@ -106,6 +106,7 @@ public sealed class BackgroundMonitoring
                 NextRestartAt = schedule.Next(now), ScheduleConfirmed = s.ScheduleConfirmed,
                 RestartExpected = now - schedule.Previous(now) < TimeSpan.FromMinutes(5) && (e.Tracker.LastSuccess is null || e.Tracker.LastSuccess < schedule.Previous(now)),
                 LogoutWarningMinutes = s.LogoutWarningMinutes, KickWarningMinutes = s.KickWarningMinutes,
+                KickBeforeRestart = s.HasKnownKick, CountdownToKick = s.CountdownToKick && s.HasKnownKick, Use24HourClock = s.Use24HourClock, VisualAlerts = s.VisualAlerts,
                 LastQueryAt = r?.At, LastSuccessAt = e.Tracker.LastSuccess, QuerySuccess = r?.Success == true,
                 Players = info?.Players, Capacity = info?.MaxPlayers, Queue = info?.Queue, RttMs = info is null ? null : r?.RttMs,
                 GameClock = info?.GameClock, GameSession = session, Polling = e.Polling,

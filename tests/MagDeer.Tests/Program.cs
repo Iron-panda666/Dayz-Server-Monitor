@@ -91,6 +91,47 @@ Task Sync(Action action) { action(); return Task.CompletedTask; }
 DateTimeOffset Utc(string value) => DateTimeOffset.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
 var schedule = new RestartSchedule(new MonitorSettings().RestartTimes);
 
+await Test("Countdown colors follow 15/10/5 minutes and pulse only digits gently during the last 30 seconds", () => Sync(() =>
+{
+    var even = DateTimeOffset.FromUnixTimeSeconds(1000); var odd = even.AddSeconds(1);
+    Assert(CountdownVisuals.Evaluate(901, even).Stage == CountdownStage.Normal);
+    Assert(CountdownVisuals.Evaluate(900, even).Stage == CountdownStage.Yellow);
+    Assert(CountdownVisuals.Evaluate(600, even).Stage == CountdownStage.Orange);
+    var start = CountdownVisuals.Evaluate(300, even); var middle = CountdownVisuals.Evaluate(165, even);
+    Assert(start.RedMix == 0 && middle.RedMix == .5);
+    Assert(CountdownVisuals.Color(middle, true) == "#FF7B48");
+    Assert(CountdownVisuals.Evaluate(31, odd).Opacity == 1);
+    Assert(CountdownVisuals.Evaluate(30, even).Stage == CountdownStage.Red);
+    Assert(CountdownVisuals.Evaluate(30, odd).Opacity == .78 && CountdownVisuals.Evaluate(30, even).Opacity == 1);
+    Assert(CountdownVisuals.Evaluate(0, odd).Opacity == 1 && CountdownVisuals.Evaluate(-1, odd).Opacity == 1);
+    Assert(CountdownVisuals.Evaluate(double.NaN, even).Stage == CountdownStage.Normal);
+}));
+await Test("Known MAG DEER kick is per endpoint and never changes the actual restart schedule", () => Sync(() =>
+{
+    var mag = new MonitorSettings { CountdownToKick = true };
+    var restart = Utc("2026-10-31T02:00:00Z");
+    Assert(mag.HasKnownKick && RestartSchedule.CzechTime(KickPlan.Target(mag, restart)).Hour == 2);
+    Assert(RestartSchedule.CzechTime(KickPlan.Target(mag, restart)).Minute == 55);
+    Assert(new RestartSchedule(mag.RestartTimes).Next(restart.AddMinutes(-10)) == restart);
+    var other = new MonitorSettings { IpAddress = "203.0.113.10", ServerName = "MAG label copied by someone", CountdownToKick = true };
+    Assert(!other.HasKnownKick && KickPlan.Target(other, restart) == restart);
+    other.KickBeforeRestart = true; other.KickWarningMinutes = 7;
+    Assert(KickPlan.Target(other, restart) == restart.AddMinutes(-7));
+    var copy = other.Copy(); ServerProfile.From(mag).ApplyTo(copy);
+    Assert(copy.HasKnownKick && copy.KickWarningMinutes == 5);
+    ServerProfile.From(other).ApplyTo(copy); Assert(copy.KickWarningMinutes == 7 && copy.CountdownToKick);
+    mag.KickBeforeRestart = false; Assert(!mag.HasKnownKick && KickPlan.Target(mag, restart) == restart);
+}));
+await Test("Appearance options persist without leaking private wallpaper paths to exported snapshots", () => Sync(() =>
+{
+    var s = new MonitorSettings { WidgetMode = true, BackgroundStyle = "Custom", BackgroundImagePath = "C:/Private/wallpaper.png", AeroGlass = false };
+    s.Validate(); var copy = s.Copy(); Assert(copy.WidgetMode && copy.BackgroundImagePath == s.BackgroundImagePath && !copy.AeroGlass);
+    string json = JsonSerializer.Serialize(new DeckSnapshot { Now = DateTimeOffset.UtcNow }, StreamDeckBridge.WireJson);
+    Assert(!json.Contains("Private") && !json.Contains("backgroundImagePath"));
+    s.BackgroundStyle = "remote-url"; bool failed = false;
+    try { s.Validate(); } catch (ArgumentException) { failed = true; } Assert(failed);
+}));
+
 await Test("DayZ keyword clock, queue and multipliers use invariant bounded values", () => Sync(() =>
 {
     var (clock, queue) = DayZKeywords.Parse("battleye,lqs3,etm4.000000,entm4.000000,mod,19:42");

@@ -42,7 +42,7 @@
     </Border>
     <Border local:DashboardPanel.Role="Status" Style="{StaticResource Tile}"><Viewbox Stretch="Uniform" StretchDirection="DownOnly"><StackPanel x:Name="StatusDesign" Width="260">
       <TextBlock x:Name="StatusLabel" Text="{DynamicResource L.ServerStatus}" Style="{StaticResource DashboardLabel}"/>
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0"><Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource WarningBrush}" Margin="0,0,8,0"/><TextBlock x:Name="StatusText" Text="QUERY UNAVAILABLE" FontWeight="SemiBold" FontSize="24" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}"/></StackPanel>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0"><Ellipse x:Name="StatusDot" Width="8" Height="8" VerticalAlignment="Center" Fill="{DynamicResource WarningBrush}" Margin="0,0,8,0"/><TextBlock x:Name="StatusText" Text="QUERY UNAVAILABLE" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="24" ToolTip="{Binding Text,RelativeSource={RelativeSource Self}}"/></StackPanel>
       <TextBlock x:Name="StatusHint" Text="{DynamicResource L.Waiting}" Style="{StaticResource DetailLine}" Margin="0,5,0,0"/>
     </StackPanel></Viewbox></Border>
     <Border local:DashboardPanel.Role="Players" Style="{StaticResource Tile}"><Viewbox Stretch="Uniform" StretchDirection="DownOnly"><local:PlayerCountDisplay x:Name="PlayerCounts" Width="190"/></Viewbox></Border>

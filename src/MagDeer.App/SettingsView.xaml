@@ -40,9 +40,9 @@
 </StackPanel></Border><Border Style="{StaticResource SettingsCard}"><StackPanel>
 <TextBlock Text="{DynamicResource L.WarningMinutes}" FontSize="17" Margin="0,0,0,10"/>
           <local:SettingsFields MaxColumns="2"><StackPanel><TextBlock Text="{DynamicResource L.LogoutMinutes}"/><TextBox x:Name="LogoutMinutesBox" PreviewKeyDown="ForwardMinutes" ToolTip="{DynamicResource L.LogoutTip}"/></StackPanel><StackPanel><TextBlock Text="{DynamicResource L.KickMinutes}"/><TextBox x:Name="KickMinutesBox" PreviewKeyDown="ForwardMinutes" ToolTip="{DynamicResource L.KickTip}"/></StackPanel></local:SettingsFields>
-          <TextBlock Text="{DynamicResource L.MinuteNote}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/>
+          <CheckBox x:Name="KickKnownBox" Content="{DynamicResource L.KickKnownOption}"/><CheckBox x:Name="KickTargetBox" Content="{DynamicResource L.KickTargetOption}" IsEnabled="{Binding IsChecked,ElementName=KickKnownBox}"/><TextBlock Text="{DynamicResource L.KickScopeHelp}" Style="{StaticResource Help}"/><TextBlock Text="{DynamicResource L.MinuteNote}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/>
 </StackPanel></Border><Border Style="{StaticResource SettingsCard}"><StackPanel><TextBlock Text="{DynamicResource L.SettingsNotificationStyle}" Style="{StaticResource SectionHeading}"/>
-<CheckBox x:Name="VisualBox" Content="{DynamicResource L.VisualAlerts}"/>
+<TextBlock Text="{DynamicResource L.CountdownColorsHelp}" Style="{StaticResource Help}"/><CheckBox x:Name="VisualBox" Content="{DynamicResource L.VisualAlerts}"/>
           <CheckBox x:Name="SoundBox" Content="{DynamicResource L.SoundAlerts}"/>
           <CheckBox x:Name="NotifyBox" Content="{DynamicResource L.Notifications}"/>
           <TextBlock Text="{DynamicResource L.NotificationNote}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,8,0,20"/>
@@ -67,13 +67,13 @@
 </StackPanel></ScrollViewer></TabItem>
 <TabItem x:Name="AppearanceSection" Header="{DynamicResource L.SettingsAppearance}"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,10,0"><StackPanel>
 <Border Style="{StaticResource SettingsCard}"><StackPanel><TextBlock Text="{DynamicResource L.SettingsLook}" Style="{StaticResource SectionHeading}"/>
-<TextBlock Text="{DynamicResource L.Theme}"/><ComboBox x:Name="ThemeBox" DisplayMemberPath="Label"/>
-          <TextBlock Text="{DynamicResource L.ThemeNote}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/><TextBlock Text="{DynamicResource L.Language}"/><ComboBox x:Name="LanguageBox" DisplayMemberPath="Label"/>
+<TextBlock Text="{DynamicResource L.Theme}"/><ComboBox x:Name="ThemeBox" DisplayMemberPath="Label" SelectionChanged="ForwardSelection" Tag="PreviewAppearance"/>
+          <TextBlock Text="{DynamicResource L.Background}"/><ComboBox x:Name="WallpaperBox" DisplayMemberPath="Label" SelectionChanged="ForwardSelection" Tag="PreviewAppearance"/><StackPanel x:Name="CustomWallpaperPanel"><TextBox x:Name="WallpaperPathBox" IsReadOnly="True"/><Button Content="{DynamicResource L.ChooseImage}" Click="ForwardAction" Tag="ChooseImage" HorizontalAlignment="Left"/></StackPanel><CheckBox x:Name="AeroGlassBox" Content="{DynamicResource L.AeroGlass}" Checked="ForwardAction" Unchecked="ForwardAction" Tag="PreviewAppearance"/><TextBlock Text="{DynamicResource L.BackgroundHelp}" Style="{StaticResource Help}"/><TextBlock Text="{DynamicResource L.ThemeNote}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/><TextBlock Text="{DynamicResource L.Language}"/><ComboBox x:Name="LanguageBox" DisplayMemberPath="Label"/>
           <TextBlock Text="{DynamicResource L.LanguageNote}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/>
 </StackPanel></Border><Border Style="{StaticResource SettingsCard}"><StackPanel><TextBlock Text="{DynamicResource L.SettingsScreen}" Style="{StaticResource SectionHeading}"/>
 <TextBlock Text="{DynamicResource L.Monitor}"/><ComboBox x:Name="MonitorBox" DisplayMemberPath="Label"/>
           <TextBlock Text="{DynamicResource L.MonitorNote}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,18"/><TextBlock Text="{DynamicResource L.DisplayProfile}"/><ComboBox x:Name="DisplayProfileBox" DisplayMemberPath="Label"/>
-          <TextBlock Text="{DynamicResource L.DisplayProfileHelp}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/><CheckBox x:Name="TopBox" Content="{DynamicResource L.AlwaysTop}"/><CheckBox x:Name="CompactBox" Content="{DynamicResource L.CompactOption}"/><TextBlock Text="{DynamicResource L.FullscreenHelp}" Margin="0,24,0,0" Foreground="{DynamicResource AccentBrush}"/>
+          <TextBlock Text="{DynamicResource L.DisplayProfileHelp}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/><CheckBox x:Name="WidgetBox" Content="{DynamicResource L.WidgetMode}"/><TextBlock Text="{DynamicResource L.WidgetHelp}" Style="{StaticResource Help}"/><CheckBox x:Name="TopBox" Content="{DynamicResource L.AlwaysTop}"/><CheckBox x:Name="CompactBox" Content="{DynamicResource L.CompactOption}"/><TextBlock Text="{DynamicResource L.FullscreenHelp}" Margin="0,24,0,0" Foreground="{DynamicResource AccentBrush}"/>
 </StackPanel></Border>
 </StackPanel></ScrollViewer></TabItem>
 <TabItem x:Name="TimeSection" Header="{DynamicResource L.SettingsTime}"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,10,0"><StackPanel>

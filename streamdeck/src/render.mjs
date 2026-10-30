@@ -12,7 +12,8 @@ export function normalizeSettings(value = {}) {
     label: typeof value.label === 'string' ? value.label.slice(0, 12) : '',
     dataDirectory: typeof value.dataDirectory === 'string' ? value.dataDirectory.slice(0, 1024) : '',
     endpoint: typeof value.endpoint === 'string' && value.endpoint.length <= 80 ? value.endpoint.trim() : '',
-    autoWarnings: value.autoWarnings !== false, sunrise, sunset
+    autoWarnings: value.autoWarnings !== false, sunrise, sunset,
+    clockFormat: ['app', '12h', '24h'].includes(value.clockFormat) ? value.clockFormat : 'app'
   };
 }
 export const escapeXml = text => String(text).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c]);
@@ -50,8 +51,21 @@ export function estimatedGameClock(state, settings = normalizeSettings()) {
     }
   }
   const isDay = seconds >= sunrise && seconds < sunset;
-  return { text: `${predicted ? '~' : ''}${String(Math.floor(seconds / 3600) % 24).padStart(2, '0')}:${String(Math.floor(seconds / 60) % 60).padStart(2, '0')}`,
-    phase: isDay ? 'DAY?' : 'NIGHT?', speed: valid(day) && (isDay || valid(night)) ? day * (isDay ? 1 : night) : null, predicted };
+  const hour = Math.floor(seconds / 3600) % 24;
+  const use24 = settings.clockFormat === '24h' || settings.clockFormat !== '12h' && state.use24HourClock !== false;
+  const period = use24 ? '' : hour < 12 ? 'AM' : 'PM';
+  const displayTime = `${predicted ? '~' : ''}${String(use24 ? hour : hour % 12 || 12).padStart(2, '0')}:${String(Math.floor(seconds / 60) % 60).padStart(2, '0')}`;
+  return { text: displayTime + (period ? ' ' + period : ''), displayTime, period,
+    phase: isDay ? 'DAY' : 'NIGHT', speed: valid(day) && (isDay || valid(night)) ? day * (isDay ? 1 : night) : null, predicted };
+}
+export function restartAppearance(seconds, now) {
+  if (!Number.isFinite(seconds) || seconds > 900) return { color: '#90e8ff', opacity: 1 };
+  if (seconds > 600) return { color: '#ffda58', opacity: 1 };
+  if (seconds > 300) return { color: '#ff9a3d', opacity: 1 };
+  const mix = Math.max(0, Math.min(1, (300 - seconds) / 270));
+  const values = [255, Math.round(154 + (91 - 154) * mix), Math.round(61 + (82 - 61) * mix)];
+  return { color: '#' + values.map(n => n.toString(16).padStart(2, '0')).join(''),
+    opacity: seconds > 0 && seconds <= 30 && Math.floor(now / 1000) % 2 !== 0 ? .78 : 1 };
 }
 export function serverLabel(name = '') {
   const number = name.match(/#\d+/)?.[0] ?? '';
@@ -59,16 +73,19 @@ export function serverLabel(name = '') {
 }
 export function renderKey(state, requestedView, rawSettings = {}, feedback = '', connectionIssue = null) {
   const settings = normalizeSettings(rawSettings), now = Date.parse(state?.now);
-  const remaining = (Date.parse(state?.nextRestartAt) - now) / 1000;
+  const untilRestart = (Date.parse(state?.nextRestartAt) - now) / 1000;
+  const targetKick = state?.countdownToKick === true && state?.kickBeforeRestart === true;
+  const remaining = state?.restartExpected ? 0 : untilRestart - (targetKick ? state.kickWarningMinutes * 60 : 0);
   const warning = state && !state.service && (state.restartExpected || remaining <= state.logoutWarningMinutes * 60);
   const view = settings.autoWarnings && warning ? 'restart' : requestedView;
-  const accent = !state ? '#b8cbd4' : state.restartExpected || remaining <= state.kickWarningMinutes * 60 ? '#ffaaa0' : warning ? '#ffdb7e' : '#90e8ff';
+  const appearance = state?.visualAlerts === false ? { color: '#90e8ff', opacity: 1 } : restartAppearance(remaining, now);
+  const accent = !state ? '#b8cbd4' : appearance.color;
   const stale = state && (!Number.isFinite(Date.parse(state.lastQueryAt)) || (now - Date.parse(state.lastQueryAt)) / 1000 > Math.max(30, (state.queryIntervalSeconds ?? 300) + 45));
   const available = state?.querySuccess && !stale;
   const label = settings.label || serverLabel(state?.serverName) || 'DAYZ MONITOR';
   let body = '';
   const text = (value, y, size = 8, color = '#b8cbd4') => `<text x="36" y="${y}" fill="${color}" font-size="${size}" text-anchor="middle">${escapeXml(value)}</text>`;
-  const metric = (value, color = '#f4f8fb', size = 18) => text(value, 46, size, color);
+  const metric = (value, color = '#f4f8fb', size = 18, opacity = 1) => `<g opacity="${opacity}">${text(value, 46, size, color)}</g>`;
   body += text(view === 'session' ? 'DAYZ / LOCAL' : label, 10, 7);
   if (!state) {
     body += connectionIssue === 'server-not-monitored'
@@ -93,11 +110,12 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '',
         + (view === 'players' ? text('QUEUE N/A', 60, 8) + text(footer || ageLabel, 70, 6) : text(footer || ageLabel, 64, 7));
     } else if (view === 'game') {
       const game = estimatedGameClock(state, settings);
-      body += text('GAME TIME', 24) + metric(game?.text ?? 'N/A', '#f4f8fb', 17)
-        + text(footer || (game ? `${game.phase} ${game.speed == null ? 'N/A' : Number(game.speed.toFixed(2)) + 'x'}` : 'NOT PUBLISHED'), 63, 7);
+      body += text('GAME TIME', 24) + metric(game?.displayTime ?? 'N/A', '#f4f8fb', 17)
+        + (game?.period ? text(game.period, 55, 7) : '')
+        + text(footer || (game ? `${game.phase} ${game.speed == null ? 'N/A' : Number(game.speed.toFixed(2)) + 'x'} · EST` : 'NOT PUBLISHED'), game?.period ? 69 : 63, 6);
     } else if (view === 'restart') {
-      body += text('RESTART', 24) + metric(state.restartExpected ? 'NOW?' : countdown(remaining), accent)
-        + text(footer || (!state.scheduleConfirmed ? 'PLAN?' : 'CONFIRMED'), 63, 7);
+      body += text(targetKick ? 'PLAYER KICK' : 'RESTART', 24) + metric(state.restartExpected ? 'NOW' : countdown(remaining), accent, 18, appearance.opacity)
+        + text(footer || (!state.scheduleConfirmed ? 'UNCONFIRMED' : 'CONFIRMED'), 63, 6);
     } else if (view === 'players') {
       const players = Number.isInteger(state.players) && Number.isInteger(state.capacity) ? `${state.players}/${state.capacity}` : 'N/A';
       const waiting = Number.isInteger(state.queue) && state.queue >= 0 && state.queue <= 10000 ? state.queue : null;
@@ -113,7 +131,7 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '',
         : session.state === 'Disabled' ? 'DISABLED IN APP' : session.state === 'MultipleInstances' ? 'MULTIPLE GAMES' : 'LOCAL ACCESS';
       body += text('SESSION', 24) + metric(duration, running ? '#90e8ff' : '#ffdb7e', 20) + text(feedback || note, 63, 7);
     } else if (view === 'logout') {
-      const untilLogout = remaining - state.logoutWarningMinutes * 60;
+      const untilLogout = untilRestart - state.logoutWarningMinutes * 60;
       body += text(untilLogout <= 0 ? 'LOG OUT NOW' : 'LOG OUT IN', 24) + metric(state.restartExpected || untilLogout <= 0 ? 'NOW' : countdown(untilLogout), accent)
         + text(footer || (!state.scheduleConfirmed ? 'PLAN?' : 'BEFORE RESTART'), 63, 7);
     } else {

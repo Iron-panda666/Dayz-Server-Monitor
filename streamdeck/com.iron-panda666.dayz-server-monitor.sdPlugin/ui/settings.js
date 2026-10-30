@@ -1,5 +1,5 @@
 let socket, context, actionUuid, settings = {}, initialized = false, pinned = false;
-const ids = ['view', 'label', 'dataDirectory', 'endpoint', 'autoWarnings', 'sunrise', 'sunset'];
+const ids = ['view', 'label', 'dataDirectory', 'endpoint', 'autoWarnings', 'clockFormat', 'sunrise', 'sunset'];
 function setMonitors(monitors = []) {
   const select = document.getElementById('endpoint'); select.replaceChildren(new Option('Follow desktop selection', ''));
   for (const item of monitors) if (typeof item.endpoint === 'string' && typeof item.serverName === 'string') select.add(new Option(item.serverName + ' · ' + item.endpoint, item.endpoint));
@@ -17,6 +17,7 @@ function apply(value) {
   document.getElementById('dataDirectory').value = settings.dataDirectory ?? '';
   setMonitors([...document.getElementById('endpoint').options].filter(o => o.value).map(o => ({endpoint: o.value, serverName: o.text.split(' · ')[0]})));
   document.getElementById('autoWarnings').checked = settings.autoWarnings !== false;
+  document.getElementById('clockFormat').value = settings.clockFormat ?? 'app';
   document.getElementById('sunrise').value = settings.sunrise ?? 6;
   document.getElementById('sunset').value = settings.sunset ?? 18;
   for (const checkbox of document.querySelectorAll('#pages input')) checkbox.checked = !Array.isArray(settings.pages) || settings.pages.includes(checkbox.value);
@@ -30,7 +31,7 @@ function save() {
   const valid = Number.isInteger(sunrise) && Number.isInteger(sunset) && sunrise >= 0 && sunset <= 23 && sunrise < sunset && pages.length > 0;
   document.getElementById('validation').textContent = valid ? '' : 'Select at least one view. Daytime start must be before nighttime start (0–23).';
   if (!valid) return;
-  settings = { ...settings, view: document.getElementById('view').value, label: document.getElementById('label').value,
+  settings = { ...settings, clockFormat: document.getElementById('clockFormat').value, view: document.getElementById('view').value, label: document.getElementById('label').value,
     dataDirectory: document.getElementById('dataDirectory').value.trim(), endpoint: document.getElementById('endpoint').value, autoWarnings: document.getElementById('autoWarnings').checked, sunrise, sunset, pages };
   socket.send(JSON.stringify({ event: 'setSettings', context, payload: settings }));
 }

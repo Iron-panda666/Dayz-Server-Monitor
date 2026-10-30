@@ -25,6 +25,14 @@ public partial class DashboardView : UserControl
         use24HourClock = use24Hours;
         if (Surface.Slots.Count > 0) ApplyDensity(Surface.Mode);
     }
+    public Brush ApplyCountdownVisual(CountdownVisual visual, bool dark, bool enabled)
+    {
+        Brush color = !enabled || visual.Stage == CountdownStage.Normal ? (Brush)Application.Current.FindResource("AccentBrush")
+            : new SolidColorBrush((Color)ColorConverter.ConvertFromString(CountdownVisuals.Color(visual, dark)));
+        CountdownText.Foreground = color;
+        CountdownText.Opacity = enabled ? visual.Opacity : 1;
+        return color;
+    }
     private void ApplyDensity(DashboardMode mode)
     {
         bool tiny = mode == DashboardMode.Ribbon;

@@ -2,6 +2,8 @@
 
 The application source, documentation and original T/R icon are provided under the [MIT license](LICENSE).
 
+The Sakura landscape is original MIT-licensed vector artwork. The optional Mount Fuji photo is by Clay Banks and retains the Unsplash License. Its source, license and hash are in [FUJI-PHOTO.md](docs/licenses/FUJI-PHOTO.md). User-selected local wallpapers are not included in releases or exports.
+
 The Windows portable build includes Microsoft .NET 10 and Windows Desktop runtime components. They retain their own notices; the project's MIT license does not replace them. Copies from the runtime packs used for this release are in [docs/licenses](docs/licenses):
 
 - DOTNET-LICENSE.txt
