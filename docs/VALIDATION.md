@@ -1,4 +1,4 @@
-# Validation · 1.8.0
+# Validation · 1.9.0
 
 The release is built for Windows x64 using .NET SDK 8.0.427. The automated checks cover the areas below. They do not establish multi-day reliability or confirm any provider's restart schedule.
 
@@ -56,4 +56,20 @@ Ten complete palettes pass text and metric contrast checks, resource updates and
 
 The close-to-taskbar/tray options and display profile IDs are checked through settings validation/roundtrip. Code review confirms that hiding leaves the monitoring timer and Stream Deck bridge running, explicit Quit bypasses minimization, settings/bounds are saved before hiding, and the tray offers restore/quit. Main window startup is guarded against duplicate Loaded events. The full live tray/close workflow, DPI changes between physical screens, small-screen settings placement and extended continuous use still need hands-on verification. No physical LCD compatibility is claimed from rendering alone.
 
-The build places the Windows ZIP, source ZIP, standalone Stream Deck installer and checksum file together in the ignored local release folder. Published packages exclude private config.json and data. Total: 42 core + 15 WPF + 11 plugin checks.
+That release placed its packages in the older local handoff folder. Published packages excluded private config.json and data. Total for 1.8.0: 42 core + 15 WPF + 11 plugin checks.
+
+## Profiles, local session, multiple monitors and export · 1.9.0
+
+Core checks cover exact game executable selection (excluding Steam/launchers/dedicated servers and other Windows sessions), startup after an already running game, monotonic runtime across wall-clock jumps, process exit/PID reuse and unknown/multiple cases. WPF checks retain a small, translated session line. This is local process runtime including menus, not authoritative Steam overlay or server-connected time.
+
+Profile tests cover rename/IP edits in place, duplicate-name rejection, draft isolation, deletion/last-profile protection, alphabetical ordering and catalog v2 migration without restoring deleted presets. MAG provenance uses a dated allowlist of IP/game-port pairs, not a server-name heuristic or authenticated identity. Official MAG pages were checked on 30 October 2026; an existing Badlands profile is retained but marked unverified.
+
+Multi-monitor fixtures verify opt-in, endpoint deduplication, isolated successful/failed metrics and history, cadence and refresh protection. Named-pipe fixtures select independent targets, route refreshes, list endpoints and reject unknown targets. The actual official-SDK plugin fixture displays different counts on separate keys and confirms refreshing one does not change the other. A target mismatch from an older app cannot display the wrong server. Service faces cover operator incidents, web-only reachability and unknown results. New multiple-server/session/service workflows still need physical MK.2 acceptance.
+
+Local HTTP tests check Prometheus content type, escaped labels, missing measurements instead of false zeroes, separate service scope, cached JSON and read-only rejection of control/config paths. Mock public-service responses distinguish operator incidents, web access and blocked checks. Requests use fixed endpoints and bounded sizes/timeouts, without personal accounts. Real Grafana/HA setup and LAN firewall behavior are not claimed. Web reachability cannot establish messaging, streaming, login or matchmaking availability.
+
+The A2S parser also accepts legacy single-packet GoldSource CS 1.6 replies, with truncation rejection. Rust/CS/Project Zomboid support is protocol-level, without live provider acceptance. Minecraft, PlanetSide 2 and WARDOGS adapters are not shipped; see [monitor types](MONITOR-TYPES.md).
+
+Packaging creates `ReleasePackages/v1.9.0` with the portable Windows ZIP, matching plugin/source ZIPs, manifest and SHA-256 sums. It verifies the embedded EXE/plugin against standalone files and rejects private config/history in the ZIP. No app/game/installer is launched.
+
+The full release checks passed: **58 core + 16 WPF + 15 plugin = 89 checks**. Elgato CLI validated and packaged the installer; its existing private-repository URL warning remains. A one-time public-service check on 30 October 2026 received Discord's operational report and HTTP 200 headers from Spotify, WhatsApp Web and Steam Store. These are historical source/reachability observations only, with no authentication or backend operation tested. English previews render the local session and service face as demonstration data.

@@ -37,6 +37,11 @@ public sealed class MonitorSettings
     public int HistoryRetentionDays { get; set; } = 90;
     public double ServerOffsetHours { get; set; } = -1;
     public bool ShowServerTime { get; set; } = true;
+    public bool ShowGameSession { get; set; } = true;
+    public bool ExportEnabled { get; set; }
+    public bool MonitorOnlineServices { get; set; }
+    public string ExportAddress { get; set; } = "127.0.0.1";
+    public int ExportPort { get; set; } = 9187;
     public bool Use24HourClock { get; set; } = true;
     public bool SoundAlerts { get; set; }
     public bool WindowsNotifications { get; set; }
@@ -90,6 +95,10 @@ public sealed class MonitorSettings
         if (SavedServers is null || SavedServers.Count > 50 || SavedServers.Any(x => x is null))
             throw new ArgumentException("Lze uložit nejvýše 50 serverů.");
         foreach (var profile in SavedServers) profile.Validate();
+        if (SavedServers.Count(p => p.MonitorInBackground) > 16) throw new ArgumentException("BackgroundLimit");
+        if (!IPAddress.TryParse(ExportAddress, out var exportAddress) || exportAddress.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork ||
+            exportAddress.Equals(IPAddress.Any) || exportAddress.Equals(IPAddress.Broadcast) || ExportPort is < 1024 or > 65535)
+            throw new ArgumentException("ExportInvalid");
         if (!double.IsFinite(ServerOffsetHours) || ServerOffsetHours is < -24 or > 24)
             throw new ArgumentException("Posun serverového času musí být −24 až +24 hodin.");
         if (!double.IsFinite(Left) || !double.IsFinite(Top) || !double.IsFinite(Width) || !double.IsFinite(Height) ||

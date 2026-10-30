@@ -11,25 +11,41 @@ if (args.Length == 2 && args[0] == "--deck-fixture")
     string directory = Path.GetFullPath(args[1]);
     Directory.CreateDirectory(directory);
     var started = DateTimeOffset.UtcNow; int refreshes = 0;
-    var guard = new QueryRefreshGuard();
-    await using var bridge = new StreamDeckBridge(Path.Combine(directory, "fixture-data"), () => new DeckSnapshot
+    var guard = new QueryRefreshGuard(); var secondGuard = new QueryRefreshGuard(); int secondRefreshes = 0;
+    DeckSnapshot Snapshot() => new()
     {
         Now = DateTimeOffset.UtcNow, ServerName = "MAG fixture #2", Endpoint = "127.0.0.1:2303", Status = "Online",
         NextRestartAt = started.AddHours(2.5), LogoutWarningMinutes = 10, KickWarningMinutes = 5,
         LastQueryAt = started, LastSuccessAt = started, QuerySuccess = true, Players = 39 + refreshes,
         Capacity = 121, Queue = 0, RttMs = 87, GameClock = new(12, 0, 4, 4), QueryIntervalSeconds = 300,
+        GameSession = new("Running", started.AddMinutes(-30), 1800),
         RefreshRemainingSeconds = guard.RemainingSeconds,
         History = [new(started.AddMinutes(-10), 35, 121), new(started.AddMinutes(-5), null, null), new(started, 39, 121)]
-    }, _ =>
+    };
+    await using var bridge = new StreamDeckBridge(Path.Combine(directory, "fixture-data"), Snapshot, _ =>
     {
         bool accepted = guard.TryBeginManual(); if (accepted) Interlocked.Increment(ref refreshes);
         return Task.FromResult(new DeckRefreshResult(accepted, guard.RemainingSeconds, accepted ? "accepted" : "cooldown"));
-    }, directory);
+    }, directory, () => [Snapshot(), Snapshot() with { Endpoint = "127.0.0.1:2403", ServerName = "Second fixture", Players = 77 + secondRefreshes, RefreshRemainingSeconds = secondGuard.RemainingSeconds }],
+    (endpoint, _) =>
+    {
+        bool accepted = endpoint == "127.0.0.1:2403" && secondGuard.TryBeginManual(); if (accepted) Interlocked.Increment(ref secondRefreshes);
+        return Task.FromResult(new DeckRefreshResult(accepted, secondGuard.RemainingSeconds, accepted ? "accepted" : "cooldown"));
+    });
     bridge.Start(); Console.WriteLine("DECK_FIXTURE_READY");
     await Console.In.ReadLineAsync();
     return 0;
 }
 
+if (args.Length == 1 && args[0] == "--services")
+{
+    var guards = new Dictionary<string, QueryRefreshGuard>();
+    QueryRefreshGuard Guard(string key) { if (!guards.TryGetValue(key, out var guard)) guards[key] = guard = new(); return guard; }
+    using var monitor = new ServiceMonitoring(() => DateTimeOffset.UtcNow, Guard);
+    monitor.Configure(true); monitor.Tick(CancellationToken.None); await monitor.CurrentTask;
+    Console.WriteLine(JsonSerializer.Serialize(monitor.Snapshots(new("Unavailable", null, null)).Select(s => new { s.ServerName, s.Service }), JsonStorage.Options));
+    return 0;
+}
 if (args.Length == 3 && args[0] == "--probe-list")
 {
     var profiles = JsonSerializer.Deserialize<List<ServerProfile>>(File.ReadAllText(args[1]), JsonStorage.Options)!;
@@ -116,11 +132,11 @@ await Test("Stream Deck named pipe shares cooldown, rejects other commands and c
     finally { await bridge.DisposeAsync(); if (Directory.Exists(directory)) Directory.Delete(directory, true); }
 });
 
-await Test("Catalog contains 17 distinct valid endpoints and never confirms provider schedules", () => Sync(() =>
+await Test("Catalog contains 16 distinct valid endpoints and never confirms provider schedules", () => Sync(() =>
 {
     var catalog = ServerCatalog.Create();
-    Assert(catalog.Count == 17 && catalog.Count(p => p.Name.StartsWith("Sunnyvale")) == 12);
-    Assert(catalog.Select(p => (p.IpAddress, p.QueryPort)).Distinct().Count() == 17);
+    Assert(catalog.Count == 16 && catalog.Count(p => p.Name.StartsWith("Sunnyvale")) == 12);
+    Assert(catalog.Select(p => (p.IpAddress, p.QueryPort)).Distinct().Count() == 16);
     foreach (var profile in catalog) { profile.Validate(); Assert(!profile.ScheduleConfirmed); }
     Assert(catalog.Single(p => p.Name.StartsWith("Sunnyvale #12 ")).IpAddress == "172.111.51.80");
 }));
@@ -128,16 +144,19 @@ await Test("Catalog migration preserves active server, custom settings and delib
 {
     var settings = new MonitorSettings { ScheduleConfirmed = true, RestartTimes = ["12:15"] };
     settings.SavedServers.Add(ServerProfile.From(settings));
-    Assert(ServerCatalog.MergeOnce(settings) && settings.SavedServers.Count == 17);
+    Assert(ServerCatalog.MergeOnce(settings) && settings.SavedServers.Count == 16);
     var existing = settings.SavedServers.Single(p => p.IpAddress == settings.IpAddress && p.QueryPort == settings.QueryPort);
     Assert(existing.ScheduleConfirmed && existing.RestartTimes.SequenceEqual(new[] { "12:15" }));
     Assert(settings.ScheduleConfirmed && settings.RestartTimes[0] == "12:15");
-    settings.SavedServers.RemoveAt(0); Assert(!ServerCatalog.MergeOnce(settings) && settings.SavedServers.Count == 16);
-    var fresh = new MonitorSettings(); ServerCatalog.MergeOnce(fresh); Assert(fresh.SavedServers.Count == 17);
+    settings.SavedServers.RemoveAt(0); Assert(!ServerCatalog.MergeOnce(settings) && settings.SavedServers.Count == 15);
+    var fresh = new MonitorSettings(); ServerCatalog.MergeOnce(fresh); Assert(fresh.SavedServers.Count == 16);
     fresh.SavedServers[0].Name = "Edited"; Assert(ServerCatalog.Create()[0].Name != "Edited");
     var full = new MonitorSettings { SavedServers = Enumerable.Range(0, 50).Select(i => new ServerProfile { Name = "Custom " + i }).ToList() };
     ServerCatalog.MergeOnce(full); Assert(full.SavedServers.Count == 50 && full.SavedServers[49].Name == "Custom 49");
 }));
+foreach (var check in SessionAndProfileChecks.All()) await Test(check.Name, () => Sync(check.Run));
+foreach (var check in MultiMonitoringChecks.All()) await Test(check.Name, check.Run);
+
 await Test("Shutdown drains finished, faulted and canceled tasks without throwing", async () =>
 {
     Assert(await ShutdownDrain.WaitAsync([Task.CompletedTask], TimeSpan.FromSeconds(1)));
@@ -473,6 +492,17 @@ await Test("A2S parser reads DayZ slots and full EDF", () => Sync(() =>
     Assert(extended.GameClock == new DayZGameClock(19, 42, 4, 4) && extended.Queue == 7 && extended.Players == 87);
     var modern = A2sClient.ParseInfo(InfoPacket(true, "lqs0,etm4,entm4,19:42", 0));
     Assert(modern.GameClock == new DayZGameClock(19, 42, 4, 4) && modern.Queue == 0, "Extended GameID did not identify DayZ");
+}));
+await Test("GoldSource CS 1.6 reply parses safely and rejects every truncation", () => Sync(() =>
+{
+    using var data = new MemoryStream(); using var w = new BinaryWriter(data);
+    w.Write(uint.MaxValue); w.Write((byte)0x6d);
+    foreach (var text in new[] { "127.0.0.1:27015", "CS fixture", "de_dust2", "cstrike", "Counter-Strike" }) { w.Write(Encoding.UTF8.GetBytes(text)); w.Write((byte)0); }
+    w.Write(new byte[] { 12, 32, 48, (byte)'d', (byte)'l', 0, 0, 1, 0 });
+    var packet = data.ToArray(); var info = A2sClient.ParseInfo(packet);
+    Assert(info.Players == 12 && info.MaxPlayers == 32 && info.Map == "de_dust2" && info.GameClock is null && info.Queue is null);
+    for (int length = 0; length < packet.Length; length++)
+    { bool rejected = false; try { A2sClient.ParseInfo(packet.AsSpan(0, length)); } catch (InvalidDataException) { rejected = true; } Assert(rejected); }
 }));
 await Test("Every truncated packet rejected safely", () => Sync(() =>
 {

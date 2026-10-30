@@ -3,13 +3,12 @@ namespace MagDeer.Core;
 /// <summary>Public DayZ endpoints, checked via A2S_INFO on 2026-10-29. No web dependency at runtime.</summary>
 public static class ServerCatalog
 {
-    public const int Version = 1;
+    public const int Version = 2;
     public static IReadOnlyList<ServerProfile> Create() =>
     [
         Profile("MAG MiddleAgedGamers #1 PVE CHERNO", "54.36.109.179", 2302, 2303),
         Profile("MAG MiddleAgedGamers #2 PVE DEER", "217.182.198.57", 2302, 2303),
-        Profile("OFFICIAL MAG MiddleAgedGamers #3 Vanilla+", "57.129.39.17", 2302, 2303),
-        Profile("MAG MiddleAgedGamers #5 Badlands Vanilla+", "57.129.39.17", 2802, 2803),
+        Profile("MAG MiddleAgedGamers #3 Vanilla+", "57.129.39.17", 2302, 2303),
         Profile("MAG MiddleAgedGamers Test", "5.252.100.201", 2602, 2603),
         Profile("Sunnyvale #1 | Livonia | PvP Clans", "172.111.51.75", 2302, 2303),
         Profile("Sunnyvale #2 | Chernarus | PvP Solo/Duo/Trio", "172.111.51.75", 2402, 2403),
@@ -35,6 +34,17 @@ public static class ServerCatalog
     public static bool MergeOnce(MonitorSettings settings)
     {
         if (settings.ServerCatalogVersion >= Version) return false;
+        if (settings.ServerCatalogVersion >= 1)
+        {
+            // Do not repopulate a user's deliberately removed presets on catalog upgrades.
+            foreach (var profile in settings.SavedServers)
+                if (profile.IpAddress == "57.129.39.17" && profile.GamePort == 2302 && profile.Name == "OFFICIAL MAG MiddleAgedGamers #3 Vanilla+")
+                    profile.Name = "MAG MiddleAgedGamers #3 Vanilla+";
+            if (settings.IpAddress == "57.129.39.17" && settings.GamePort == 2302 && settings.ServerName == "OFFICIAL MAG MiddleAgedGamers #3 Vanilla+")
+                settings.ServerName = "MAG MiddleAgedGamers #3 Vanilla+";
+            settings.ServerCatalogVersion = Version;
+            return true;
+        }
         if (!settings.SavedServers.Any(p => p.IpAddress == settings.IpAddress && p.QueryPort == settings.QueryPort)
             && settings.SavedServers.Count < 50)
             settings.SavedServers.Add(ServerProfile.From(settings));

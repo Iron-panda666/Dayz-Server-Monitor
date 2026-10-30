@@ -9,7 +9,7 @@
     <Product>Dayz Server Monitor</Product>
     <Title>Dayz Server Monitor</Title>
     <RootNamespace>MagDeer.App</RootNamespace>
-    <Version>1.8.0</Version>
+    <Version>1.9.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <ApplicationManifest>app.manifest</ApplicationManifest>

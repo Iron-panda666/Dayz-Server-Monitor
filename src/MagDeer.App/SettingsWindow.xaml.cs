@@ -12,6 +12,7 @@ public partial class SettingsWindow : Window
     private readonly List<WorldClock> clocks;
     private readonly List<ZoneChoice> zones = [];
     private bool loadingProfile;
+    private ServerProfile? editedProfile;
     private sealed record DisplayOption(string Device, string Label)
     {
         public override string ToString() => Label;
@@ -22,7 +23,7 @@ public partial class SettingsWindow : Window
     }
     private sealed record CloseOption(string Id, string Label);
 
-    public SettingsWindow(MonitorSettings settings, bool canConfirmOffline, bool isOffline)
+    public SettingsWindow(MonitorSettings settings, bool canConfirmOffline, bool isOffline, Func<DeckSnapshot[]>? snapshots = null)
     {
         original = settings;
         profiles = settings.Copy().SavedServers;
@@ -42,6 +43,10 @@ public partial class SettingsWindow : Window
         LogoutMinutesBox.Text = settings.LogoutWarningMinutes.ToString(); KickMinutesBox.Text = settings.KickWarningMinutes.ToString();
         OffsetBox.Text = settings.ServerOffsetHours.ToString(CultureInfo.CurrentCulture);
         ServerClockBox.IsChecked = settings.ShowServerTime; Clock24Box.IsChecked = settings.Use24HourClock;
+        GameSessionBox.IsChecked = settings.ShowGameSession;
+        ExportBox.IsChecked = settings.ExportEnabled; ExportAddressBox.Text = settings.ExportAddress; ExportPortBox.Text = settings.ExportPort.ToString();
+        ServicesBox.IsChecked = settings.MonitorOnlineServices;
+        BackgroundBox.IsChecked = settings.SavedServers.FirstOrDefault(p => p.Name == settings.ServerName && p.IpAddress == settings.IpAddress && p.QueryPort == settings.QueryPort)?.MonitorInBackground == true;
         TopBox.IsChecked = settings.AlwaysOnTop; CompactBox.IsChecked = settings.CompactMode;
         VisualBox.IsChecked = settings.VisualAlerts; SoundBox.IsChecked = settings.SoundAlerts;
         NotifyBox.IsChecked = settings.WindowsNotifications; StartupBox.IsChecked = settings.StartWithWindows;
@@ -74,7 +79,21 @@ public partial class SettingsWindow : Window
         ClockPresetBox.ItemsSource = WorldClock.Presets;
         ClockPresetBox.SelectedIndex = 1;
         RefreshClocks();
+        editedProfile = profiles.FirstOrDefault(p => p.Name == settings.ServerName && p.IpAddress == settings.IpAddress && p.QueryPort == settings.QueryPort);
         RefreshProfiles();
+        if (snapshots is not null)
+        {
+            var statusTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+            void UpdateServices()
+            {
+                var values = snapshots().Where(s => s.Service is not null).Select(s => s.ServerName + ": " + s.Service!.State +
+                    " · " + (s.Service.CheckedAt is { } at ? at.ToLocalTime().ToString("HH:mm:ss") : "N/A") + "\n" + s.Service.Description).ToArray();
+                ServicesStatusText.Text = values.Length == 0 ? L.Text("ServiceSaveFirst") : string.Join("\n\n", values);
+            }
+            statusTimer.Tick += (_, _) => UpdateServices();
+            Loaded += (_, _) => { UpdateServices(); statusTimer.Start(); };
+            Closed += (_, _) => statusTimer.Stop();
+        }
     }
 
     private static int Number(TextBox box, string name) => int.TryParse(box.Text.Trim(), out var value) ? value : throw new ArgumentException(L.Text("IntegerError", L.Text(name)));
@@ -94,6 +113,9 @@ public partial class SettingsWindow : Window
             if (!double.TryParse(OffsetBox.Text.Trim().Replace(',', '.'), NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var offset))
                 throw new ArgumentException(L.Text("OffsetError"));
             s.ServerOffsetHours = offset; s.ShowServerTime = ServerClockBox.IsChecked == true; s.Use24HourClock = Clock24Box.IsChecked == true;
+            s.ShowGameSession = GameSessionBox.IsChecked == true;
+            s.ExportEnabled = ExportBox.IsChecked == true; s.ExportAddress = ExportAddressBox.Text.Trim(); s.ExportPort = Number(ExportPortBox, "ExportPort");
+            s.MonitorOnlineServices = ServicesBox.IsChecked == true;
             s.AlwaysOnTop = TopBox.IsChecked == true; s.CompactMode = CompactBox.IsChecked == true;
             s.VisualAlerts = VisualBox.IsChecked == true; s.SoundAlerts = SoundBox.IsChecked == true;
             s.WindowsNotifications = NotifyBox.IsChecked == true; s.StartWithWindows = StartupBox.IsChecked == true;
@@ -125,15 +147,15 @@ public partial class SettingsWindow : Window
     private void RefreshProfiles()
     {
         loadingProfile = true;
-        ProfilesBox.ItemsSource = profiles.ToArray();
-        ProfilesBox.SelectedItem = profiles.FirstOrDefault(p => p.Name == NameBox.Text.Trim() && p.IpAddress == IpBox.Text.Trim());
+        ProfilesBox.ItemsSource = ServerIdentity.Sort(profiles).ToArray();
+        ProfilesBox.SelectedItem = editedProfile;
         loadingProfile = false;
     }
     private void UpsertProfile(ServerProfile profile)
     {
-        int index = profiles.FindIndex(p => p.Name.Equals(profile.Name, StringComparison.OrdinalIgnoreCase));
-        if (index >= 0) profiles[index] = profile;
-        else { if (profiles.Count >= 50) throw new ArgumentException(L.Text("ServerLimit")); profiles.Add(profile); }
+        profile.MonitorInBackground = BackgroundBox.IsChecked == true;
+        ServerProfileEditor.Save(profiles, editedProfile, profile);
+        editedProfile = profile;
     }
     private void ProfileSelected(object sender, SelectionChangedEventArgs e)
     {
@@ -142,6 +164,8 @@ public partial class SettingsWindow : Window
     private void LoadProfileClick(object sender, RoutedEventArgs e)
     {
         if (ProfilesBox.SelectedItem is not ServerProfile p) return;
+        editedProfile = p;
+        BackgroundBox.IsChecked = p.MonitorInBackground;
         NameBox.Text = p.Name; IpBox.Text = p.IpAddress; GamePortBox.Text = p.GamePort.ToString(); QueryPortBox.Text = p.QueryPort.ToString();
         ScheduleBox.Text = string.Join(", ", p.RestartTimes); EveryHoursBox.Text = p.RestartEveryHours.ToString(); AnchorBox.Text = p.RestartAnchor;
         OffsetBox.Text = p.ServerOffsetHours.ToString(CultureInfo.CurrentCulture);
@@ -152,6 +176,8 @@ public partial class SettingsWindow : Window
     private void NewProfileClick(object sender, RoutedEventArgs e)
     {
         loadingProfile = true; ProfilesBox.SelectedIndex = -1; loadingProfile = false;
+        editedProfile = null;
+        BackgroundBox.IsChecked = false;
         NameBox.Text = ""; IpBox.Text = ""; GamePortBox.Text = "2302"; QueryPortBox.Text = "2303";
         ConfirmedBox.IsChecked = false; OfflineBox.IsChecked = false; NameBox.Focus();
     }
@@ -164,6 +190,16 @@ public partial class SettingsWindow : Window
             ErrorText.Visibility = Visibility.Visible;
         }
         catch (ArgumentException ex) { ErrorText.Text = L.Error(ex); ErrorText.Visibility = Visibility.Visible; }
+    }
+    private void DeleteProfileClick(object sender, RoutedEventArgs e)
+    {
+        if (ProfilesBox.SelectedItem is not ServerProfile selected) return;
+        if (profiles.Count <= 1) { ErrorText.Text = L.Text("LastServer"); ErrorText.Visibility = Visibility.Visible; return; }
+        if (MessageBox.Show(this, L.Text("DeleteServerConfirm", selected.Name), L.Text("DeleteServer"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+        editedProfile = ServerProfileEditor.Remove(profiles, selected);
+        RefreshProfiles();
+        LoadProfileClick(sender, e);
+        ErrorText.Text = L.Text("ServerDeleted"); ErrorText.Visibility = Visibility.Visible;
     }
     private void GenerateClick(object sender, RoutedEventArgs e)
     {

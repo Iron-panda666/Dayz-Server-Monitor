@@ -12,3 +12,4 @@ cleanup-old-releases.ps1
 streamdeck/**/*.sdPlugin/logs/
 
 release/
+ReleasePackages/v*/

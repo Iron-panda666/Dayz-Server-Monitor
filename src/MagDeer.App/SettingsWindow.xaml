@@ -8,9 +8,10 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="12,4,18,8">
           <TextBlock Text="{DynamicResource L.SavedServers}"/>
           <ComboBox x:Name="ProfilesBox" SelectionChanged="ProfileSelected"/>
-          <StackPanel Orientation="Horizontal" Margin="0,0,0,16"><Button Content="{DynamicResource L.LoadSelected}" Click="LoadProfileClick" Margin="0,0,8,0"/><Button Content="{DynamicResource L.NewServer}" Click="NewProfileClick" Margin="0,0,8,0"/><Button Content="{DynamicResource L.StoreServer}" Click="StoreProfileClick"/></StackPanel>
+          <WrapPanel Margin="0,0,0,16"><Button Content="{DynamicResource L.EditServer}" Click="LoadProfileClick" Margin="0,0,8,0"/><Button Content="{DynamicResource L.NewServer}" Click="NewProfileClick" Margin="0,0,8,0"/><Button Content="{DynamicResource L.StoreServer}" Click="StoreProfileClick" Margin="0,0,8,0"/><Button Content="{DynamicResource L.DeleteServer}" Click="DeleteProfileClick"/></WrapPanel>
           <TextBlock Text="{DynamicResource L.ServerIntro}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/>
           <TextBlock Text="{DynamicResource L.ServerName}"/><TextBox x:Name="NameBox"/>
+          <CheckBox x:Name="BackgroundBox" Content="{DynamicResource L.MonitorBackground}" ToolTip="{DynamicResource L.MonitorBackgroundHelp}"/>
           <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,12,0"><TextBlock Text="{DynamicResource L.IpAddress}"/><TextBox x:Name="IpBox"/></StackPanel><StackPanel Grid.Column="1" Margin="0,0,12,0"><TextBlock Text="{DynamicResource L.GamePort}"/><TextBox x:Name="GamePortBox"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource L.QueryPort}"/><TextBox x:Name="QueryPortBox"/></StackPanel></Grid>
           <TextBlock Text="{DynamicResource L.GenerateHeading}" FontSize="17" Margin="0,4,0,10"/>
           <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,12,0"><TextBlock Text="{DynamicResource L.EveryHours}"/><TextBox x:Name="EveryHoursBox"/></StackPanel><StackPanel Grid.Column="1" Margin="0,0,12,0"><TextBlock Text="{DynamicResource L.Anchor}"/><TextBox x:Name="AnchorBox"/></StackPanel><Button Grid.Column="2" Content="{DynamicResource L.Generate}" Click="GenerateClick" VerticalAlignment="Center"/></Grid>
@@ -46,6 +47,7 @@
           <TextBlock Text="{DynamicResource L.Monitor}"/><ComboBox x:Name="MonitorBox" DisplayMemberPath="Label"/>
           <TextBlock Text="{DynamicResource L.MonitorNote}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,18"/>
           <CheckBox x:Name="TopBox" Content="{DynamicResource L.AlwaysTop}"/><CheckBox x:Name="CompactBox" Content="{DynamicResource L.CompactOption}"/>
+          <CheckBox x:Name="GameSessionBox" Content="{DynamicResource L.ShowGameSession}" ToolTip="{DynamicResource L.SessionHelp}"/>
           <CheckBox x:Name="Clock24Box" Content="{DynamicResource L.Clock24}"/>
           <CheckBox x:Name="ServerClockBox" Content="{DynamicResource L.OffsetClockOption}"/>
           <TextBlock Text="{DynamicResource L.Offset}" Margin="0,14,0,0"/><TextBox x:Name="OffsetBox"/>
@@ -63,6 +65,18 @@
           <TextBlock Text="{DynamicResource L.TimeZone}"/><ComboBox x:Name="TimeZoneBox" DisplayMemberPath="Label"/>
           <CheckBox x:Name="ClockEnabledBox" Content="{DynamicResource L.ClockEnabled}" IsChecked="True"/>
           <WrapPanel Margin="0,12,0,0"><Button Content="{DynamicResource L.AddClock}" Click="AddClockClick" Margin="0,0,8,5"/><Button Content="{DynamicResource L.UpdateClock}" Click="UpdateClockClick" Margin="0,0,8,5"/></WrapPanel>
+        </StackPanel></ScrollViewer>
+      </TabItem>
+      <TabItem Header="{DynamicResource L.ExportTab}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="12,4,18,8">
+          <CheckBox x:Name="ServicesBox" Content="{DynamicResource L.OnlineServices}"/>
+          <TextBlock Text="{DynamicResource L.OnlineServicesHelp}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,4,0,18"/>
+          <TextBlock x:Name="ServicesStatusText" Foreground="{DynamicResource AccentBrush}" FontSize="12" Margin="0,0,0,18"/>
+          <CheckBox x:Name="ExportBox" Content="{DynamicResource L.ExportEnabled}"/>
+          <TextBlock Text="{DynamicResource L.ExportHelp}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,4,0,18"/>
+          <TextBlock Text="{DynamicResource L.ExportAddress}"/><TextBox x:Name="ExportAddressBox"/>
+          <TextBlock Text="{DynamicResource L.ExportPort}"/><TextBox x:Name="ExportPortBox"/>
+          <TextBlock Text="{DynamicResource L.ExportPaths}" Foreground="{DynamicResource AccentBrush}" FontSize="12" Margin="0,10,0,12"/>
         </StackPanel></ScrollViewer>
       </TabItem>
       <TabItem Header="{DynamicResource L.AlertsTab}">

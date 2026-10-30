@@ -28,6 +28,8 @@ public sealed record DeckSnapshot
     public int? Queue { get; init; }
     public double? RttMs { get; init; }
     public DayZGameClock? GameClock { get; init; }
+    public GameSessionSnapshot? GameSession { get; init; }
+    public ServiceAvailability? Service { get; init; }
     public bool Polling { get; init; }
     public int RefreshRemainingSeconds { get; init; }
     public int QueryIntervalSeconds { get; init; }
@@ -40,9 +42,11 @@ public sealed class StreamDeckBridge : IAsyncDisposable
     public static readonly JsonSerializerOptions WireJson = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, MaxDepth = 16 };
     private readonly Func<DeckSnapshot> getState;
     private readonly Func<CancellationToken, Task<DeckRefreshResult>> refresh;
+    private readonly Func<DeckSnapshot[]>? getMonitors;
+    private readonly Func<string, CancellationToken, Task<DeckRefreshResult>>? refreshMonitor;
     private readonly CancellationTokenSource lifetime = new();
     private readonly ConcurrentDictionary<int, Task> clients = new();
-    private readonly SemaphoreSlim slots = new(4, 4);
+    private readonly SemaphoreSlim slots = new(24, 24);
     private readonly string dataRoot, discoveryPath, session = Guid.NewGuid().ToString("N");
     private Task listener = Task.CompletedTask;
     private int nextClient;
@@ -50,10 +54,12 @@ public sealed class StreamDeckBridge : IAsyncDisposable
     public string PipeName { get; }
     public static string DefaultDiscoveryDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DayzServerMonitor", "bridges");
 
-    public StreamDeckBridge(string directory, Func<DeckSnapshot> getState, Func<CancellationToken, Task<DeckRefreshResult>> refresh, string? discoveryDirectory = null)
+    public StreamDeckBridge(string directory, Func<DeckSnapshot> getState, Func<CancellationToken, Task<DeckRefreshResult>> refresh, string? discoveryDirectory = null,
+        Func<DeckSnapshot[]>? getMonitors = null, Func<string, CancellationToken, Task<DeckRefreshResult>>? refreshMonitor = null)
     {
         dataRoot = Path.GetFullPath(directory);
         this.getState = getState; this.refresh = refresh;
+        this.getMonitors = getMonitors; this.refreshMonitor = refreshMonitor;
         var identity = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(dataRoot.ToUpperInvariant())))[..20];
         PipeName = "DayzServerMonitor-" + identity;
         discoveryPath = Path.Combine(discoveryDirectory ?? DefaultDiscoveryDirectory, identity + ".json");
@@ -74,7 +80,7 @@ public sealed class StreamDeckBridge : IAsyncDisposable
             try
             {
                 await slots.WaitAsync(ct).ConfigureAwait(false); reserved = true;
-                pipe = new(PipeName, PipeDirection.InOut, 4, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+                pipe = new(PipeName, PipeDirection.InOut, 24, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
                 await pipe.WaitForConnectionAsync(ct).ConfigureAwait(false);
                 int id = Interlocked.Increment(ref nextClient);
                 var task = ServeWithSlotAsync(pipe, ct);
@@ -117,10 +123,22 @@ public sealed class StreamDeckBridge : IAsyncDisposable
                     }
                     using var request = JsonDocument.Parse(line.ToString(), new JsonDocumentOptions { MaxDepth = 4 });
                     string? command = request.RootElement.TryGetProperty("command", out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+                    string endpoint = request.RootElement.TryGetProperty("endpoint", out var target) && target.ValueKind == JsonValueKind.String ? target.GetString() ?? "" : "";
+                    var active = getState();
+                    var monitors = getMonitors?.Invoke() ?? [active];
+                    var state = endpoint.Length == 0 ? active : monitors.FirstOrDefault(s => s.Endpoint == endpoint);
+                    if (state is null)
+                    {
+                        await writer.WriteLineAsync("{\"ok\":false,\"error\":\"server-not-monitored\"}".AsMemory(), deadline.Token).ConfigureAwait(false);
+                        await writer.FlushAsync(deadline.Token).ConfigureAwait(false); continue;
+                    }
+                    DeckSnapshot Current() => endpoint.Length == 0 ? getState() : getMonitors?.Invoke().FirstOrDefault(s => s.Endpoint == endpoint) ?? state;
                     string response = command switch
                     {
-                        "snapshot" => JsonSerializer.Serialize(new { ok = true, state = getState() }, WireJson),
-                        "refresh" => JsonSerializer.Serialize(new { ok = true, refresh = await refresh(deadline.Token).ConfigureAwait(false), state = getState() }, WireJson),
+                        "snapshot" => JsonSerializer.Serialize(new { ok = true, state, monitors = monitors.Select(s => new { s.Endpoint, s.ServerName }) }, WireJson),
+                        "refresh" => JsonSerializer.Serialize(new { ok = true, refresh = endpoint.Length == 0 || refreshMonitor is null && endpoint == active.Endpoint
+                            ? await refresh(deadline.Token).ConfigureAwait(false)
+                            : refreshMonitor is null ? new(false, 0, "server-not-monitored") : await refreshMonitor(endpoint, deadline.Token).ConfigureAwait(false), state = Current() }, WireJson),
                         _ => "{\"ok\":false,\"error\":\"unsupported-command\"}"
                     };
                     await writer.WriteLineAsync(response.AsMemory(), deadline.Token).ConfigureAwait(false);

@@ -6,6 +6,7 @@ public sealed class ServerProfile
     public string IpAddress { get; set; } = "217.182.198.57";
     public int GamePort { get; set; } = 2302;
     public int QueryPort { get; set; } = 2303;
+    public bool MonitorInBackground { get; set; }
     public string[] RestartTimes { get; set; } = ["03:00", "07:00", "11:00", "15:00", "19:00", "23:00"];
     public bool ScheduleConfirmed { get; set; }
     public int RestartEveryHours { get; set; } = 4;
@@ -13,7 +14,7 @@ public sealed class ServerProfile
     public double ServerOffsetHours { get; set; } = -1;
     public int LogoutWarningMinutes { get; set; } = 10;
     public int KickWarningMinutes { get; set; } = 5;
-    public override string ToString() => $"{Name} · {IpAddress}:{GamePort}";
+    public override string ToString() => $"{Name} · {IpAddress}:{GamePort}" + (ServerIdentity.UsesMagName(Name) && ServerIdentity.MagSource(IpAddress, GamePort) is null ? " · " + L.Text("AddressUnverifiedShort") : "");
     public void ApplyTo(MonitorSettings settings)
     {
         settings.ServerName = Name; settings.IpAddress = IpAddress; settings.GamePort = GamePort; settings.QueryPort = QueryPort;

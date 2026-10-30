@@ -46,6 +46,15 @@ internal static class ResponsiveChecks
             assert(ReferenceEquals(chart, view.FindName("Chart")) && ReferenceEquals(players, view.FindName("PlayerCounts")), "Data controls recreated on resize");
             assert(((PlayerCountDisplay)players).PlayerText == "121 / 121", "Player state lost during reflow");
         });
+        test("Session line stays small and translates without altering player data", () =>
+        {
+            var view = Demo("Dark"); var line = (TextBlock)view.FindName("SessionText");
+            assert(line.FontSize <= 12 && line.Text.Contains("01:23:45"), "Session line missing or oversized");
+            var players = ((PlayerCountDisplay)view.FindName("PlayerCounts")).PlayerText;
+            foreach (var language in L.Languages) { Localization.Apply(language.Id); line.Text = L.Text("SessionRunning", "01:23:45"); assert(!line.Text.Contains("{0}") && line.Text.Contains("01:23:45"), "Session translation failed"); }
+            assert(((PlayerCountDisplay)view.FindName("PlayerCounts")).PlayerText == players, "Session changed player count");
+            Localization.Apply("en");
+        });
         test("Display, close target and theme choices survive JSON settings roundtrip and reject invalid values", () =>
         {
             foreach (var profile in DisplayProfiles.All)
@@ -72,6 +81,7 @@ internal static class ResponsiveChecks
         Text("CountdownText", "02:30:00"); Text("NextRestartText", "19:00"); Text("CompactNextRestart", "NEXT RESTART · 19:00"); Text("NextDateText", "30 Oct · +01:00");
         Text("PlanBadgeText", "PLAN UNCONFIRMED"); ((TextBlock)view.FindName("PlanBadgeText")).SetResourceReference(TextBlock.ForegroundProperty, "WarningBrush");
         ((Border)view.FindName("PlanBadge")).SetResourceReference(Border.BackgroundProperty, "WarningSurfaceBrush");
+        Text("SessionText", L.Text("SessionRunning", "01:23:45"));
         Text("ServerClockText", "Offset clock 15:30"); Text("OffsetLabel", "offset -1 h · calculated, not measured");
         Text("StatusText", "ONLINE"); ((TextBlock)view.FindName("StatusText")).SetResourceReference(TextBlock.ForegroundProperty, "SuccessBrush");
         Text("StatusHint", "A2S_INFO replies"); Text("RttText", "87 ms"); Text("LogoutText", "Log out by 18:50"); Text("KickText", "Expected kick 18:55");

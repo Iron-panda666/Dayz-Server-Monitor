@@ -6,15 +6,15 @@ import path from 'node:path';
 
 const entries = new Map(), connections = new Map();
 let polling = false;
-const connectionKey = directory => directory ? path.resolve(directory).toUpperCase() : '';
-function acquire(directory) {
-  const key = connectionKey(directory);
+const connectionKey = (directory, endpoint = '') => JSON.stringify([directory ? path.resolve(directory).toUpperCase() : '', endpoint]);
+function acquire(directory, endpoint) {
+  const key = connectionKey(directory, endpoint);
   let shared = connections.get(key);
-  if (!shared) { shared = { client: new BridgeClient(directory), users: 0, refreshing: false, feedback: '', feedbackUntil: 0 }; connections.set(key, shared); }
+  if (!shared) { shared = { client: new BridgeClient(directory, undefined, endpoint), users: 0, refreshing: false, feedback: '', feedbackUntil: 0 }; connections.set(key, shared); }
   shared.users++; return shared;
 }
-function release(directory) {
-  const key = connectionKey(directory), shared = connections.get(key);
+function release(directory, endpoint) {
+  const key = connectionKey(directory, endpoint), shared = connections.get(key);
   if (shared && --shared.users === 0) { shared.client.stop(); connections.delete(key); }
 }
 function paint(entry) {
@@ -44,13 +44,13 @@ async function refresh(entry) {
 }
 function detach(id) {
   const entry = entries.get(id);
-  if (entry) { entry.gesture.cancel(); release(entry.settings.dataDirectory); entries.delete(id); }
+  if (entry) { entry.gesture.cancel(); release(entry.settings.dataDirectory, entry.settings.endpoint); entries.delete(id); }
 }
 function attach(ev, pinned) {
   if (!ev.action.isKey()) return;
   detach(ev.action.id);
   const settings = normalizeSettings(ev.payload.settings);
-  const entry = { action: ev.action, settings, pinned, shared: acquire(settings.dataDirectory), image: null };
+  const entry = { action: ev.action, settings, pinned, shared: acquire(settings.dataDirectory, settings.endpoint), image: null };
   entry.gesture = new KeyGesture(() => {
     if (entry.pinned) return;
     const index = entry.settings.pages.indexOf(entry.settings.view);
@@ -59,6 +59,7 @@ function attach(ev, pinned) {
     paint(entry);
   }, () => { void refresh(entry); });
   entries.set(ev.action.id, entry);
+  if (ev.payload.settings?.settingsVersion !== 2) entry.action.setSettings(settings).catch(error => streamDeck.logger.error(error));
   ev.action.setTitle('').catch(error => streamDeck.logger.error(error));
   paint(entry); void tick();
 }
@@ -78,11 +79,20 @@ class MonitorAction extends SingletonAction {
   onWillDisappear(ev) { detach(ev.action.id); }
   onDidReceiveSettings(ev) {
     const entry = entries.get(ev.action.id), settings = normalizeSettings(ev.payload.settings);
-    if (!entry || entry.settings.dataDirectory !== settings.dataDirectory) { attach(ev, this.pinned); return; }
+    if (!entry || entry.settings.dataDirectory !== settings.dataDirectory || entry.settings.endpoint !== settings.endpoint) { attach(ev, this.pinned); return; }
     entry.gesture.cancel(); entry.settings = settings; paint(entry);
   }
   onKeyDown(ev) { entries.get(ev.action.id)?.gesture.press(); }
   onKeyUp(ev) { entries.get(ev.action.id)?.gesture.release(); }
+  async onSendToPlugin(ev) {
+    if (ev.payload?.command !== 'list-monitors') return;
+    const entry = entries.get(ev.action.id); if (!entry) return;
+    // A short-lived active connection discovers all enabled servers, including when a saved target was removed.
+    const client = new BridgeClient(entry.settings.dataDirectory);
+    try { await client.request(); await streamDeck.ui.sendToPropertyInspector({ monitors: client.monitors }); }
+    catch { await streamDeck.ui.sendToPropertyInspector({ monitors: [], unavailable: true }); }
+    finally { client.stop(); }
+  }
 }
 class CycleAction extends MonitorAction { constructor() { super(false); } }
 class PinnedAction extends MonitorAction { constructor() { super(true); } }

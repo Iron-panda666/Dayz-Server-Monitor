@@ -1,6 +1,6 @@
 # Stream Deck MK.2
 
-The plugin uses the official Elgato SDK and is designed for the MK.2's 72 × 72-pixel keys. It works alongside Dayz Server Monitor 1.7.1 or later on Windows 10/11 x64. Stream Deck software **7.1 or later**, including its Node.js 24 runtime, is required. Users do not need to install Node.js separately.
+The plugin uses the official Elgato SDK and is designed for the MK.2's 72 × 72-pixel keys. Use Dayz Server Monitor **1.9.0 or later** for multiple servers, local session and service status. Following the active server remains compatible with older 1.7.1+ monitors, with unavailable features shown as N/A. Windows 10/11 x64 and Stream Deck software **7.1 or later**, including its Node.js 24 runtime, are required. Users do not need to install Node.js separately.
 
 ![English key designs, enlarged, example data](images/stream-deck-keys.png)
 
@@ -10,7 +10,7 @@ These are enlarged renders of the actual key images with demo values, not a phot
 
 1. Download and unpack the Windows ZIP. Carry over your config.json and data folder if upgrading. Keep the executable in a stable, writable folder.
 2. Start DayzServerMonitor.exe yourself when convenient and select the server to watch. The plugin never starts the monitor or brings its window forward. The monitor can be minimized.
-3. Double-click **Dayz-Server-Monitor-1.8.0.streamDeckPlugin** and accept the installation in Stream Deck. The file is also inside the Windows ZIP.
+3. Double-click **Dayz-Server-Monitor-1.9.0.streamDeckPlugin** and accept the installation in Stream Deck. The file is also inside the portable Windows ZIP and local ReleasePackages folder. Only this optional plugin is installed; the monitor remains portable.
 4. Find **Dayz Server Monitor** in the Stream Deck action list. Drag **Cycle server information** onto a key.
 5. Leave the action's default artwork/title in place. A custom image in Stream Deck can override the plugin's changing display.
 
@@ -22,7 +22,7 @@ No Marketplace account, API key, paid service, extra driver or administrator acc
 
 **Pinned server information** keeps one view on a key. A short press does not send a query. Hold for one second to refresh. Add several pinned keys to keep the game clock, restart countdown and players visible together.
 
-All keys attached to the same monitor share its cached data and manual refresh guard. A hold cannot bypass a running query or the twenty-second limit, including across different keys and the desktop button. Automatic monitoring retains its configured cadence. Selecting another view does not send a game-server query.
+Keys watching the same endpoint share its cached data and manual refresh guard. A hold cannot bypass a running query or the twenty-second limit, including across different keys and the desktop button. Different servers retain their own limits. Automatic monitoring retains its configured cadence. Selecting another view does not send a game-server query.
 
 | View | Display |
 |---|---|
@@ -32,10 +32,14 @@ All keys attached to the same monitor share its cached data and manual refresh g
 | History | One hour of player samples from the current monitor session, with gaps for missing replies |
 | UDP RTT | Query round-trip time and age of the query |
 | Logout | Time until the configured logout reminder, or LOG OUT NOW |
+| Local DayZ session | Actual DayZ game-process runtime, HH:mm; excludes Steam and launchers; N/A when unknown |
+| Service target | SERVICE / OK, ISSUE or WEB OK; source scope below; N/A for unknown/stale checks |
 
 Restart warnings can temporarily override the selected view. This is enabled by default and can be disabled per key. Yellow uses the monitor's logout threshold; red uses its kick threshold. RESTART / NOW? is an expectation from the configured plan, not proof of a game restart.
 
-The short server label is generated automatically, such as MAG #2, or can be replaced with up to twelve characters. Keys follow the server selected in the monitor; they do not each start a separate DayZ poller.
+The short server label is generated automatically, such as MAG #2, or can be replaced with up to twelve characters. In **Server for this key**, leave **Follow desktop selection** for the original behavior, or choose a specific monitored endpoint. Enable its **Monitor this server in the background** option in the app and save settings, then click **Reload monitored servers** in the key's settings. Each endpoint is polled centrally by the monitor, independently of how many keys display it. A service target automatically shows service status regardless of its game-information view. [Multi-monitor and export setup](INTEGRATIONS.md).
+
+The session page describes the local DayZ process, including menus. It is the same session on every server key; it does not establish that the player joined that server. It does not read the Steam overlay, memory, chat or account. Runtime starts at the game's Windows process start and advances monotonically. Old default six-page cycles gain the seventh session page once; custom page subsets remain unchanged. A disabled session shows OFF / DISABLED IN APP.
 
 ## Game time is a measurement plus an estimate
 
@@ -49,13 +53,15 @@ Reference: [Bohemia's server configuration](https://community.bohemia.net/wiki/D
 
 ## Connection and missing data
 
-The plugin reads one local snapshot per second per selected monitor, using a Windows named pipe restricted to the current user. There is no TCP/HTTP server in the monitor. Discovery files are stored under `%LOCALAPPDATA%\DayzServerMonitor\bridges`. No credentials are stored there.
+The plugin reads one local snapshot per second per selected endpoint/data folder, using a Windows named pipe restricted to the current user. It does not use HTTP or contact game/public status sites itself. An optional HTTP exporter is available separately for Grafana/HA; Stream Deck does not require it. Discovery files are stored under `%LOCALAPPDATA%\DayzServerMonitor\bridges`. No credentials are stored there.
 
-Leave **Monitor data folder** blank to use the newest discovered running monitor. If several monitor instances use different data folders, enter the exact data folder to select one. Several keys with the same folder share one connection. A pinned view pins an information page, not the selected game server.
+Leave **Monitor data folder** blank to use the newest discovered running monitor. If several monitor instances use different data folders, enter the exact data folder to select one. Keys with the same folder and endpoint share one connection. **Pinned** refers to the information page; server targeting is a separate setting on both actions.
 
 ACCESS / DENIED / CHECK ADMIN means Windows denied access to the local monitor pipe. Check that both apps run under the same Windows account and normally, without administrator rights; the pipe checks both account and elevation.
 
 MONITOR OFF means the desktop monitor is unavailable or closed; the plugin does not launch it. QUERY / N/A means no usable query result is available. STALE means the last sample exceeded its expected cadence plus a grace period. A missing UDP reply does not prove the game is offline. WAIT 20s and QUERY RUNNING show the shared refresh restriction.
+
+SERVER / N/A / CHECK SELECTION means the saved target is no longer monitored or the app is too old for targeting. It never silently displays a different server. Re-enable the profile or select an available target. Service targets distinguish operator reports from **WEB CHECK ONLY**; a reachable Spotify/WhatsApp/Steam web page does not prove global backend availability.
 
 ## Building and distribution
 

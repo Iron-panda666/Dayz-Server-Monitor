@@ -21,7 +21,18 @@ public partial class MainWindow : Window
     private readonly A2sClient client = new();
     private readonly NtpClient ntpClient = new();
     private readonly MonitorClock clock = new();
-    private readonly QueryRefreshGuard refreshGuard = new();
+    private readonly Dictionary<string, QueryRefreshGuard> refreshGuards = [];
+    private QueryRefreshGuard refreshGuard => GuardFor(settings.EndpointKey);
+    private QueryRefreshGuard GuardFor(string endpoint)
+    { if (!refreshGuards.TryGetValue(endpoint, out var guard)) refreshGuards[endpoint] = guard = new(); return guard; }
+    private readonly BackgroundMonitoring background;
+    private readonly ServiceMonitoring services;
+    private DeckSnapshot[] monitoredSnapshots = [];
+    private MonitoringHttpServer? exporter;
+    private string exporterConfiguration = "";
+    private readonly GameSessionTracker gameSession = new();
+    private Task gameSessionTask = Task.CompletedTask;
+    private long? lastGameSessionProbe;
     private StreamDeckBridge? deckBridge;
     private DeckSnapshot deckSnapshot = new();
     private readonly CancellationTokenSource stop = new();
@@ -54,6 +65,8 @@ public partial class MainWindow : Window
     public MainWindow(MonitorSettings settings)
     {
         this.settings = settings;
+        background = new(() => clock.UtcNow, getGuard: GuardFor);
+        services = new(() => clock.UtcNow, GuardFor);
         ConfigureClock();
         schedule = new(settings.RestartTimes);
         history = new(Path.Combine(App.DataRoot, "data", "history"), settings.HistoryRetentionDays);
@@ -84,7 +97,11 @@ public partial class MainWindow : Window
         try
         {
             deckBridge = new(App.DataRoot, () => Volatile.Read(ref deckSnapshot), async ct =>
-                await Dispatcher.InvokeAsync(RequestManualRefresh, DispatcherPriority.Normal, ct));
+                await Dispatcher.InvokeAsync(RequestManualRefresh, DispatcherPriority.Normal, ct),
+                getMonitors: () => Volatile.Read(ref monitoredSnapshots), refreshMonitor: async (endpoint, ct) =>
+                    await Dispatcher.InvokeAsync(() => closing || configuring ? new DeckRefreshResult(false, 0, "settings")
+                        : endpoint == settings.EndpointKey ? RequestManualRefresh()
+                        : endpoint.StartsWith("service:", StringComparison.Ordinal) ? services.Refresh(endpoint, stop.Token) : background.Refresh(endpoint, stop.Token), DispatcherPriority.Normal, ct));
             deckBridge.Start();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -97,12 +114,19 @@ public partial class MainWindow : Window
     private void Tick()
     {
         if (closing) return;
+        if (!configuring) background.Tick(stop.Token);
+        if (!configuring) services.Tick(stop.Token);
+        if (background.LastError is { Length: > 0 } backgroundError) ReportStorageError("Background history: " + backgroundError);
+        if (!settings.ShowGameSession) gameSession.Observe(new(GameSessionState.Disabled));
+        else if (gameSessionTask.IsCompleted && (lastGameSessionProbe is null || Stopwatch.GetElapsedTime(lastGameSessionProbe.Value) >= TimeSpan.FromSeconds(5)))
+            gameSessionTask = PollGameSessionAsync();
         var now = clock.UtcNow;
         long tickStamp = Stopwatch.GetTimestamp();
         if (lastTickUtc is { } previous && Math.Abs(((now - previous) - Stopwatch.GetElapsedTime(lastTickTimestamp, tickStamp)).TotalSeconds) > 5)
         {
             // Observations made on another clock basis cannot establish a precise gap.
             tracker = new(); lastAttempt = null; Dashboard.Chart.Clear();
+            background.InvalidateClockBasis();
         }
         lastTickUtc = now; lastTickTimestamp = tickStamp;
         UpdateDisplay(now);
@@ -178,6 +202,11 @@ public partial class MainWindow : Window
 
     private void UpdateDisplay(DateTimeOffset now)
     {
+        var session = gameSession.Snapshot();
+        Dashboard.SessionText.Visibility = settings.ShowGameSession ? Visibility.Visible : Visibility.Collapsed;
+        Dashboard.SessionText.Text = session.State == "Running" && session.ElapsedSeconds is { } elapsed
+            ? L.Text("SessionRunning", GameSessionTracker.Format(elapsed))
+            : L.Text(session.State == "NotRunning" ? "SessionStopped" : session.State == "MultipleInstances" ? "SessionMultiple" : "SessionUnavailable");
         var local = RestartSchedule.CzechTime(now);
         Dashboard.ClockText.Text = LocalTime(now);
         Dashboard.ClockText.FontSize = settings.Use24HourClock ? 94 : 76;
@@ -255,13 +284,18 @@ public partial class MainWindow : Window
             LastQueryAt = latest?.At, LastSuccessAt = tracker.LastSuccess, QuerySuccess = latest?.Success == true,
             Players = info?.Players, Capacity = info?.MaxPlayers, Queue = info?.Queue, RttMs = info is null ? null : latest?.RttMs,
             GameClock = info?.GameClock, Polling = polling, RefreshRemainingSeconds = refreshGuard.RemainingSeconds,
+            GameSession = gameSession.Snapshot(),
             QueryIntervalSeconds = interval,
             History = Dashboard.Chart.Snapshot().Select(s => new DeckSample(QueryTimeline.TimeOf(s), s.Success ? s.Info?.Players : null, s.Success ? s.Info?.MaxPlayers : null)).ToArray()
         });
+        Volatile.Write(ref monitoredSnapshots, new[] { Volatile.Read(ref deckSnapshot) }.Concat(background.Snapshots(gameSession.Snapshot())).Concat(services.Snapshots(gameSession.Snapshot())).ToArray());
     }
 
     private void ApplyAppearance()
     {
+        background.Configure(settings, history);
+        services.Configure(settings.MonitorOnlineServices);
+        ConfigureExporter();
         Localization.Apply(settings.Language);
         ThemeManager.Apply(settings.Theme);
         Dashboard.WorldClocksPanel.Configure(settings.WorldClocks);
@@ -272,11 +306,13 @@ public partial class MainWindow : Window
         Dashboard.PlanBadgeText.Text = L.Text(settings.ScheduleConfirmed ? "PlanConfirmed" : "PlanUnconfirmed");
         Dashboard.PlanBadgeText.Foreground = settings.ScheduleConfirmed ? Success : Yellow;
         Dashboard.PlanBadge.Background = (Brush)Application.Current.FindResource(settings.ScheduleConfirmed ? "SuccessSurfaceBrush" : "WarningSurfaceBrush");
-        Dashboard.ServerNameText.Text = settings.ServerName;
+        Dashboard.ServerNameText.Text = settings.ServerName + (ServerIdentity.Note(ServerProfile.From(settings)) is { Length: > 0 } note ? " · " + note : "");
+        Dashboard.ServerNameText.ToolTip = ServerIdentity.MagSource(settings.IpAddress, settings.GamePort)?.Source ?? L.Text("IdentityHelp");
+        Dashboard.ServerSelector.ToolTip = ServerIdentity.Note(ServerProfile.From(settings)) + "\n" + (ServerIdentity.MagSource(settings.IpAddress, settings.GamePort)?.Source ?? L.Text("IdentityHelp"));
         Dashboard.EndpointText.Text = $"{settings.IpAddress}:{settings.GamePort}  /  Query UDP {settings.QueryPort}  /  Europe/Prague: {string.Join(" · ", settings.RestartTimes)}";
         notifications.Configure(settings);
         changingProfile = true;
-        Dashboard.ServerSelector.ItemsSource = settings.SavedServers.ToArray();
+        Dashboard.ServerSelector.ItemsSource = ServerIdentity.Sort(settings.SavedServers).ToArray();
         Dashboard.ServerSelector.SelectedItem = settings.SavedServers.FirstOrDefault(p => p.IpAddress == settings.IpAddress && p.QueryPort == settings.QueryPort && p.Name == settings.ServerName);
         changingProfile = false;
         Dashboard.Chart.Use24HourClock = settings.Use24HourClock;
@@ -284,11 +320,28 @@ public partial class MainWindow : Window
         UpdateRefreshButton();
     }
 
+    private void ConfigureExporter()
+    {
+        string target = settings.ExportEnabled ? settings.ExportAddress + ":" + settings.ExportPort : "";
+        if (target == exporterConfiguration) return;
+        var previous = exporter; exporter = null; exporterConfiguration = "";
+        if (previous is not null) _ = previous.DisposeAsync().AsTask();
+        if (!settings.ExportEnabled) return;
+        try
+        {
+            var next = new MonitoringHttpServer(settings.ExportAddress, settings.ExportPort, () => Volatile.Read(ref monitoredSnapshots));
+            next.Start(); exporter = next; exporterConfiguration = target;
+        }
+        catch (Exception ex) when (ex is System.Net.Sockets.SocketException or IOException)
+        { ReportStorageError("Export: " + ex.Message); }
+    }
+
     private async void ServerSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (changingProfile || Dashboard.ServerSelector.SelectedItem is not ServerProfile profile || closing) return;
         configuring = true; Dashboard.ServerSelector.IsEnabled = false; RefreshButton.IsEnabled = false;
         await pollTask;
+        await background.CurrentTask;
         if (closing) return;
         var next = settings.Copy(); profile.ApplyTo(next);
         try { next.Validate(); JsonStorage.Write(App.ConfigPath, next); }
@@ -326,12 +379,13 @@ public partial class MainWindow : Window
 
     private async void SettingsClick(object sender, RoutedEventArgs e)
     {
-        var dialog = new SettingsWindow(settings, tracker.Failures >= settings.FailureThreshold, tracker.ManualOffline) { Owner = this };
+        var dialog = new SettingsWindow(settings, tracker.Failures >= settings.FailureThreshold, tracker.ManualOffline, () => Volatile.Read(ref monitoredSnapshots)) { Owner = this };
         if (dialog.ShowDialog() != true) return;
         configuring = true;
         RefreshButton.IsEnabled = false;
         // Finish the current endpoint's observation before replacing its configuration.
         await pollTask;
+        await background.CurrentTask;
         await ntpTask;
         if (closing) { configuring = false; return; }
         var next = dialog.Result!;
@@ -444,6 +498,17 @@ public partial class MainWindow : Window
     {
         if (e.Mode != Microsoft.Win32.PowerModes.Resume || closing) return;
         _ = Dispatcher.InvokeAsync(() => { if (!closing) { clock.Invalidate(); lastNtpAttempt = null; lastAttempt = null; Tick(); } });
+    }
+    private async Task PollGameSessionAsync()
+    {
+        lastGameSessionProbe = Stopwatch.GetTimestamp();
+        GameSessionObservation observation;
+        try { observation = await Task.Run(WindowsGameSessionProbe.Read); }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+        { observation = new(GameSessionState.Unavailable); }
+        if (closing) return;
+        gameSession.Observe(settings.ShowGameSession ? observation : new(GameSessionState.Disabled));
+        UpdateDisplay(clock.UtcNow);
     }
     private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e) => UpdateCaption();
     private void UpdateCaption()
@@ -569,9 +634,10 @@ public partial class MainWindow : Window
             Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPowerModeChanged;
             notifications.Dispose();
             var bridgeStop = deckBridge?.DisposeAsync().AsTask() ?? Task.CompletedTask;
+            var exportStop = exporter?.DisposeAsync().AsTask() ?? Task.CompletedTask;
             // Flush the snapshot away from the UI thread. Network cleanup and saving run together.
             var save = Task.Run(() => JsonStorage.Write(App.ConfigPath, snapshot));
-            bool finished = await ShutdownDrain.WaitAsync([pollTask, ntpTask, bridgeStop, save], TimeSpan.FromMilliseconds(1200));
+            bool finished = await ShutdownDrain.WaitAsync([pollTask, ntpTask, gameSessionTask, background.CurrentTask, services.CurrentTask, bridgeStop, exportStop, save], TimeSpan.FromMilliseconds(1200));
             if (!finished || save.IsFaulted)
                 Debug.WriteLine("Dayz Server Monitor shutdown: background cleanup/save exceeded budget or failed.");
         }
@@ -579,7 +645,7 @@ public partial class MainWindow : Window
         finally
         {
             // Dispose only after any canceled consumers have finished using the token.
-            _ = Task.WhenAll(pollTask, ntpTask).ContinueWith(t => { _ = t.Exception; stop.Dispose(); }, TaskScheduler.Default);
+            _ = Task.WhenAll(pollTask, ntpTask, gameSessionTask, background.CurrentTask, services.CurrentTask).ContinueWith(t => { _ = t.Exception; services.Dispose(); stop.Dispose(); }, TaskScheduler.Default);
             allowClose = true;
             Close();
         }

@@ -4,6 +4,8 @@ Dayz Server Monitor is an independent community utility. It is not affiliated wi
 
 DayZ is a trademark or registered trademark of Bohemia Interactive a.s. Other product and community names remain the property of their respective owners. Their names identify the game, public servers or compatible devices discussed by this project. The MIT license for our source code does not grant rights to third-party names, marks, logos or game content.
 
+References to Minecraft, Rust, Counter-Strike, PlanetSide 2, Project Zomboid, WARDOGS, Spotify, Discord, WhatsApp, Steam, Grafana and Home Assistant describe protocols, public service checks or integration targets. No affiliation or endorsement by their owners is claimed. Their artwork, music, messages and account data are not included. Linking a public status endpoint does not make it part of this project's MIT license or guarantee its continuing availability.
+
 The T/R icon is original project artwork. We do not bundle the DayZ logo, MAG or Sunnyvale logos, extracted game assets, music, maps, fonts or official Elgato artwork. Key images are generated from our own text, shapes and graphs.
 
 Server names are public identifiers and may include words such as OFFICIAL in the name received from a server or listed in a preset. Those words are the server's self-description, not a claim that this monitor or plugin is an official product.

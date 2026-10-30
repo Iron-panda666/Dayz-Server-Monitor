@@ -10,7 +10,7 @@
         <StackPanel x:Name="ClockDetails" Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"><Border x:Name="PlanBadge" CornerRadius="4" Padding="8,4"><TextBlock x:Name="PlanBadgeText" FontSize="10" FontWeight="SemiBold"/></Border>
         <StackPanel x:Name="ClockExtras" Margin="0,12,0,0"><TextBlock x:Name="ServerClockText" Text="—" Foreground="{DynamicResource MutedBrush}" FontSize="14"/><TextBlock x:Name="OffsetLabel" Foreground="{DynamicResource SubtleBrush}" FontSize="11"/>
           <Grid Margin="0,9,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock x:Name="ClockSourceText" Text="{DynamicResource L.ClockWindows}" Foreground="{DynamicResource MutedBrush}" FontSize="11"/><TextBlock x:Name="NtpDetailText" Foreground="{DynamicResource SubtleBrush}" FontSize="10" Visibility="Collapsed"/></StackPanel><Button Grid.Column="1" x:Name="SyncNowButton" Content="{DynamicResource L.SyncNow}" ToolTip="{DynamicResource L.SyncNowTip}" Click="SyncNowClick" FontSize="11" Padding="8,3" Visibility="Collapsed"/></Grid>
-        </StackPanel></StackPanel>
+        <TextBlock x:Name="SessionText" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,7,0,0" ToolTip="{DynamicResource L.SessionHelp}"/></StackPanel></StackPanel>
       </Grid></Viewbox>
     </Border>
     <Border local:DashboardPanel.Role="Restart" Style="{StaticResource Tile}">

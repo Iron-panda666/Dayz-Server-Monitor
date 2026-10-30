@@ -15,8 +15,9 @@ export function validSnapshot(value) {
 }
 
 export class BridgeClient {
-  constructor(dataDirectory = '', directory = discoveryDirectory()) {
+  constructor(dataDirectory = '', directory = discoveryDirectory(), endpoint = '') {
     this.dataDirectory = dataDirectory; this.directory = directory;
+    this.endpoint = endpoint; this.monitors = [];
     this.socket = null; this.pending = null; this.buffer = ''; this.state = null;
     this.receivedAt = 0; this.progressAt = 0; this.tail = Promise.resolve(); this.stopped = false;
     this.connectionIssue = null;
@@ -71,9 +72,13 @@ export class BridgeClient {
       this.pending = null; clearTimeout(pending.timeout);
       try {
         const message = JSON.parse(line);
+        if (message.error === 'server-not-monitored' || this.endpoint && message.state?.endpoint !== this.endpoint) {
+          this.connectionIssue = 'server-not-monitored'; throw new Error('Selected server is not monitored by this app');
+        }
         if (!message.ok || !validSnapshot(message.state)) throw new Error('invalid monitor reply');
         if (!this.state || this.state.now !== message.state.now) this.progressAt = performance.now();
         this.state = message.state; this.receivedAt = performance.now(); this.connectionIssue = null; pending.resolve(message);
+        if (Array.isArray(message.monitors)) this.monitors = message.monitors.filter(s => typeof s.endpoint === 'string' && typeof s.serverName === 'string').slice(0, 50);
       } catch (error) { pending.reject(error); this.disconnect(); }
     }
   }
@@ -84,7 +89,7 @@ export class BridgeClient {
       return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => this.disconnect(), 2500);
         this.pending = { resolve, reject, timeout };
-        this.socket.write(JSON.stringify({ command }) + '\n');
+        this.socket.write(JSON.stringify({ command, endpoint: this.endpoint }) + '\n');
       });
     });
     this.tail = task;

@@ -1,13 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Resvg } from '@resvg/resvg-js';
-import { countdown, estimatedGameClock, normalizeSettings, renderKey, keyImageDataUrl } from '../src/render.mjs';
+import { countdown, estimatedGameClock, normalizeSettings, renderKey, keyImageDataUrl, sessionDuration } from '../src/render.mjs';
 import { KeyGesture } from '../src/gesture.mjs';
 import { BridgeClient, validDiscovery, validSnapshot } from '../src/bridge-client.mjs';
 
 const state = { protocolVersion: 1, now: '2026-10-30T12:00:00Z', nextRestartAt: '2026-10-30T14:30:00Z',
   lastQueryAt: '2026-10-30T12:00:00Z', serverName: 'MAG #2', querySuccess: true, players: 39, capacity: 121, rttMs: 87,
   logoutWarningMinutes: 10, kickWarningMinutes: 5, queryIntervalSeconds: 300, scheduleConfirmed: false, history: [] };
+test('service keys distinguish provider report, web reachability and an unknown check without restart overrides', () => {
+  const service = { state: 'Degraded', scope: 'ProviderStatus' };
+  const snapshot = { ...state, serverName: 'Discord', service, nextRestartAt: state.now, restartExpected: true };
+  assert.match(renderKey(snapshot, 'restart'), />ISSUE</); assert.match(renderKey(snapshot, 'players'), /PROVIDER REPORT/);
+  assert.match(renderKey({ ...snapshot, service: { state: 'Reachable', scope: 'WebReachability' } }, 'restart'), /WEB CHECK ONLY/);
+  assert.match(renderKey({ ...snapshot, service: { state: 'Unavailable', scope: 'WebReachability' } }, 'players'), />N\/A</);
+  assert.match(renderKey(null, 'players', {}, '', 'server-not-monitored'), /CHECK SELECTION/);
+});
+test('a targeted key never displays an unrelated server returned by an older monitor', async () => {
+  const client = new BridgeClient('', 'unused', '127.0.0.1:2403');
+  const pending = new Promise((resolve, reject) => { client.pending = { resolve, reject, timeout: setTimeout(() => {}, 1000) }; });
+  client.onData(JSON.stringify({ ok: true, state: { ...state, endpoint: '127.0.0.1:2303' } }) + '\n');
+  await assert.rejects(pending); assert.equal(client.snapshot(), null); assert.equal(client.connectionIssue, 'server-not-monitored');
+});
 test('wire image is an encoded SVG data URL and access denial is distinct from a stopped monitor', () => {
   const svg = renderKey(state, 'players', { label: 'MAG #2 & CZ' });
   const url = keyImageDataUrl(svg);
@@ -51,7 +65,7 @@ test('restart warning overrides are optional and use configured thresholds', () 
 });
 test('SVG is escaped, settings are bounded and every face rasterizes at MK.2 resolution', () => {
   const settings = normalizeSettings({ label: '<script>&"', pages: ['bad'], view: 'bad', sunrise: 20, sunset: 1 });
-  assert.equal(settings.view, 'restart'); assert.equal(settings.pages.length, 6); assert.equal(settings.sunrise, 6);
+  assert.equal(settings.view, 'restart'); assert.equal(settings.pages.length, 7); assert.equal(settings.sunrise, 6);
   const svg = renderKey(state, 'players', settings); assert.ok(!svg.includes('<script>')); assert.match(svg, /&lt;script&gt;/);
   for (const mode of settings.pages) {
     const image = new Resvg(renderKey(state, mode), { fitTo: { mode: 'width', value: 72 } }).render();
@@ -91,4 +105,20 @@ test('full-server queue stays visible during refresh cooldown and missing queues
   assert.match(renderKey({ ...full, lastQueryAt: '2026-10-30T10:00:00Z' }, 'players'), /QUEUE N\/A/);
   const bitmap = new Resvg(svg, { fitTo: { mode: 'width', value: 72 } }).render();
   assert.equal(bitmap.width, 72); assert.equal(bitmap.height, 72);
+});
+
+test('local session works without server query data and never treats unknown time as zero', () => {
+  const local = { ...state, querySuccess: false, lastQueryAt: null, gameSession: { state: 'Running', elapsedSeconds: 5025, source: 'WindowsProcess' } };
+  assert.match(renderKey(local, 'session'), />01:23</); assert.match(renderKey(local, 'session'), /DAYZ \/ LOCAL/);
+  assert.match(renderKey({ ...local, gameSession: { state: 'NotRunning' } }, 'session'), /GAME CLOSED/);
+  assert.match(renderKey({ ...local, gameSession: { state: 'Unavailable' } }, 'session'), />N\/A</);
+  assert.match(renderKey({ ...local, gameSession: null }, 'session'), /APP 1.9/);
+  assert.equal(sessionDuration(-1), 'N/A'); assert.equal(sessionDuration(NaN), 'N/A'); assert.equal(sessionDuration(90007), '25:00');
+});
+test('new session page joins legacy default cycling once while custom page selections stay intact', () => {
+  const legacy = ['game', 'restart', 'players', 'history', 'rtt', 'logout'];
+  const migrated = normalizeSettings({ pages: legacy }); assert.equal(migrated.pages.length, 7); assert.ok(migrated.pages.includes('session'));
+  assert.deepEqual(normalizeSettings(migrated), migrated);
+  assert.deepEqual(normalizeSettings({ pages: ['players', 'restart'] }).pages, ['players', 'restart']);
+  assert.deepEqual(normalizeSettings({ pages: legacy, settingsVersion: 2 }).pages, legacy);
 });

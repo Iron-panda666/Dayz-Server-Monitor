@@ -32,13 +32,15 @@ const demo = { protocolVersion: 1, now: at, serverName: 'MAG MiddleAgedGamers #2
   nextRestartAt: '2026-10-30T02:30:00Z', restartExpected: false, scheduleConfirmed: false, logoutWarningMinutes: 10, kickWarningMinutes: 5,
   lastQueryAt: at, lastSuccessAt: at, querySuccess: true, players: 39, capacity: 121, queue: 0, rttMs: 87,
   gameClock: { hour: 19, minute: 42, dayMultiplier: 4, nightMultiplier: 4 }, refreshRemainingSeconds: 0, queryIntervalSeconds: 300,
+  gameSession: { state: 'Running', elapsedSeconds: 5400 },
   history: Array.from({ length: 13 }, (_, i) => ({ at: new Date(Date.parse(at) - (12 - i) * 300000).toISOString(), players: i === 7 ? null : [22, 25, 27, 23, 29, 33, 31, 0, 35, 38, 34, 40, 39][i], capacity: 121 })) };
-const names = ['game', 'restart', 'players', 'history', 'rtt', 'logout'];
+const names = ['game', 'restart', 'players', 'history', 'rtt', 'logout', 'session', 'service'];
 let children = '';
 for (let i = 0; i < names.length; i++) {
-  const key = renderKey(names[i] === 'players' ? { ...demo, players: 121, queue: 21 } : demo, names[i], { autoWarnings: false });
+  const key = renderKey(names[i] === 'players' ? { ...demo, players: 121, queue: 21 } : names[i] === 'service'
+    ? { ...demo, serverName: 'Discord', service: { state: 'Operational', scope: 'ProviderStatus' } } : demo, names[i], { autoWarnings: false });
   children += `<g transform="translate(${22 + i % 3 * 168},${48 + Math.floor(i / 3) * 170})">${key}<text x="72" y="161" text-anchor="middle" fill="#c7d3e0" font-size="12">${names[i].toUpperCase()}</text></g>`;
 }
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="548" height="400"><rect width="548" height="400" fill="#202833"/><text x="22" y="27" fill="#f5f8fc" font-size="15" font-family="Segoe UI,Arial">Dayz Server Monitor · MK.2 key designs · DEMO</text>${children}</svg>`;
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="548" height="570"><rect width="548" height="570" fill="#202833"/><text x="22" y="27" fill="#f5f8fc" font-size="15" font-family="Segoe UI,Arial">Dayz Server Monitor · MK.2 key designs · DEMO</text>${children}</svg>`;
 await fs.writeFile(path.join(root, 'docs/images/stream-deck-keys.png'), new Resvg(svg, { font: { loadSystemFonts: true } }).render().asPng());
 console.log('Built official-SDK plugin, runtime notices, icons and English demo keys. No desktop windows opened.');

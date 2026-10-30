@@ -90,7 +90,11 @@ public sealed class A2sClient
     public static ServerInfo ParseInfo(ReadOnlySpan<byte> packet)
     {
         var reader = new PacketReader(packet);
-        if (reader.UInt32() != uint.MaxValue || reader.Byte() != 0x49)
+        if (reader.UInt32() != uint.MaxValue)
+            throw new InvalidDataException("Chybí hlavička A2S_INFO.");
+        byte type = reader.Byte();
+        if (type == 0x6D) return ParseGoldSource(ref reader);
+        if (type != 0x49)
             throw new InvalidDataException("Odpověď není Source A2S_INFO (0x49).");
         reader.Byte(); // protocol
         var name = reader.CString();
@@ -123,6 +127,26 @@ public sealed class A2sClient
         // Modern DayZ servers may put a placeholder in the legacy 16-bit AppID.
         var extra = appId == 24492 || gameId == 221100 ? DayZKeywords.Parse(keywords) : default;
         return new(name, map, game, players, max, version) { GameClock = extra.Clock, Queue = extra.Queue };
+    }
+
+    private static ServerInfo ParseGoldSource(ref PacketReader reader)
+    {
+        reader.CString(); // Address in legacy GoldSource replies, not an authenticated identity.
+        string name = reader.CString(), map = reader.CString();
+        reader.CString(); string game = reader.CString();
+        byte players = reader.Byte(), capacity = reader.Byte();
+        reader.Byte(); reader.Byte(); reader.Byte(); // protocol, type, OS
+        byte visibility = reader.Byte(), mod = reader.Byte();
+        if (players > capacity || visibility > 1 || mod > 1) throw new InvalidDataException("Neplatná GoldSource odpověď.");
+        if (mod == 1)
+        {
+            reader.CString(); reader.CString();
+            if (reader.Byte() != 0) throw new InvalidDataException("Neplatné pole GoldSource mod.");
+            reader.UInt32(); reader.UInt32(); reader.Byte(); reader.Byte();
+        }
+        if (reader.Byte() > 1) throw new InvalidDataException("Neplatné VAC pole.");
+        reader.Byte(); // bots
+        return new(name, map, game, players, capacity, "GoldSource");
     }
 
     private sealed class UnsupportedPacketException(string message) : Exception(message);
