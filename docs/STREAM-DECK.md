@@ -10,7 +10,7 @@ These are enlarged renders of the actual key images with demo values, not a phot
 
 1. Download and unpack the Windows ZIP. Carry over your config.json and data folder if upgrading. Keep the executable in a stable, writable folder.
 2. Start DayzServerMonitor.exe yourself when convenient and select the server to watch. The plugin never starts the monitor or brings its window forward. The monitor can be minimized.
-3. Double-click **Dayz-Server-Monitor-1.7.1.streamDeckPlugin** and accept the installation in Stream Deck. The file is also inside the Windows ZIP.
+3. Double-click **Dayz-Server-Monitor-1.7.2.streamDeckPlugin** and accept the installation in Stream Deck. The file is also inside the Windows ZIP.
 4. Find **Dayz Server Monitor** in the Stream Deck action list. Drag **Cycle server information** onto a key.
 5. Leave the action's default artwork/title in place. A custom image in Stream Deck can override the plugin's changing display.
 
@@ -53,13 +53,15 @@ The plugin reads one local snapshot per second per selected monitor, using a Win
 
 Leave **Monitor data folder** blank to use the newest discovered running monitor. If several monitor instances use different data folders, enter the exact data folder to select one. Several keys with the same folder share one connection. A pinned view pins an information page, not the selected game server.
 
+ACCESS / DENIED / CHECK ADMIN means Windows denied access to the local monitor pipe. Check that both apps run under the same Windows account and normally, without administrator rights; the pipe checks both account and elevation.
+
 MONITOR OFF means the desktop monitor is unavailable or closed; the plugin does not launch it. QUERY / N/A means no usable query result is available. STALE means the last sample exceeded its expected cadence plus a grace period. A missing UDP reply does not prove the game is offline. WAIT 20s and QUERY RUNNING show the shared refresh restriction.
 
 ## Building and distribution
 
 With .NET 8 SDK and Node.js 24+ installed, `./build.ps1` builds and tests both projects, validates the plugin with Elgato's official CLI, and creates the .streamDeckPlugin installer. `./build.ps1 -SkipStreamDeck` builds just the Windows monitor.
 
-The Node tests include the actual bundled official-SDK plugin connected to a simulated Stream Deck host and a C# named-pipe fixture. They verify press/hold behavior, data transfer, cooldown across keys, and the MONITOR OFF state without opening the real desktop applications. Physical MK.2 installation, readability under its key lenses, sleep/reconnect and extended use still need hands-on testing.
+The Node tests include the actual bundled official-SDK plugin connected to a simulated Stream Deck host and a C# named-pipe fixture. They reject raw SVG on the image wire and verify encoded key images, press/hold behavior, data transfer, cooldown across keys, and the MONITOR OFF state without opening the real desktop applications. Live output on the physical MK.2 was confirmed by the user on 30 October 2026 after applying the image repair. Installer UI, detailed readability under its key lenses, sleep/reconnect and extended use still need hands-on testing.
 
 The CLI may report that the project URL returns 404 because this GitHub repository is private. That warning does not make the installer public or submit it to Marketplace. No Marketplace submission or Maker Agreement acceptance is performed by this project.
 

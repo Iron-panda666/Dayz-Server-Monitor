@@ -10,7 +10,7 @@ It started with MAG DEER, but you can select another server or save your own. Th
 
 ## Get it running
 
-Download `Dayz-Server-Monitor-1.7.1-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed.
+Download `Dayz-Server-Monitor-1.7.2-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed.
 
 Settings are saved beside the EXE in `config.json`. History is kept in `data`. When updating, close the old copy and keep those two items. For a separate data folder, use:
 

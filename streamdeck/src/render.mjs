@@ -1,4 +1,6 @@
 export const views = ['game', 'restart', 'players', 'history', 'rtt', 'logout'];
+// Stream Deck's wire API needs an image data URL, not the raw SVG markup.
+export const keyImageDataUrl = svg => 'data:image/svg+xml;base64,' + Buffer.from(svg, 'utf8').toString('base64');
 export function normalizeSettings(value = {}) {
   const pages = Array.isArray(value.pages) ? [...new Set(value.pages.filter(p => views.includes(p)))] : [...views];
   const number = (v, fallback) => Number.isFinite(Number(v)) ? Math.max(0, Math.min(23, Math.trunc(Number(v)))) : fallback;
@@ -48,7 +50,7 @@ export function serverLabel(name = '') {
   const number = name.match(/#\d+/)?.[0] ?? '';
   return (/Sunnyvale/i.test(name) ? 'SV ' + number : /MiddleAgedGamers/i.test(name) ? 'MAG ' + number : name).trim().slice(0, 12);
 }
-export function renderKey(state, requestedView, rawSettings = {}, feedback = '') {
+export function renderKey(state, requestedView, rawSettings = {}, feedback = '', connectionIssue = null) {
   const settings = normalizeSettings(rawSettings), now = Date.parse(state?.now);
   const remaining = (Date.parse(state?.nextRestartAt) - now) / 1000;
   const warning = state && (state.restartExpected || remaining <= state.logoutWarningMinutes * 60);
@@ -61,7 +63,11 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '')
   const text = (value, y, size = 8, color = '#b8cbd4') => `<text x="36" y="${y}" fill="${color}" font-size="${size}" text-anchor="middle">${escapeXml(value)}</text>`;
   const metric = (value, color = '#f4f8fb', size = 18) => text(value, 46, size, color);
   body += text(label, 10, 7);
-  if (!state) { body += text('MONITOR', 28, 9) + metric('OFF', '#ffdb7e') + text('START THE APP', 62, 7); }
+  if (!state) {
+    body += connectionIssue === 'access-denied'
+      ? text('ACCESS', 28, 9) + metric('DENIED', '#ffdb7e', 16) + text('CHECK ADMIN', 62, 7)
+      : text('MONITOR', 28, 9) + metric('OFF', '#ffdb7e') + text('START THE APP', 62, 7);
+  }
   else {
     const age = Math.max(0, Math.floor((now - Date.parse(state.lastQueryAt)) / 1000));
     const ageLabel = Number.isFinite(age) ? age < 60 ? `${age}s OLD` : `${Math.floor(age / 60)}m OLD` : 'NO QUERY';

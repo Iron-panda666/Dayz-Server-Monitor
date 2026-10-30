@@ -32,7 +32,7 @@ test('real official-SDK plugin exchanges state with the C# pipe fixture and shar
     const reply = await client.request(); assert.equal(reply.state.players, 39); client.stop();
     if (!server.address()) await once(server, 'listening');
     const info = { application: { font: 'Segoe UI', language: 'en', platform: 'windows', platformVersion: '10', version: '7.1.0' },
-      plugin: { uuid: 'com.iron-panda666.dayz-server-monitor', version: '1.7.1.0' },
+      plugin: { uuid: 'com.iron-panda666.dayz-server-monitor', version: '1.7.2.0' },
       devices: [{ id: 'mock-mk2', name: 'MK.2 console fixture', type: 0, size: { columns: 5, rows: 3 } }], colors: {} };
     const connected = once(server, 'connection');
     plugin = spawn(process.execPath, ['bin/plugin.js', '-port', String(server.address().port), '-pluginUUID', 'fixture-plugin', '-registerEvent', 'registerPlugin', '-info', JSON.stringify(info)],
@@ -40,7 +40,15 @@ test('real official-SDK plugin exchanges state with the C# pipe fixture and shar
     let pluginErrors = ''; plugin.stderr.on('data', data => pluginErrors += data);
     const [socket] = await Promise.race([connected, new Promise((_, reject) => setTimeout(() => reject(new Error('Plugin failed to register: ' + pluginErrors)), 6000))]);
     const images = new Map(), settings = [];
-    socket.on('message', data => { const message = JSON.parse(data); if (message.event === 'setImage') images.set(message.context, text(message.payload.image)); if (message.event === 'setSettings') settings.push(message); });
+    const invalidImages = [];
+    socket.on('message', data => {
+      const message = JSON.parse(data);
+      if (message.event === 'setImage') {
+        if (!message.payload.image.startsWith('data:image/svg+xml;base64,')) { invalidImages.push(message.payload.image); return; }
+        images.set(message.context, text(message.payload.image));
+      }
+      if (message.event === 'setSettings') settings.push(message);
+    });
     const event = (name, context, payload = {}) => socket.send(JSON.stringify({ event: name,
       action: 'com.iron-panda666.dayz-server-monitor.' + (context === 'pinned' ? 'pinned' : 'cycle'), context, device: 'mock-mk2', payload }));
     const appear = context => event('willAppear', context, { controller: 'Keypad', coordinates: { column: 0, row: 0 }, isInMultiAction: false, state: 0,
@@ -58,6 +66,7 @@ test('real official-SDK plugin exchanges state with the C# pipe fixture and shar
     const ended = once(fixture, 'exit'); fixture.stdin.end('stop\n'); await ended;
     await until(() => images.get('cycle')?.includes('>OFF<') && images.get('pinned')?.includes('>OFF<'));
     assert.equal((await fs.readdir(directory)).filter(n => n.endsWith('.json')).length, 0);
+    assert.equal(invalidImages.length, 0, 'Raw SVG was sent instead of an image data URL');
   } finally {
     // Stop only the console children created by this test, never the user's applications.
     if (plugin && plugin.exitCode === null) { const ended = once(plugin, 'exit'); plugin.kill(); await ended; }

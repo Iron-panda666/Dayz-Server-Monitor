@@ -19,12 +19,15 @@ export class BridgeClient {
     this.dataDirectory = dataDirectory; this.directory = directory;
     this.socket = null; this.pending = null; this.buffer = ''; this.state = null;
     this.receivedAt = 0; this.progressAt = 0; this.tail = Promise.resolve(); this.stopped = false;
+    this.connectionIssue = null;
   }
   snapshot() { return this.state && performance.now() - this.receivedAt < 3500 && performance.now() - this.progressAt < 3500 ? this.state : null; }
   async connect() {
     if (this.stopped) throw new Error('stopped');
     if (this.socket && !this.socket.destroyed) return;
-    const names = await fs.readdir(this.directory);
+    let names;
+    try { names = await fs.readdir(this.directory); }
+    catch (error) { this.connectionIssue = ['EPERM', 'EACCES'].includes(error.code) ? 'access-denied' : 'monitor-off'; throw error; }
     const candidates = [];
     for (const name of names.filter(n => /^[A-F0-9]{20}\.json$/.test(n))) {
       try {
@@ -35,6 +38,7 @@ export class BridgeClient {
           candidates.push({ ...value, modified: stat.mtimeMs });
       } catch { /* In-progress or stale discovery file. */ }
     }
+    let denied = false;
     for (const candidate of candidates.sort((a, b) => b.modified - a.modified).slice(0, 8)) {
       if (this.stopped) throw new Error('stopped');
       try {
@@ -51,8 +55,9 @@ export class BridgeClient {
         socket.on('error', () => { if (this.socket === socket) this.disconnect(); });
         socket.on('close', () => { if (this.socket === socket) this.disconnect(); });
         return;
-      } catch { /* Try the next running monitor; never launch one. */ }
+      } catch (error) { if (['EPERM', 'EACCES'].includes(error.code)) denied = true; }
     }
+    this.connectionIssue = denied ? 'access-denied' : 'monitor-off';
     throw new Error('monitor unavailable');
   }
   onData(data) {
@@ -68,7 +73,7 @@ export class BridgeClient {
         const message = JSON.parse(line);
         if (!message.ok || !validSnapshot(message.state)) throw new Error('invalid monitor reply');
         if (!this.state || this.state.now !== message.state.now) this.progressAt = performance.now();
-        this.state = message.state; this.receivedAt = performance.now(); pending.resolve(message);
+        this.state = message.state; this.receivedAt = performance.now(); this.connectionIssue = null; pending.resolve(message);
       } catch (error) { pending.reject(error); this.disconnect(); }
     }
   }

@@ -4,7 +4,7 @@ Malá aplikace pro Windows, kterou si můžeš nechat otevřenou na druhém moni
 
 ## Spuštění
 
-V Releases stáhni `Dayz-Server-Monitor-1.7.1-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Funguje na Windows 10/11 x64. .NET je součástí balíčku, správce ani API klíč nepotřebuješ.
+V Releases stáhni `Dayz-Server-Monitor-1.7.2-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Funguje na Windows 10/11 x64. .NET je součástí balíčku, správce ani API klíč nepotřebuješ.
 
 Vedle EXE se ukládá `config.json`, historie je ve složce `data`. Při aktualizaci starou aplikaci zavři a obojí si ponech. V **Settings → Display** můžeš přepnout angličtinu na češtinu a vybrat světlý, tmavý, oranžový nebo šedozelený motiv.
 
@@ -30,7 +30,7 @@ Je to hobby projekt vytvořený pomocí **vibe codingu s podporou AI**. Nápad a
 
 ## Stream Deck a licence
 
-Součástí vydání je plugin pro **Stream Deck MK.2**. Dvojklikem nainstaluj `Dayz-Server-Monitor-1.7.1.streamDeckPlugin` a přetáhni akci Cycle server information na klávesu. Krátký stisk střídá údaje, podržení jednu sekundu obnoví dotaz se společnou 20sekundovou ochranou. Akce Pinned server information udrží jeden vybraný pohled na klávese; můžeš si tak připravit více kláves vedle sebe. Výchozí popisky a náhledy jsou anglicky. Monitor musí běžet, může být minimalizovaný; plugin jej sám neotevírá. [Podrobný návod a omezení](docs/STREAM-DECK.md).
+Součástí vydání je plugin pro **Stream Deck MK.2**. Dvojklikem nainstaluj `Dayz-Server-Monitor-1.7.2.streamDeckPlugin` a přetáhni akci Cycle server information na klávesu. Krátký stisk střídá údaje, podržení jednu sekundu obnoví dotaz se společnou 20sekundovou ochranou. Akce Pinned server information udrží jeden vybraný pohled na klávese; můžeš si tak připravit více kláves vedle sebe. Výchozí popisky a náhledy jsou anglicky. Monitor musí běžet, může být minimalizovaný; plugin jej sám neotevírá. [Podrobný návod a omezení](docs/STREAM-DECK.md).
 
 Vlastní zdrojový kód i ikona T/R jsou pod [licencí MIT](LICENSE). Licence přibaleného .NET zůstávají zachované v [oznámeních třetích stran](THIRD_PARTY_NOTICES.md). Jde o nezávislý komunitní nástroj.
 

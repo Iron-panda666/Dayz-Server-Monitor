@@ -1,13 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Resvg } from '@resvg/resvg-js';
-import { countdown, estimatedGameClock, normalizeSettings, renderKey } from '../src/render.mjs';
+import { countdown, estimatedGameClock, normalizeSettings, renderKey, keyImageDataUrl } from '../src/render.mjs';
 import { KeyGesture } from '../src/gesture.mjs';
 import { BridgeClient, validDiscovery, validSnapshot } from '../src/bridge-client.mjs';
 
 const state = { protocolVersion: 1, now: '2026-10-30T12:00:00Z', nextRestartAt: '2026-10-30T14:30:00Z',
   lastQueryAt: '2026-10-30T12:00:00Z', serverName: 'MAG #2', querySuccess: true, players: 39, capacity: 121, rttMs: 87,
   logoutWarningMinutes: 10, kickWarningMinutes: 5, queryIntervalSeconds: 300, scheduleConfirmed: false, history: [] };
+test('wire image is an encoded SVG data URL and access denial is distinct from a stopped monitor', () => {
+  const svg = renderKey(state, 'players', { label: 'MAG #2 & CZ' });
+  const url = keyImageDataUrl(svg);
+  assert.ok(url.startsWith('data:image/svg+xml;base64,'));
+  assert.equal(Buffer.from(url.split(',')[1], 'base64').toString('utf8'), svg);
+  assert.match(renderKey(null, 'players', {}, '', 'access-denied'), />DENIED</);
+  assert.ok(!renderKey(null, 'players', {}, '', 'access-denied').includes('START THE APP'));
+});
 test('short presses cycle once; a one-second hold refreshes once and never cycles on release', () => {
   let short = 0, long = 0, next = 0; const pending = new Map();
   const timers = { setTimeout(fn) { pending.set(++next, fn); return next; }, clearTimeout(id) { pending.delete(id); } };

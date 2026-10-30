@@ -1,6 +1,6 @@
 import streamDeck, { SingletonAction, action } from '@elgato/streamdeck';
 import { BridgeClient } from './bridge-client.mjs';
-import { normalizeSettings, renderKey } from './render.mjs';
+import { normalizeSettings, renderKey, keyImageDataUrl } from './render.mjs';
 import { KeyGesture } from './gesture.mjs';
 import path from 'node:path';
 
@@ -20,10 +20,10 @@ function release(directory) {
 function paint(entry) {
   const shared = entry.shared;
   const feedback = performance.now() < shared.feedbackUntil ? shared.feedback : '';
-  const image = renderKey(shared.client.snapshot(), entry.settings.view, entry.settings, feedback);
+  const image = keyImageDataUrl(renderKey(shared.client.snapshot(), entry.settings.view, entry.settings, feedback, shared.client.connectionIssue));
   if (image === entry.image) return;
   entry.image = image;
-  entry.action.setImage(image).catch(error => streamDeck.logger.error(error));
+  entry.action.setImage(image).catch(error => { entry.image = null; streamDeck.logger.error(error); });
 }
 async function refresh(entry) {
   const shared = entry.shared;
