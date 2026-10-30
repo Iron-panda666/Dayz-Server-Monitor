@@ -9,12 +9,15 @@ Recorded release results for Windows x64. Versions through 1.9.2 used .NET SDK 8
 | 1.9.1 | 58 | 20 | 15 | 93 |
 | 1.9.2 | 58 | 20 | 15 | 93 |
 | 1.10.0 | 58 | 20 | 17 | 95 |
+| 1.10.1 | 58 | 21 | 17 | 96 |
 
 These are automated check counts. The outstanding physical/live checks are listed at the end.
 
 Version 1.10.0 moves all four projects to .NET 10 and updates the portable runtime to 10.0.14. C# remains at version 12. Settings, history and the plugin pipe protocol are unchanged. The solution builds with warnings treated as errors.
 
 The Stream Deck dependency tree uses Zod 4.6.7 through an override for @elgato/utils 0.6.2. SDK 3.0.4 remains in use. On 30 October 2026, npm audit reported 0 known vulnerabilities, including development dependencies. New checks exercise the SDK's option/RPC schemas and verify that a constrained array of 100,000 invalid items is rejected before parsing any item. The existing bundled-plugin/C# pipe integration also passes. This does not establish that all oversized or unconstrained input is harmless.
+
+Version 1.10.1 centers the dashboard and separates clock sizing from label sizing. A new WPF check resizes the same view between 1100 x 450 and 1920 x 1080, verifies at least 12.5 logical pixels for the selected visible labels after transforms and checks clock centering and AM/PM space. Existing profile geometry checks still cover 100-200% DPI. These are offscreen renders, not physical readability measurements.
 
 ## Query, time and storage
 

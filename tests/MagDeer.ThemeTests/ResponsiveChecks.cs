@@ -46,10 +46,39 @@ internal static class ResponsiveChecks
             assert(ReferenceEquals(chart, view.FindName("Chart")) && ReferenceEquals(players, view.FindName("PlayerCounts")), "Data controls recreated on resize");
             assert(((PlayerCountDisplay)players).PlayerText == "121 / 121", "Player state lost during reflow");
         });
-        test("Session line stays small and translates without altering player data", () =>
+        test("Dashboard text remains readable when resizing within the same layout", () =>
+        {
+            var view = Demo("Aero");
+            double previous = 0;
+            foreach (var size in new[] { new Size(1100, 450), new Size(1920, 1080), new Size(1100, 450) })
+            {
+                Layout(view, size.Width, size.Height);
+                var clock = (TextBlock)view.FindName("ClockText");
+                assert(clock.FontSize != previous, "Clock size did not follow a same-mode resize"); previous = clock.FontSize;
+                view.SetClockFormat(true);
+                foreach (var name in new[] { "ClockHeading", "PlanBadgeText", "DateText", "LastUpdateText", "PollText", "CountdownLabel", "RttLabel", "SessionText" })
+                {
+                    var text = (TextBlock)view.FindName(name);
+                    var transform = text.TransformToAncestor(view);
+                    double scale = (transform.Transform(new Point(0, 1)) - transform.Transform(new Point(0, 0))).Length;
+                    assert(text.FontSize * scale >= 12.5, name + ": text shrank below a readable size");
+                    assert(text.TextAlignment == TextAlignment.Center, name + ": text is not centered");
+                }
+                if (size.Height > 700)
+                {
+                    var tile = view.LayoutPanel.Slots["Clock"];
+                    var bounds = clock.TransformToAncestor(view.LayoutPanel).TransformBounds(new Rect(clock.RenderSize));
+                    assert(Math.Abs((bounds.Left + bounds.Right - tile.Left - tile.Right) / 2) < 2, "Tall clock is off-center in its card");
+                }
+            }
+            view.SetClockFormat(false); ((TextBlock)view.FindName("ClockText")).Text = "11:58 PM";
+            Layout(view, 1100, 450);
+            assert(((TextBlock)view.FindName("ClockText")).FontSize < previous, "12-hour clock did not reserve space for AM/PM");
+        });
+        test("Session line remains readable and smaller than the clock without altering player data", () =>
         {
             var view = Demo("Dark"); var line = (TextBlock)view.FindName("SessionText");
-            assert(line.FontSize <= 12 && line.Text.Contains("01:23:45"), "Session line missing or oversized");
+            assert(line.FontSize >= 13 && line.FontSize <= 16 && line.Text.Contains("01:23:45"), "Session line missing or unreadable");
             var players = ((PlayerCountDisplay)view.FindName("PlayerCounts")).PlayerText;
             foreach (var language in L.Languages) { Localization.Apply(language.Id); line.Text = L.Text("SessionRunning", "01:23:45"); assert(!line.Text.Contains("{0}") && line.Text.Contains("01:23:45"), "Session translation failed"); }
             assert(((PlayerCountDisplay)view.FindName("PlayerCounts")).PlayerText == players, "Session changed player count");
@@ -99,7 +128,7 @@ internal static class ResponsiveChecks
     public static void Render(string directory)
     {
         Directory.CreateDirectory(directory);
-        var examples = new[] { ("desktop", "Ocean", 850, 850), ("wide", "Aero", 1100, 450), ("bar-79", "Matrix", 1280, 400),
+        var examples = new[] { ("desktop", "Ocean", 850, 850), ("wide", "Aero", 1100, 450), ("wide-large", "Aero", 1920, 1080), ("bar-79", "Matrix", 1280, 400),
             ("bar-88", "Ocean", 1920, 480), ("bar-119", "Anime", 1480, 320), ("portrait", "Violet", 400, 1280), ("mini", "XP", 480, 320), ("ribbon", "Matrix", 480, 128) };
         foreach (var (name, theme, width, height) in examples)
         {

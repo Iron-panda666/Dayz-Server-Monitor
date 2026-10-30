@@ -8,7 +8,7 @@ The plugin uses Elgato's SDK and renders for 72 x 72-pixel MK.2 keys. It needs W
 
 1. Unpack the Windows ZIP. Keep `config.json` and `data` when upgrading.
 2. Start `DayzServerMonitor.exe` and select a server. It can stay minimized.
-3. Install `Dayz-Server-Monitor-1.10.0.streamDeckPlugin`, included in the ZIP and ReleasePackages folder.
+3. Install `Dayz-Server-Monitor-1.10.1.streamDeckPlugin`, included in the ZIP and ReleasePackages folder.
 4. Drag Cycle server information or Pinned server information from the Dayz Server Monitor action list onto a key.
 
 Direct installation needs no Marketplace account or extra driver. Run both apps under the same Windows account, without elevation. The plugin does not launch the monitor. A custom key image/title can cover its generated display.
@@ -64,7 +64,7 @@ UDP silence does not prove a game outage. Failed/stale readings are not displaye
 
 `./build.ps1` builds/tests the app and plugin, validates it with Elgato CLI and creates the installer. `./build.ps1 -SkipStreamDeck` builds only the Windows monitor. Node.js 24+ and .NET 10 SDK are build requirements.
 
-Version 1.10.0 keeps Elgato SDK 3.0.4 and overrides its @elgato/utils dependency to Zod 4.6.7. The SDK imports zod/v4-mini, which remains available in Zod 4. The override addresses [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). npm audit runs during packaging and stops the build on known High/Critical dependency findings. It does not replace testing or a code review.
+Version 1.10.1 keeps Elgato SDK 3.0.4 and overrides its @elgato/utils dependency to Zod 4.6.7. The SDK imports zod/v4-mini, which remains available in Zod 4. The override addresses [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). npm audit runs during packaging and stops the build on known High/Critical dependency findings. It does not replace testing or a code review.
 
 The SDK integration fixture uses a simulated Stream Deck host and C# pipe fixture. Physical MK.2 output was confirmed on 30 October 2026 after the image repair; new multi-server/session/service workflows still need hands-on checks. [Validation record](VALIDATION.md).
 

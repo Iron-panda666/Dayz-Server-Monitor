@@ -2,18 +2,25 @@ namespace MagDeer.App;
 
 public sealed class PlayerCountDisplay : StackPanel
 {
+    private readonly TextBlock title = new() { Style = (Style)Application.Current.FindResource("Label"), FontSize = 14 };
     private readonly TextBlock players = new() { Text = "N/A", FontSize = 31, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 7, 0, 0) };
     private readonly TextBlock queue = new() { FontSize = 17, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 3, 0, 0), TextWrapping = TextWrapping.Wrap };
-    private readonly TextBlock capacity = new() { FontSize = 11 };
+    private readonly TextBlock capacity = new() { FontSize = 13 };
     public bool Condensed
     {
         set { capacity.Visibility = value ? Visibility.Collapsed : Visibility.Visible; players.FontSize = value ? 28 : 31; players.TextWrapping = TextWrapping.NoWrap; }
     }
     public string PlayerText => players.Text;
     public string QueueText => queue.Text;
+    public bool ShowTitle { set => title.Visibility = value ? Visibility.Visible : Visibility.Collapsed; }
+    public void FitTo(Size available)
+    {
+        players.FontSize = Math.Clamp(available.Width / 4.4, 12, 34);
+        queue.FontSize = Math.Clamp(available.Width / 9, 13, 18);
+    }
     public PlayerCountDisplay()
     {
-        var title = new TextBlock { Style = (Style)Application.Current.FindResource("Label") };
+        TextBlock.SetTextAlignment(this, TextAlignment.Center);
         title.SetResourceReference(TextBlock.TextProperty, "L.Players");
         players.SetResourceReference(TextBlock.ForegroundProperty, "MetricBrush");
         capacity.SetResourceReference(TextBlock.TextProperty, "L.Capacity");

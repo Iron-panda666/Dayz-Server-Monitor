@@ -48,6 +48,8 @@ The app needs a display exposed to Windows as an extended desktop. HDMI/DisplayP
 
 Small modes may hide world clocks, details or the graph. Collection continues. Compact mode explicitly hides the graph and address details. Check readability on the actual LCD at the intended distance.
 
+Version 1.10.1 centers the dashboard labels and values. Regular labels use 13-17 logical pixels; the clock and countdown resize separately. Tall clock cards stack the extra information below the time. The address panel keeps its font size, truncates long lines with a tooltip and hides secondary rows when space runs out. Recovery/storage messages can be scrolled. Small LCD and ribbon layouts still have physical readability limits.
+
 ![Wide layout with sample data](images/layout-wide.png)
 
 ![1280 x 400 layout with sample data](images/layout-bar-79.png)

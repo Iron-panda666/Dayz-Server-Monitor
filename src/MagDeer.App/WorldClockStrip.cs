@@ -12,12 +12,12 @@ public sealed class WorldClockStrip : WrapPanel
         foreach (var clock in settings.Where(x => x.Enabled))
         {
             var zone = clock.ResolveZone();
-            var label = new TextBlock { Text = clock.Label, FontSize = 12, TextTrimming = TextTrimming.CharacterEllipsis,
+            var label = new TextBlock { Text = clock.Label, FontSize = 13, TextAlignment = TextAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis,
                 TextWrapping = TextWrapping.NoWrap, ToolTip = clock.Label + " / " + clock.TimeZoneId };
             label.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
-            var time = new TextBlock { FontSize = 30, FontWeight = FontWeights.Light };
+            var time = new TextBlock { FontSize = 30, FontWeight = FontWeights.Light, TextAlignment = TextAlignment.Center };
             time.SetResourceReference(TextBlock.ForegroundProperty, "MetricBrush");
-            var date = new TextBlock { FontSize = 10 };
+            var date = new TextBlock { FontSize = 12, TextAlignment = TextAlignment.Center };
             date.SetResourceReference(TextBlock.ForegroundProperty, "SubtleBrush");
             var content = new StackPanel(); content.Children.Add(label); content.Children.Add(time); content.Children.Add(date);
             var card = new Border { Width = 182, Padding = new Thickness(12, 9, 12, 9), CornerRadius = new CornerRadius(8),

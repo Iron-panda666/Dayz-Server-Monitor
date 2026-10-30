@@ -14,6 +14,7 @@ public sealed class DashboardPanel : Panel
     public bool HasWorldClocks { get => (bool)GetValue(HasWorldClocksProperty); set => SetValue(HasWorldClocksProperty, value); }
     public DashboardMode Mode { get; private set; }
     public event Action<DashboardMode>? ModeChanged;
+    public event Action? SlotsChanged;
     public IReadOnlyDictionary<string, Rect> Slots { get; private set; } = new Dictionary<string, Rect>();
     public static DashboardMode ChooseMode(Size size) => size.Height < 170 || size.Width / size.Height >= 6 ? DashboardMode.Ribbon
         : size.Width / size.Height < .72 ? DashboardMode.Portrait
@@ -34,7 +35,7 @@ public sealed class DashboardPanel : Panel
             { Put(role, x, 0, w * fraction, h); x += w * fraction; }
             return slots;
         }
-        double top = w < 240 ? 0 : Math.Min(40, h * .075);
+        double top = w < 240 || h < 240 ? 0 : 46;
         if (top > 0) Put("Server", 0, 0, w, top);
         double worldHeight = world ? Math.Min(h * .17, w < 240 ? 160 : 210) : 0;
         if (world) Put("World", 0, h - worldHeight, w, worldHeight);
@@ -108,7 +109,10 @@ public sealed class DashboardPanel : Panel
         var size = new Size(double.IsFinite(availableSize.Width) ? Math.Max(1, availableSize.Width) : 850, double.IsFinite(availableSize.Height) ? Math.Max(1, availableSize.Height) : 800);
         var mode = ChooseMode(size);
         if (Mode != mode) { Mode = mode; ModeChanged?.Invoke(mode); }
-        Slots = Plan(size, Compact, HasWorldClocks);
+        var next = Plan(size, Compact, HasWorldClocks);
+        bool changed = next.Count != Slots.Count || next.Any(x => !Slots.TryGetValue(x.Key, out var old) || old != x.Value);
+        Slots = next;
+        if (changed) SlotsChanged?.Invoke();
         foreach (UIElement child in InternalChildren)
         {
             bool shown = Slots.TryGetValue(GetRole(child), out var rect);

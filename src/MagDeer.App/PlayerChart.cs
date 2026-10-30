@@ -44,7 +44,7 @@ public sealed class PlayerChart : FrameworkElement
         if (ActualWidth < 1 || ActualHeight < 1) return;
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize));
         bool times = ActualHeight >= 38, dates = ActualHeight >= 70, captionVisible = ActualHeight >= 110;
-        double bottom = Math.Max(8, ActualHeight - (captionVisible ? 66 : dates ? 44 : times ? 22 : 2));
+        double bottom = Math.Max(8, ActualHeight - (captionVisible ? 66 : dates ? 44 : times ? 24 : 2));
         var grid = new Pen((Brush)Application.Current.FindResource("BorderBrush"), 1);
         dc.DrawLine(grid, new Point(0, bottom), new Point(ActualWidth, bottom));
         dc.DrawLine(grid, new Point(0, bottom / 2), new Point(ActualWidth, bottom / 2));
@@ -74,16 +74,17 @@ public sealed class PlayerChart : FrameworkElement
             double x = i * (ActualWidth - 14) / 2 + 7;
             dc.DrawLine(grid, new Point(x, bottom), new Point(x, bottom + 4));
             DrawLabel(dc, Time(ticks[i]), muted, x, bottom + 6, i);
-            if (dates) DrawLabel(dc, RestartSchedule.CzechTime(ticks[i]).ToString("d MMM yyyy", L.Culture), muted, x, bottom + 22, i);
+            if (dates) DrawLabel(dc, RestartSchedule.CzechTime(ticks[i]).ToString("d MMM yyyy", L.Culture), muted, x, bottom + 24, i);
         }
         if (!captionVisible) return;
         var caption = L.Text("ChartLast", FullTime(QueryTimeline.TimeOf(samples[^1])));
         var text = Text(caption, muted);
         dc.PushClip(new RectangleGeometry(new Rect(0, bottom + 43, ActualWidth, 20)));
-        dc.DrawText(text, new Point(0, bottom + 43)); dc.Pop();
+        text.MaxTextWidth = Math.Max(1, ActualWidth); text.MaxLineCount = 1; text.Trimming = TextTrimming.CharacterEllipsis;
+        dc.DrawText(text, new Point(Math.Max(0, (ActualWidth - text.Width) / 2), bottom + 43)); dc.Pop();
     }
     private FormattedText Text(string value, Brush brush) => new(value, L.Culture, FlowDirection.LeftToRight,
-        new Typeface("Segoe UI"), 11, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+        new Typeface("Segoe UI"), 13, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
     private void DrawLabel(DrawingContext dc, string value, Brush brush, double x, double y, int align)
     {
         var text = Text(value, brush);

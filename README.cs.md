@@ -6,7 +6,7 @@ Monitor DayZ serverů pro Windows 10/11 x64. Vznikl pro druhý displej při hran
 
 ## Spuštění
 
-Stáhni `Dayz-Server-Monitor-1.10.0-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Je to portable verze bez instalace. .NET je přibalený, správce ani API klíč nepotřebuješ.
+Stáhni `Dayz-Server-Monitor-1.10.1-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Je to portable verze bez instalace. .NET je přibalený, správce ani API klíč nepotřebuješ.
 
 Nastavení je v `config.json`, historie ve složce `data` vedle EXE. Před aktualizací starou kopii zavři a obojí ponech. Jinou datovou složku lze zadat při spuštění:
 
@@ -38,7 +38,7 @@ Světové hodiny, formát 12/24 h a NTP jsou v sekci Čas a hodiny. NTP upravuje
 
 Délka session vychází ze spuštění skutečného procesu DayZ. Steam ani launcher se nepočítá, herní menu ano. Není to délka připojení k serveru ani přesný čítač Steam overlaye. Paměť hry a chat se nečtou.
 
-V ZIPu je `Dayz-Server-Monitor-1.10.0.streamDeckPlugin` pro MK.2. Krátký stisk střídá pohledy, podržení jednu sekundu vyžádá obnovu. Každá klávesa může sledovat jiný zapnutý server. Ukazuje herní čas, restart, hráče, graf, UDP RTT, upomínku odhlášení nebo místní session. Herní čas musí server zveřejňovat; dopočet a den/noc jsou odhady. [Instalace a význam údajů](docs/STREAM-DECK.md).
+V ZIPu je `Dayz-Server-Monitor-1.10.1.streamDeckPlugin` pro MK.2. Krátký stisk střídá pohledy, podržení jednu sekundu vyžádá obnovu. Každá klávesa může sledovat jiný zapnutý server. Ukazuje herní čas, restart, hráče, graf, UDP RTT, upomínku odhlášení nebo místní session. Herní čas musí server zveřejňovat; dopočet a den/noc jsou odhady. [Instalace a význam údajů](docs/STREAM-DECK.md).
 
 V Integracích lze zapnout export pro Prometheus/Grafanu a REST senzory Home Assistant. Čte už naměřená data, neposílá další dotazy na hru. Volitelné kontroly služeb berou hlášení Discordu a dostupnost webů Spotify, WhatsApp a Steam z tohoto PC. Odpověď webu neprokazuje funkčnost celé služby. [Příklady konfigurace](docs/INTEGRATIONS.md) | [Podpora dalších her](docs/MONITOR-TYPES.md).
 
@@ -50,10 +50,12 @@ Na Windows s .NET SDK 10.0.403 nebo novějším v řadě 10.x a Node.js 24+ spus
 .\build.ps1
 ```
 
-Nebo otevři `DayzServerMonitor.sln` ve Visual Studiu 2026 s desktopovým .NET. Build provede kontroly a připraví EXE, plugin a zdrojový ZIP do `artifacts` a `ReleasePackages/v1.10.0`. Aplikaci nespouští.
+Nebo otevři `DayzServerMonitor.sln` ve Visual Studiu 2026 s desktopovým .NET. Build provede kontroly a připraví EXE, plugin a zdrojový ZIP do `artifacts` a `ReleasePackages/v1.10.1`. Aplikaci nespouští.
 
-Verze 1.10.0 obsahuje .NET 10.0.14 a pro Stream Deck SDK používá opravený Zod 4.6.7. .NET se samostatně neinstaluje. Existující config.json a data zůstávají kompatibilní.
+Verze 1.10.1 obsahuje .NET 10.0.14 a pro Stream Deck SDK používá opravený Zod 4.6.7. .NET se samostatně neinstaluje. Existující config.json a data zůstávají kompatibilní.
 
-Verze 1.10.0 prošla 58 základními, 20 WPF a 17 pluginovými kontrolami. Fyzické LCD/DPI, celý průchod nastavením a několikadenní provoz ještě potřebují ruční ověření. [Výsledky testů](docs/VALIDATION.md).
+Texty přehledu jsou vystředěné. Velké hodiny mění velikost nezávisle na popiscích. Adresní panel používá pevnou velikost písma; zkrácený řádek se celý zobrazí po najetí myší. Na malých displejích se nejdřív schovají vedlejší vysvětlivky.
+
+Verze 1.10.1 prošla 58 základními, 21 WPF a 17 pluginovými kontrolami. Fyzické LCD/DPI, celý průchod nastavením a několikadenní provoz ještě potřebují ruční ověření. [Výsledky testů](docs/VALIDATION.md).
 
 Je to hobby projekt vzniklý pomocí vibe codingu s podporou AI. Vlastní kód a ikona T/R mají [licenci MIT](LICENSE). Přibalené závislosti mají vlastní [licenční oznámení](THIRD_PARTY_NOTICES.md). Nejde o oficiální produkt Bohemia Interactive, MAG, Sunnyvale, Valve ani Elgato. [Názvy a značky](docs/TRADEMARKS.md).

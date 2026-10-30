@@ -209,7 +209,7 @@ public partial class MainWindow : Window
             : L.Text(session.State == "NotRunning" ? "SessionStopped" : session.State == "MultipleInstances" ? "SessionMultiple" : "SessionUnavailable");
         var local = RestartSchedule.CzechTime(now);
         Dashboard.ClockText.Text = LocalTime(now);
-        Dashboard.ClockText.FontSize = settings.Use24HourClock ? 94 : 76;
+        Dashboard.SetClockFormat(settings.Use24HourClock);
         Dashboard.DateText.Text = local.ToString("D", L.Culture);
         Dashboard.ServerClockText.Text = L.Text("ServerClock", local.AddHours(settings.ServerOffsetHours).ToString(settings.Use24HourClock ? "HH:mm" : "hh:mm tt", CultureInfo.InvariantCulture));
         Dashboard.OffsetLabel.Text = L.Text("OffsetNote", settings.ServerOffsetHours.ToString("+0.##;-0.##;0", L.Culture));
