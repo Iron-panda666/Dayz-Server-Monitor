@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>MagDeerMonitor</AssemblyName>
+    <RootNamespace>MagDeer.App</RootNamespace>
+    <Version>1.6.0</Version>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <DebugType>embedded</DebugType>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../MagDeer.Core/MagDeer.Core.csproj" /><Resource Include="Assets\app.ico" /></ItemGroup>
+</Project>

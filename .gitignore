@@ -1,0 +1,10 @@
+.tools/
+**/bin/
+**/obj/
+.vs/
+artifacts/
+data/
+config.json
+*.user
+
+cleanup-old-releases.ps1
