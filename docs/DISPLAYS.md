@@ -4,7 +4,7 @@ The dashboard rearranges the same live controls as the window changes shape. Wid
 
 The title bar is **32 device-independent pixels** high, rather than the old 58. At Windows 150% scaling this is 48 physical pixels. Refresh, settings and the more menu share the title bar. There is no bottom button strip.
 
-Use **⋯ → Display size preset** or **Settings → Display**. There are 27 choices: Auto, Desktop, twelve landscape/portrait pairs and Square. A preset resizes the window in physical pixels, subject to Windows DPI and the current monitor's available area. It does not change Windows resolution, rotation or scaling. Manual resizing remains adaptive after selecting a preset. Auto keeps the current window size. The last actual position and size are saved.
+Use **⋯ → Display size preset** or **Settings → Appearance**. There are 27 choices: Auto, Desktop, twelve landscape/portrait pairs and Square. A preset resizes the window in physical pixels, subject to Windows DPI and the current monitor's available area. It does not change Windows resolution, rotation or scaling. Manual resizing remains adaptive after selecting a preset. Auto keeps the current window size. The last actual position and size are saved.
 
 **F11** fills the current monitor and hides the title bar; **Esc** leaves fullscreen. Below 260 logical pixels wide the title bar also hides automatically. Right-click anywhere on the dashboard, or use **Shift+F10**, to open the same controls. **F5** requests a refresh with the shared twenty-second limit. **Ctrl+,** opens settings. On a tiny secondary LCD, settings use a larger connected screen if available.
 
@@ -61,7 +61,7 @@ Luna and Glass use original light gradients; Glass does not enable desktop blur/
 
 Configuration is saved in `config.json` beside the portable executable, or in the folder supplied through `--data-dir`. Theme, language, server profiles, clocks, display preset, close behavior and the last window bounds are retained. Saving settings applies immediately; closing or hiding captures the current bounds too.
 
-By default, **× quits**. Enable **Settings → Display → Close button minimizes instead of quitting**, then choose:
+By default, **× quits**. Enable **Settings → App behavior → Close button minimizes instead of quitting**, then choose:
 
 - **Windows taskbar:** the existing window minimizes to the taskbar.
 - **Notification area:** the window hides and the T/R icon remains beside the clock. Double-click it, or choose Open monitor, to restore. Windows may place the icon inside its overflow menu.

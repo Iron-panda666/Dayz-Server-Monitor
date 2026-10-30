@@ -1,6 +1,6 @@
 # Themes
 
-Choose a theme at the top of **Settings → Display → Whole-window theme**. It changes the whole window, including cards, text, controls and graphs. The choice is saved in config.json.
+Choose a theme at the top of **Settings → Appearance → Whole-window theme**. It changes the whole window, including cards, text, controls and graphs. The choice is saved in config.json.
 
 | Theme | Background | Cards | Main numbers | Accent |
 |---|---|---|---|---|

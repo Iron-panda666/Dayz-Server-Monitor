@@ -3,7 +3,7 @@
   "Name": "Dayz Server Monitor",
   "Description": "Independent DayZ server monitor companion: restart countdown, players, history, UDP RTT and estimated in-game clock. Requires the Windows monitor app.",
   "Author": "Iron-panda666",
-  "Version": "1.9.0.0",
+  "Version": "1.9.1.0",
   "UUID": "com.iron-panda666.dayz-server-monitor",
   "SDKVersion": 3,
   "Software": {

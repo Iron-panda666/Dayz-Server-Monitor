@@ -1,12 +1,12 @@
 # Languages and world clocks · 1.3
 
-The default UI language is **English**. Settings → Display → Application language offers exactly five choices: English (EN), Čeština (CZ), Polski (PL), Deutsch (DE) and Español (ES). The setting is stored as `Language: en/cs/pl/de/es`. A configuration from an older version without this field defaults to English. Saving settings applies the selected language without restarting the monitor. Server names and custom city names remain exactly as entered. Technical status codes (ONLINE, OFFLINE, QUERY UNAVAILABLE, RESTART EXPECTED), time-zone IDs, original diagnostic details and operating-system error messages are not translated.
+The default UI language is **English**. Settings → Appearance → Application language offers exactly five choices: English (EN), Čeština (CZ), Polski (PL), Deutsch (DE) and Español (ES). The setting is stored as `Language: en/cs/pl/de/es`. A configuration from an older version without this field defaults to English. Saving settings applies the selected language without restarting the monitor. Server names and custom city names remain exactly as entered. Technical status codes (ONLINE, OFFLINE, QUERY UNAVAILABLE, RESTART EXPECTED), time-zone IDs, original diagnostic details and operating-system error messages are not translated.
 
 UI labels, settings, date names, reminder text, query-status explanations and common validation errors have embedded translations. They require no online service or key. Language changes do not change the restart schedule, notification identity or UDP endpoint.
 
 ## Add world clocks
 
-Open **Settings → World clocks**. Choose a city preset or select a time zone, enter a city/label and optional country abbreviation, then click **Add clock**. To modify an existing row, select it, edit the fields and click **Update selected**. Finally click **Save settings**. The list supports removal, reordering and temporarily hiding a clock. Up to eight clocks can be stored; all are optional and the default list is empty.
+Open **Settings → Time & clocks → Add or edit a world clock**. Choose a city preset or select a time zone, enter a city/label and optional country abbreviation, then click **Add clock**. To modify an existing row, select it, edit the fields and click **Update selected**. Finally click **Save settings**. The list supports removal, reordering and temporarily hiding a clock. Up to eight clocks can be stored; all are optional and the default list is empty.
 
 Presets include Prague, London, Berlin, Warsaw, Madrid, New York, Los Angeles, Tokyo, Sydney, Dubai, Delhi and UTC. The time-zone list also offers all zones available in Windows. A custom label may describe any city or place using the selected zone; the app does not infer a zone from the spelling of the city or the country code. Changing only a label does not change the clock's zone.
 

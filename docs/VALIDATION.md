@@ -1,4 +1,4 @@
-# Validation · 1.9.0
+# Validation · 1.9.1
 
 The release is built for Windows x64 using .NET SDK 8.0.427. The automated checks cover the areas below. They do not establish multi-day reliability or confirm any provider's restart schedule.
 
@@ -73,3 +73,11 @@ The A2S parser also accepts legacy single-packet GoldSource CS 1.6 replies, with
 Packaging creates `ReleasePackages/v1.9.0` with the portable Windows ZIP, matching plugin/source ZIPs, manifest and SHA-256 sums. It verifies the embedded EXE/plugin against standalone files and rejects private config/history in the ZIP. No app/game/installer is launched.
 
 The full release checks passed: **58 core + 16 WPF + 15 plugin = 89 checks**. Elgato CLI validated and packaged the installer; its existing private-repository URL warning remains. A one-time public-service check on 30 October 2026 received Discord's operational report and HTTP 200 headers from Spotify, WhatsApp Web and Steam Store. These are historical source/reachability observations only, with no authentication or backend operation tested. English previews render the local session and service face as demonstration data.
+
+## Settings organization · 1.9.1
+
+The real SettingsView is rendered without constructing a Window, starting monitoring, saving user configuration or changing foreground apps. Four additional WPF checks cover sidebar/compact navigation, retained field identity/contents, visible save footer and wrapped fields on all seven pages in five languages, three palettes and 360/720/940 logical widths. Actions forward to the existing dialog controller and optional export details stay hidden/disabled while off. Rendered English pages include servers, restarts, appearance and narrow mode. These checks do not establish physical monitor/DPI acceptance or exercise the full live dialog workflow.
+
+The dialog deep-copies profile/world-clock drafts as before. Code review confirms that switching profiles validates and retains only the current profile's draft; global settings are read at the final Save. Cancel has no configuration write. Editing multiple profiles no longer requires separate Save server actions. Existing core profile edit/delete/draft-isolation checks remain in place. There are no configuration schema changes.
+
+Final checks for 1.9.1 passed: **58 core + 20 WPF + 15 plugin = 93 checks**. The new English settings renders come from the real view, with no desktop windows opened. Full live dialog interaction remains separate from the offscreen checks.

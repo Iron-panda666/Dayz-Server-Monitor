@@ -4,8 +4,8 @@ These features are included in **1.9.0**. They are optional; existing settings k
 
 ## Keep several game servers running
 
-1. Open **Settings → Server**, choose a saved server and select **Edit**.
-2. Check **Monitor this server in the background**, then **Save server**. Repeat for the servers you want.
+1. Open **Settings → Servers** and choose a saved server to edit it.
+2. Check **Monitor this server in the background**. Repeat for the servers you want; switching profiles keeps valid edits in the dialog draft.
 3. Choose **Save settings** to apply the draft. Cancel discards edits and deletions.
 4. On each Stream Deck key, choose **Server for this key → Reload monitored servers**, then select its server. Leave **Follow desktop selection** for the original behavior.
 

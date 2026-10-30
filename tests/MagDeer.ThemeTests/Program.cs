@@ -135,6 +135,7 @@ internal static class Program
         });
 
         ResponsiveChecks.Run(Test, Assert);
+        SettingsChecks.Run(Test, Assert);
 
         if (args.Length == 2 && args[0] == "--render")
         {

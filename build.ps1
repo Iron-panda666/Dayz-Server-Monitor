@@ -39,7 +39,7 @@ if (-not $SkipStreamDeck) {
     }
     finally { Pop-Location }
 }
-foreach ($preview in @("theme-comparison.png", "world-clocks.png", "query-chart.png", "layout-desktop.png", "layout-wide.png", "layout-bar-79.png", "layout-bar-88.png", "layout-bar-119.png", "layout-portrait.png", "layout-mini.png", "layout-ribbon.png")) {
+foreach ($preview in @("theme-comparison.png", "world-clocks.png", "query-chart.png", "layout-desktop.png", "layout-wide.png", "layout-bar-79.png", "layout-bar-88.png", "layout-bar-119.png", "layout-portrait.png", "layout-mini.png", "layout-ribbon.png", "settings-overview.png", "settings-restarts.png", "settings-appearance.png", "settings-narrow.png")) {
     $path = Join-Path "artifacts\previews" $preview
     if (Test-Path -LiteralPath $path) {
         New-Item -ItemType Directory -Path "docs\images" -Force | Out-Null

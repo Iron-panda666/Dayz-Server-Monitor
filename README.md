@@ -10,7 +10,7 @@ It started with MAG DEER, but you can select another server or save your own. Th
 
 ## Get it running
 
-**Portable Windows application — no installation required.** Download `Dayz-Server-Monitor-1.9.0-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed. [ReleasePackages and download guide](ReleasePackages/README.md).
+**Portable Windows application — no installation required.** Download `Dayz-Server-Monitor-1.9.1-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed. [ReleasePackages and download guide](ReleasePackages/README.md).
 
 Settings are saved beside the EXE in `config.json`. History is kept in `data`. When updating, close the old copy and keep those two items. For a separate data folder, use:
 
@@ -34,7 +34,7 @@ The app unpacks its bundled native runtime into the user's temporary folder on f
 - A separate server per Stream Deck key, plus optional cached-data export for Prometheus/Grafana and Home Assistant.
 - Optional Discord operator-status reports and Spotify, WhatsApp Web and Steam Store reachability checks, with their limits clearly labelled.
 
-English is the default language. Czech, Polish, German and Spanish are available in **Settings → Display**. The theme selector is at the top of that tab.
+English is the default language. Czech, Polish, German and Spanish are available in **Settings → Appearance**, alongside the theme selector. Settings now use seven focused sections, with a compact selector in narrow windows and Save/Cancel always reachable. [Settings guide and actual previews](docs/SETTINGS.md).
 
 [LCD research, sizing, layouts and controls](docs/DISPLAYS.md)
 
@@ -50,7 +50,7 @@ By default it checks every five minutes, every thirty seconds in the last fiftee
 
 A missing UDP reply does not prove the game server is down: the query service could be unavailable or filtered. One timeout never switches the app to OFFLINE, and failed measurements show N/A. Repeated failures produce QUERY UNAVAILABLE; OFFLINE requires manual confirmation in settings. A detected recovery records when query replies resumed.
 
-In **Settings → Server**, select a profile to edit, use **Save server** to keep that draft, and **Save settings** to apply it. **New** creates another profile; **Delete** removes the selection after confirmation and keeps the history. Cancel discards the draft. The last saved server is protected. A checked **Monitor this server in the background** keeps that endpoint available to its own Stream Deck keys while another server is selected on the desktop.
+In **Settings → Servers**, choose a profile to edit it. Switching profiles keeps valid edits in the dialog's draft; **Save settings** applies all changes together. **New server** creates another profile; **Delete server** removes the selection after confirmation and keeps the history. Cancel discards the draft. The last saved server is protected. A checked **Monitor this server in the background** keeps that endpoint available to its own Stream Deck keys while another server is selected on the desktop. Restart plans/reminders have their own **Restarts & alerts** section; NTP and world clocks are under **Time & clocks**.
 
 The session counter reads the start time of the actual DayZ game process every five seconds. It excludes Steam, launchers and dedicated servers. Game menus count toward this local runtime. It is not Steam's overlay counter or time connected to a particular server; access problems show N/A. No game memory or chat is read.
 
@@ -70,7 +70,7 @@ Install the .NET 8 SDK and Node.js 24+ on Windows, then run:
 
 The script builds the Visual Studio solution, runs the console and WPF checks, and creates a self-contained single-file Windows x64 build plus source ZIP in `artifacts`. It never launches the desktop app. The WPF checks render controls into PNG files without opening windows.
 
-The local `ReleasePackages/v1.9.0` folder contains the portable Windows ZIP, source ZIP, Stream Deck installer and checksums together. The Windows ZIP includes the EXE and plugin installer, with no private configuration or history. Only the optional Stream Deck plugin requires installation into Elgato Stream Deck.
+The local `ReleasePackages/v1.9.1` folder contains the portable Windows ZIP, source ZIP, Stream Deck installer and checksums together. The Windows ZIP includes the EXE and plugin installer, with no private configuration or history. Only the optional Stream Deck plugin requires installation into Elgato Stream Deck.
 
 To work in Visual Studio 2022, open `DayzServerMonitor.sln` with the .NET desktop development workload installed. No external NuGet package is needed beyond Microsoft's runtime/build packs. See [validation](docs/VALIDATION.md) for what has and has not been checked.
 

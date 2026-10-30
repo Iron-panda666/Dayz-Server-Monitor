@@ -81,7 +81,7 @@ public static class DesktopServices
         var area = screen.WorkingArea;
         SetWindowPos(handle, IntPtr.Zero, area.Left, area.Top, 0, 0, 0x0015);
         double scale = Math.Max(96, GetDpiForWindow(handle)) / 96.0;
-        window.Width = Math.Max(window.MinWidth, Math.Min(720, area.Width / scale - 24));
+            window.Width = Math.Max(window.MinWidth, Math.Min(940, area.Width / scale - 24));
         window.Height = Math.Max(window.MinHeight, Math.Min(800, area.Height / scale - 24));
         window.Left = area.Left / scale + (area.Width / scale - window.Width) / 2;
         window.Top = area.Top / scale + (area.Height / scale - window.Height) / 2;

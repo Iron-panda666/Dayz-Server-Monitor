@@ -1,6 +1,6 @@
 # Optional NTP time source · 1.4
 
-Open **Settings → Display** and enable **Use an NTP time server in this app**. Choose `time.cloudflare.com`, `pool.ntp.org`, or type your own hostname/IP address. The destination port is UDP 123. Save settings to apply the source. The default remains Windows time; NTP is opt-in.
+Open **Settings → Time & clocks** and enable **Use an NTP time server in this app**. Choose `time.cloudflare.com`, `pool.ntp.org`, or type your own hostname/IP address. The destination port is UDP 123. Save settings to apply the source. The default remains Windows time; NTP is opt-in.
 
 The default synchronization interval is 60 minutes and the total DNS + UDP timeout is 4 seconds. Allowed values: interval 2–1440 minutes, timeout 1–15 seconds. **Sync now** under the main clock allows a manual query, with at least 64 seconds between attempts. A server's RATE response lengthens the wait to at least 15 minutes; a DENY/RSTR response prevents further requests until the host or NTP-enabled setting changes. Ordinary failures retry with exponential backoff starting at two minutes, bounded by the configured normal interval.
 

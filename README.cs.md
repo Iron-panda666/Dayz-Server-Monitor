@@ -4,21 +4,23 @@ Malá aplikace pro Windows, kterou si můžeš nechat otevřenou na druhém moni
 
 ## Spuštění
 
-**Přenosná (portable) verze bez instalace.** V Releases stáhni `Dayz-Server-Monitor-1.9.0-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Funguje na Windows 10/11 x64. .NET je součástí balíčku, správce ani API klíč nepotřebuješ. [ReleasePackages a přehled balíčků](ReleasePackages/README.md).
+**Přenosná (portable) verze bez instalace.** V Releases stáhni `Dayz-Server-Monitor-1.9.1-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Funguje na Windows 10/11 x64. .NET je součástí balíčku, správce ani API klíč nepotřebuješ. [ReleasePackages a přehled balíčků](ReleasePackages/README.md).
 
-Vedle EXE se ukládá `config.json`, historie je ve složce `data`. Při aktualizaci starou aplikaci zavři a nový ZIP rozbal do stejné složky; konfiguraci a historii ponech. V **Settings → Display** můžeš přepnout angličtinu na češtinu a vybrat z deseti motivů, včetně modrého Ocean, Luna ve stylu XP, Glass ve stylu Aero, Sakura a zelenočerného Terminal.
+Vedle EXE se ukládá `config.json`, historie je ve složce `data`. Při aktualizaci starou aplikaci zavři a nový ZIP rozbal do stejné složky; konfiguraci a historii ponech. V **Settings → Appearance / Nastavení → Vzhled** můžeš přepnout angličtinu na češtinu a vybrat z deseti motivů, včetně modrého Ocean, Luna ve stylu XP, Glass ve stylu Aero, Sakura a zelenočerného Terminal.
 
 Horní lišta má běžných 32 bodů. Ovládání je v záhlaví a nabídce **⋯**, spodní pás tlačítek odpadl. Při zkrácení a roztažení okna se panely s údaji a graf přesunou doprava; na výšku se skládají pod sebe. Nabídka obsahuje 27 velikostních profilů. **F11** vyplní monitor, **Esc** vrátí okno, pravé tlačítko otevře ovládání i bez záhlaví. [Rozbor LCD, rozlišení, rozměry a profily](docs/DISPLAYS.md).
 
 V nastavení můžeš zapnout, aby křížek aplikaci místo ukončení minimalizoval na hlavní panel nebo skryl k hodinám. Nastavení i rozměry okna se uloží. Ze skrytí ji obnovíš dvojklikem na ikonu; přes **Quit monitor / Ukončit monitor** ji úplně vypneš. Monitoring a Stream Deck při minimalizaci pokračují.
 
-Hotové balíčky jsou také v místní složce `ReleasePackages/v1.9.0`. Windows ZIP obsahuje přenosný program i instalátor pluginu pro Stream Deck. Samostatně se instaluje pouze volitelný plugin do aplikace Elgato. Žádná instalace ani aplikace se při sestavení sama nespouští.
+Hotové balíčky jsou také v místní složce `ReleasePackages/v1.9.1`. Windows ZIP obsahuje přenosný program i instalátor pluginu pro Stream Deck. Samostatně se instaluje pouze volitelný plugin do aplikace Elgato. Žádná instalace ani aplikace se při sestavení sama nespouští.
 
 ## K čemu slouží
 
 V horním seznamu vybereš server; další můžeš přidat v nastavení. Připravené jsou čtyři MAG adresy dohledané na webu provozovatele a 12 Sunnyvale. MAG zdroje byly ověřené 30. října 2026; dostupnost query je samostatné, starší měření. Název serveru ani odpověď UDP neprokazují vlastníka. Podrobnosti jsou v [seznamu serverů](docs/SERVERS.md).
 
-Seznamy se řadí abecedně. V nastavení vyber profil, uprav ho a zvol **Uložit server**, potom **Uložit nastavení**. Přejmenování ani změna IP nevytváří duplikát. **Nový** přidá další profil, **Smazat** po potvrzení odstraní vybraný; historii ponechá a poslední profil chrání. Zrušit zahodí rozpracované změny. U každého profilu lze zapnout sledování na pozadí, nejvýše u šestnácti. Každá klávesa Stream Decku si pak vybere vlastní sledovaný server.
+Seznamy se řadí abecedně. V nastavení vyber profil a uprav ho; při přepnutí na další server se platné změny ponechají v návrhu. Jedno **Uložit nastavení** použije vše společně. Přejmenování ani změna IP nevytváří duplikát. **Nový** přidá další profil, **Smazat** po potvrzení odstraní vybraný; historii ponechá a poslední profil chrání. Zrušit zahodí rozpracované změny. U každého profilu lze zapnout sledování na pozadí, nejvýše u šestnácti. Každá klávesa Stream Decku si pak vybere vlastní sledovaný server.
+
+Nastavení má sedm přehledných sekcí: **Servery**, **Restarty a upozornění**, **Monitoring a data**, **Vzhled**, **Čas a hodiny**, **Integrace** a **Chování aplikace**. Vlevo je navigace, v úzkém okně ji nahradí rozbalovací výběr. Pole se skládají pod sebe a Uložit/Zrušit zůstává dole. Motiv a jazyk jsou nahoře ve Vzhledu, NTP u hodin, historie u monitoringu a zavírání do lišty v Chování aplikace. [Návod se skutečnými anglickými náhledy](docs/SETTINGS.md).
 
 Drobný údaj o délce session sleduje skutečný proces hry DayZ, nikoli Steam ani launcher, který někdy zůstává zapnutý. Obnovuje se po pěti sekundách a zahrnuje i herní menu. Není to čas připojení ke konkrétnímu serveru ani přesný čítač Steam overlaye. Když přístup k údaji selže, ukáže N/A. Paměť hry se nečte. Stejný údaj má vlastní stránku Stream Decku.
 
@@ -44,7 +46,7 @@ Je to hobby projekt vytvořený pomocí **vibe codingu s podporou AI**. Nápad a
 
 ## Stream Deck a licence
 
-Součástí vydání je plugin pro **Stream Deck MK.2**. Dvojklikem nainstaluj `Dayz-Server-Monitor-1.9.0.streamDeckPlugin` a přetáhni akci Cycle server information na klávesu. Krátký stisk střídá údaje, podržení jednu sekundu obnoví dotaz se společnou 20sekundovou ochranou. Akce Pinned server information udrží jeden vybraný pohled na klávese; můžeš si tak připravit více kláves vedle sebe. Výchozí popisky a náhledy jsou anglicky. Monitor musí běžet, může být minimalizovaný; plugin jej sám neotevírá. [Podrobný návod a omezení](docs/STREAM-DECK.md).
+Součástí vydání je plugin pro **Stream Deck MK.2**. Dvojklikem nainstaluj `Dayz-Server-Monitor-1.9.1.streamDeckPlugin` a přetáhni akci Cycle server information na klávesu. Krátký stisk střídá údaje, podržení jednu sekundu obnoví dotaz se společnou 20sekundovou ochranou. Akce Pinned server information udrží jeden vybraný pohled na klávese; můžeš si tak připravit více kláves vedle sebe. Výchozí popisky a náhledy jsou anglicky. Monitor musí běžet, může být minimalizovaný; plugin jej sám neotevírá. [Podrobný návod a omezení](docs/STREAM-DECK.md).
 
 Vlastní zdrojový kód i ikona T/R jsou pod [licencí MIT](LICENSE). Licence přibaleného .NET zůstávají zachované v [oznámeních třetích stran](THIRD_PARTY_NOTICES.md). Jde o nezávislý komunitní nástroj.
 
