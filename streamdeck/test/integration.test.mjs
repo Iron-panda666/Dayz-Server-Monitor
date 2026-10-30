@@ -21,7 +21,7 @@ function text(image = '') {
 test('real official-SDK plugin exchanges state with the C# pipe fixture and shares refresh protection', { timeout: 25000 }, async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'DayzDeckIntegration-'));
   const dotnet = process.env.DOTNET_EXE || path.join(root, '.tools/dotnet/dotnet.exe');
-  const dll = path.join(root, 'tests/MagDeer.Tests/bin/Release/net8.0/MagDeer.Tests.dll');
+  const dll = path.join(root, 'tests/MagDeer.Tests/bin/Release/net10.0/MagDeer.Tests.dll');
   const fixture = spawn(dotnet, [dll, '--deck-fixture', directory], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
   let output = '', errors = '', plugin;
   fixture.stdout.on('data', data => output += data); fixture.stderr.on('data', data => errors += data);
@@ -32,7 +32,7 @@ test('real official-SDK plugin exchanges state with the C# pipe fixture and shar
     const reply = await client.request(); assert.equal(reply.state.players, 39); assert.equal(reply.monitors.length, 2); client.stop();
     if (!server.address()) await once(server, 'listening');
     const info = { application: { font: 'Segoe UI', language: 'en', platform: 'windows', platformVersion: '10', version: '7.1.0' },
-      plugin: { uuid: 'com.iron-panda666.dayz-server-monitor', version: '1.9.2.0' },
+      plugin: { uuid: 'com.iron-panda666.dayz-server-monitor', version: '1.10.0.0' },
       devices: [{ id: 'mock-mk2', name: 'MK.2 console fixture', type: 0, size: { columns: 5, rows: 3 } }], colors: {} };
     const connected = once(server, 'connection');
     plugin = spawn(process.execPath, ['bin/plugin.js', '-port', String(server.address().port), '-pluginUUID', 'fixture-plugin', '-registerEvent', 'registerPlugin', '-info', JSON.stringify(info)],

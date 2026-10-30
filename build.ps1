@@ -12,6 +12,7 @@ if ($DotNet -eq "dotnet" -and (Test-Path ".tools\dotnet\dotnet.exe")) {
     $env:DOTNET_CLI_HOME = Join-Path $PSScriptRoot ".tools\cli-home"
     $env:NUGET_PACKAGES = Join-Path $PSScriptRoot ".tools\nuget"
 }
+$env:DOTNET_EXE = (Get-Command $DotNet -ErrorAction Stop).Source
 function Invoke-DotNet([string[]]$Arguments) {
     & $DotNet @Arguments
     if ($LASTEXITCODE -ne 0) { throw "dotnet failed ($LASTEXITCODE)" }
@@ -26,6 +27,8 @@ if (-not $SkipStreamDeck) {
     try {
         & npm.cmd ci --ignore-scripts --no-audit --no-fund
         if ($LASTEXITCODE -ne 0) { throw "Plugin dependency install failed" }
+        & npm.cmd run audit
+        if ($LASTEXITCODE -ne 0) { throw "Plugin dependency audit failed" }
         & npm.cmd run build
         if ($LASTEXITCODE -ne 0) { throw "Plugin build failed" }
         if (-not $SkipTests) {
@@ -53,6 +56,22 @@ if (-not $SkipStreamDeck) {
 }
 $publish = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Join-Path $PSScriptRoot "artifacts\release-$version" }
 Invoke-DotNet -Arguments @("publish", "src\MagDeer.App", "-c", "Release", "-p:PublishProfile=Portable", "--configfile", "NuGet.Config", "--output", $publish)
+# Copy notices from the exact runtime packs restored for this publish.
+$assets = Get-Content -LiteralPath "src\MagDeer.App\obj\project.assets.json" -Raw | ConvertFrom-Json
+$noticePacks = @(
+    @{ Package = "Microsoft.NETCore.App.Runtime.win-x64"; Files = @{ "LICENSE.TXT" = "DOTNET-LICENSE.txt"; "THIRD-PARTY-NOTICES.TXT" = "DOTNET-THIRD-PARTY-NOTICES.txt" } },
+    @{ Package = "Microsoft.WindowsDesktop.App.Runtime.win-x64"; Files = @{ "LICENSE" = "WINDOWS-DESKTOP-LICENSE.txt" } }
+)
+foreach ($pack in $noticePacks) {
+    $dependency = @($assets.project.frameworks.PSObject.Properties | ForEach-Object { $_.Value.downloadDependencies } | Where-Object { $_.name -eq $pack.Package }) | Select-Object -First 1
+    if (-not $dependency -or $dependency.version -notmatch '^\[([0-9.]+),\s*\1\]$') { throw "Cannot determine runtime notice version: $($pack.Package)" }
+    $relative = $pack.Package.ToLowerInvariant() + "/" + $Matches[1]
+    $packDirectory = $assets.packageFolders.PSObject.Properties.Name | ForEach-Object { Join-Path $_ $relative } | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if (-not $packDirectory) { throw "Runtime notice pack not found: $relative" }
+    foreach ($file in $pack.Files.Keys) {
+        Copy-Item -LiteralPath (Join-Path $packDirectory $file) -Destination (Join-Path "docs\licenses" $pack.Files[$file]) -Force
+    }
+}
 Copy-Item -LiteralPath "README.md", "README.cs.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "config.example.json" -Destination $publish -Force
 Copy-Item -LiteralPath "docs" -Destination $publish -Recurse -Force
 $portableZip = Join-Path $PSScriptRoot "artifacts\Dayz-Server-Monitor-$version-win-x64.zip"

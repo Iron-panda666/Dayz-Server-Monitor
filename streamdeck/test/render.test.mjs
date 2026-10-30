@@ -4,6 +4,31 @@ import { Resvg } from '@resvg/resvg-js';
 import { countdown, estimatedGameClock, normalizeSettings, renderKey, keyImageDataUrl, sessionDuration } from '../src/render.mjs';
 import { KeyGesture } from '../src/gesture.mjs';
 import { BridgeClient, validDiscovery, validSnapshot } from '../src/bridge-client.mjs';
+import { OptionGroup } from '@elgato/utils';
+import { JsonRpcRequest, JsonRpcResponse } from '@elgato/utils/rpc';
+import { z } from 'zod/v4-mini';
+
+test('SDK option and RPC schemas work with the patched Zod Mini', () => {
+  const option = { type: 'option', label: 'MAG DEER', value: '217.182.198.57:2303' };
+  const group = { type: 'option-group', label: 'Servers', options: [option] };
+  assert.equal(OptionGroup.safeParse({ ...group, options: [group, option] }).success, true);
+  assert.equal(OptionGroup.safeParse({ ...group, options: [{ ...option, value: {} }] }).success, false);
+  assert.equal(JsonRpcRequest.safeParse({ jsonrpc: '2.0', method: 'snapshot', params: [], id: '1' }).success, true);
+  assert.equal(JsonRpcResponse.safeParse({ jsonrpc: '2.0', result: { players: 39 }, id: '1' }).success, true);
+  assert.equal(JsonRpcResponse.safeParse({ jsonrpc: '2.0', error: { code: -32600, message: 'Invalid request' } }).success, true);
+  assert.equal(JsonRpcResponse.safeParse({ jsonrpc: '2.0', error: { code: 'invalid' } }).success, false);
+});
+
+test('oversized constrained arrays are rejected before validating their elements', () => {
+  let parsed = 0;
+  const item = z.string().check(z.refine(() => { parsed++; return false; }));
+  const schema = z.array(item).check(z.maxLength(120));
+  const result = schema.safeParse(Array(100000).fill('invalid'));
+  assert.equal(result.success, false);
+  assert.equal(parsed, 0, 'Oversized input was validated element by element');
+  assert.equal(result.error.issues.length, 1);
+  assert.equal(result.error.issues[0].code, 'too_big');
+});
 
 const state = { protocolVersion: 1, now: '2026-10-30T12:00:00Z', nextRestartAt: '2026-10-30T14:30:00Z',
   lastQueryAt: '2026-10-30T12:00:00Z', serverName: 'MAG #2', querySuccess: true, players: 39, capacity: 121, rttMs: 87,

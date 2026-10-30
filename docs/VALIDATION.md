@@ -1,6 +1,6 @@
 # Validation
 
-Recorded release results for Windows x64, built with .NET SDK 8.0.427:
+Recorded release results for Windows x64. Versions through 1.9.2 used .NET SDK 8.0.427; version 1.10.0 uses SDK 10.0.403 and runtime 10.0.14.
 
 | Version | Core | WPF | Plugin | Total |
 |---|---:|---:|---:|---:|
@@ -8,10 +8,13 @@ Recorded release results for Windows x64, built with .NET SDK 8.0.427:
 | 1.9.0 | 58 | 16 | 15 | 89 |
 | 1.9.1 | 58 | 20 | 15 | 93 |
 | 1.9.2 | 58 | 20 | 15 | 93 |
+| 1.10.0 | 58 | 20 | 17 | 95 |
 
 These are automated check counts. The outstanding physical/live checks are listed at the end.
 
-Version 1.9.2 repackages the current app and documentation. The app/plugin version and HTTP user agent were updated; monitoring behavior is unchanged. All 93 checks passed before packaging.
+Version 1.10.0 moves all four projects to .NET 10 and updates the portable runtime to 10.0.14. C# remains at version 12. Settings, history and the plugin pipe protocol are unchanged. The solution builds with warnings treated as errors.
+
+The Stream Deck dependency tree uses Zod 4.6.7 through an override for @elgato/utils 0.6.2. SDK 3.0.4 remains in use. On 30 October 2026, npm audit reported 0 known vulnerabilities, including development dependencies. New checks exercise the SDK's option/RPC schemas and verify that a constrained array of 100,000 invalid items is rejected before parsing any item. The existing bundled-plugin/C# pipe integration also passes. This does not establish that all oversized or unconstrained input is harmless.
 
 ## Query, time and storage
 
@@ -41,7 +44,7 @@ Node tests run the bundled official-SDK plugin against a simulated WebSocket hos
 
 Multi-monitor fixtures check opt-in polling, deduplicated endpoints, isolated metrics/history and rejected missing targets. HTTP fixtures check cached JSON, Prometheus labels/content type, missing values and rejection of control/config paths. Mock service replies distinguish operator incidents, local web access and blocked checks.
 
-Elgato CLI 1.10.4 validated/packed the plugin. The recorded warning is the private repo URL returning 404 anonymously. Package checks compare the embedded EXE/plugin with standalone files, exclude private config/history and compare source ZIP files with the committed sources. Packages include SHA-256 sums.
+Elgato CLI 1.10.4 validated/packed the plugin. During private staging its anonymous repository URL check returned 404. Package checks compare the embedded EXE/plugin with standalone files, exclude private config/history and compare source ZIP files with the committed sources. Packages include SHA-256 sums.
 
 ## Live observations
 
