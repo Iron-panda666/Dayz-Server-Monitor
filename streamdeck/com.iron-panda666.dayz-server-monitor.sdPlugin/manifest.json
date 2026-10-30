@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "Dayz Server Monitor",
+  "Description": "Independent DayZ server monitor companion: restart countdown, players, history, UDP RTT and estimated in-game clock. Requires the Windows monitor app.",
+  "Author": "Iron-panda666",
+  "Version": "1.7.0.0",
+  "UUID": "com.iron-panda666.dayz-server-monitor",
+  "SDKVersion": 3,
+  "Software": {
+    "MinimumVersion": "7.1"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Nodejs": {
+    "Version": "24"
+  },
+  "CodePath": "bin/plugin.js",
+  "Category": "Dayz Server Monitor",
+  "CategoryIcon": "imgs/action",
+  "Icon": "imgs/plugin",
+  "URL": "https://github.com/Iron-panda666/Dayz-Server-Monitor",
+  "PropertyInspectorPath": "ui/settings.html",
+  "Actions": [
+    {
+      "UUID": "com.iron-panda666.dayz-server-monitor.cycle",
+      "Name": "Cycle server information",
+      "Tooltip": "Press to cycle views. Hold for one second to request a refresh with the monitor's shared 20-second limit.",
+      "Icon": "imgs/action",
+      "Controllers": [
+        "Keypad"
+      ],
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/key",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.iron-panda666.dayz-server-monitor.pinned",
+      "Name": "Pinned server information",
+      "Tooltip": "Keep one view on this key. Hold for one second to request a refresh. A short press does not send a query.",
+      "Icon": "imgs/action",
+      "Controllers": [
+        "Keypad"
+      ],
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "imgs/key",
+          "ShowTitle": false
+        }
+      ]
+    }
+  ]
+}

@@ -5,6 +5,31 @@ using System.Text;
 using System.Text.Json;
 using MagDeer.Core;
 
+if (args.Length == 2 && args[0] == "--deck-fixture")
+{
+    // Console-only IPC fixture: no desktop Window, game server query or user-profile writes.
+    string directory = Path.GetFullPath(args[1]);
+    Directory.CreateDirectory(directory);
+    var started = DateTimeOffset.UtcNow; int refreshes = 0;
+    var guard = new QueryRefreshGuard();
+    await using var bridge = new StreamDeckBridge(Path.Combine(directory, "fixture-data"), () => new DeckSnapshot
+    {
+        Now = DateTimeOffset.UtcNow, ServerName = "MAG fixture #2", Endpoint = "127.0.0.1:2303", Status = "Online",
+        NextRestartAt = started.AddHours(2.5), LogoutWarningMinutes = 10, KickWarningMinutes = 5,
+        LastQueryAt = started, LastSuccessAt = started, QuerySuccess = true, Players = 39 + refreshes,
+        Capacity = 121, Queue = 0, RttMs = 87, GameClock = new(12, 0, 4, 4), QueryIntervalSeconds = 300,
+        RefreshRemainingSeconds = guard.RemainingSeconds,
+        History = [new(started.AddMinutes(-10), 35, 121), new(started.AddMinutes(-5), null, null), new(started, 39, 121)]
+    }, _ =>
+    {
+        bool accepted = guard.TryBeginManual(); if (accepted) Interlocked.Increment(ref refreshes);
+        return Task.FromResult(new DeckRefreshResult(accepted, guard.RemainingSeconds, accepted ? "accepted" : "cooldown"));
+    }, directory);
+    bridge.Start(); Console.WriteLine("DECK_FIXTURE_READY");
+    await Console.In.ReadLineAsync();
+    return 0;
+}
+
 if (args.Length == 3 && args[0] == "--probe-list")
 {
     var profiles = JsonSerializer.Deserialize<List<ServerProfile>>(File.ReadAllText(args[1]), JsonStorage.Options)!;
@@ -49,6 +74,47 @@ void Assert(bool condition, string message = "Assertion failed") { if (!conditio
 Task Sync(Action action) { action(); return Task.CompletedTask; }
 DateTimeOffset Utc(string value) => DateTimeOffset.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
 var schedule = new RestartSchedule(new MonitorSettings().RestartTimes);
+
+await Test("DayZ keyword clock, queue and multipliers use invariant bounded values", () => Sync(() =>
+{
+    var (clock, queue) = DayZKeywords.Parse("battleye,lqs3,etm4.000000,entm4.000000,mod,19:42");
+    Assert(clock == new DayZGameClock(19, 42, 4, 4) && queue == 3);
+    Assert(clock!.DayMultiplier * clock.NightMultiplier == 16);
+    var missing = DayZKeywords.Parse("etmNaN,entmInfinity,24:80,lqs-1"); Assert(missing.Clock is null && missing.Queue is null);
+    var invalid = DayZKeywords.Parse("00:00,etm0,entm65"); Assert(invalid.Clock == new DayZGameClock(0, 0, null, null));
+    Assert(DayZKeywords.Parse("07:15,etm2.5,entm9").Clock == new DayZGameClock(7, 15, 2.5, 9));
+}));
+await Test("Stream Deck named pipe shares cooldown, rejects other commands and closes promptly", async () =>
+{
+    var directory = Path.Combine(Path.GetTempPath(), "DayzBridgeTests-" + Guid.NewGuid().ToString("N"));
+    var time = new FakeTimeProvider(DateTimeOffset.UtcNow); var guard = new QueryRefreshGuard(time); int refreshes = 0;
+    var bridge = new StreamDeckBridge(directory, () => new DeckSnapshot { Now = time.GetUtcNow(), ServerName = "Fixture", RefreshRemainingSeconds = guard.RemainingSeconds }, _ =>
+    {
+        bool accepted = guard.TryBeginManual(); if (accepted) refreshes++;
+        return Task.FromResult(new DeckRefreshResult(accepted, guard.RemainingSeconds, accepted ? "accepted" : "cooldown"));
+    }, directory);
+    try
+    {
+        bridge.Start();
+        using var client = new System.IO.Pipes.NamedPipeClientStream(".", bridge.PipeName, System.IO.Pipes.PipeDirection.InOut, System.IO.Pipes.PipeOptions.Asynchronous);
+        await client.ConnectAsync(2000);
+        using var reader = new StreamReader(client, Encoding.UTF8, false, 1024, true);
+        using var writer = new StreamWriter(client, new UTF8Encoding(false), 1024, true) { AutoFlush = true };
+        async Task<JsonDocument> Send(string command)
+        {
+            await writer.WriteLineAsync(JsonSerializer.Serialize(new { command }));
+            return JsonDocument.Parse((await reader.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(2)))!);
+        }
+        using var first = await Send("snapshot"); Assert(first.RootElement.GetProperty("state").GetProperty("protocolVersion").GetInt32() == 1);
+        using var accepted = await Send("refresh"); Assert(accepted.RootElement.GetProperty("refresh").GetProperty("accepted").GetBoolean());
+        using var rejected = await Send("refresh"); Assert(!rejected.RootElement.GetProperty("refresh").GetProperty("accepted").GetBoolean() && refreshes == 1);
+        using var unsupported = await Send("launch"); Assert(!unsupported.RootElement.GetProperty("ok").GetBoolean() && refreshes == 1);
+        time.Advance(TimeSpan.FromSeconds(20)); using var again = await Send("refresh"); Assert(refreshes == 2);
+        await bridge.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(1));
+        Assert(!Directory.EnumerateFiles(directory, "*.json").Any(), "Discovery file left after clean shutdown");
+    }
+    finally { await bridge.DisposeAsync(); if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+});
 
 await Test("Catalog contains 17 distinct valid endpoints and never confirms provider schedules", () => Sync(() =>
 {
@@ -389,20 +455,24 @@ await Test("Restart expectation ends on verified response", () => Sync(() =>
     Assert(!tr.RestartGap && tr.Status(t.AddMinutes(9), schedule, 3) == ServerStatus.Online);
 }));
 
-byte[] InfoPacket(bool edf = false)
+byte[] InfoPacket(bool edf = false, string keywords = "pve", ushort appId = 24492)
 {
     using var ms = new MemoryStream(); using var w = new BinaryWriter(ms);
     void Str(string s) { w.Write(Encoding.UTF8.GetBytes(s)); w.Write((byte)0); }
     w.Write(-1); w.Write((byte)0x49); w.Write((byte)17);
     Str("MAG fixture"); Str("DeerIsle"); Str("dayz"); Str("DayZ");
-    w.Write((ushort)24492); w.Write((byte)87); w.Write((byte)121); w.Write((byte)0);
+    w.Write(appId); w.Write((byte)87); w.Write((byte)121); w.Write((byte)0);
     w.Write((byte)'d'); w.Write((byte)'w'); w.Write((byte)0); w.Write((byte)1); Str("1.0");
-    if (edf) { w.Write((byte)0xF1); w.Write((ushort)2302); w.Write(123UL); w.Write((ushort)2304); Str("spectator"); Str("pve"); w.Write(221100UL); }
+    if (edf) { w.Write((byte)0xF1); w.Write((ushort)2302); w.Write(123UL); w.Write((ushort)2304); Str("spectator"); Str(keywords); w.Write(221100UL); }
     return ms.ToArray();
 }
 await Test("A2S parser reads DayZ slots and full EDF", () => Sync(() =>
 {
     var parsed = A2sClient.ParseInfo(InfoPacket(true)); Assert(parsed == info);
+    var extended = A2sClient.ParseInfo(InfoPacket(true, "lqs7,etm4,entm4,19:42"));
+    Assert(extended.GameClock == new DayZGameClock(19, 42, 4, 4) && extended.Queue == 7 && extended.Players == 87);
+    var modern = A2sClient.ParseInfo(InfoPacket(true, "lqs0,etm4,entm4,19:42", 0));
+    Assert(modern.GameClock == new DayZGameClock(19, 42, 4, 4) && modern.Queue == 0, "Extended GameID did not identify DayZ");
 }));
 await Test("Every truncated packet rejected safely", () => Sync(() =>
 {

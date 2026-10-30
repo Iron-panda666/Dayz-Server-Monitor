@@ -1,7 +1,8 @@
 param(
     [string]$DotNet = "dotnet",
     [string]$OutputDirectory = "",
-    [switch]$SkipTests
+    [switch]$SkipTests,
+    [switch]$SkipStreamDeck
 )
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
@@ -20,6 +21,24 @@ if (-not $SkipTests) {
     Invoke-DotNet -Arguments @("run", "--project", "tests\MagDeer.Tests", "-c", "Release", "--no-build")
     Invoke-DotNet -Arguments @("run", "--project", "tests\MagDeer.ThemeTests", "-c", "Release", "--no-build", "--", "--render", "artifacts\previews\theme-comparison.png")
 }
+if (-not $SkipStreamDeck) {
+    Push-Location "streamdeck"
+    try {
+        & npm.cmd ci --ignore-scripts --no-audit --no-fund
+        if ($LASTEXITCODE -ne 0) { throw "Plugin dependency install failed" }
+        & npm.cmd run build
+        if ($LASTEXITCODE -ne 0) { throw "Plugin build failed" }
+        if (-not $SkipTests) {
+            & npm.cmd test
+            if ($LASTEXITCODE -ne 0) { throw "Plugin tests failed" }
+        }
+        & .\node_modules\.bin\streamdeck.cmd validate com.iron-panda666.dayz-server-monitor.sdPlugin --no-update-check
+        if ($LASTEXITCODE -ne 0) { throw "Elgato validation failed" }
+        & .\node_modules\.bin\streamdeck.cmd pack com.iron-panda666.dayz-server-monitor.sdPlugin --output ..\artifacts --force --no-update-check --no-file-list
+        if ($LASTEXITCODE -ne 0) { throw "Elgato packaging failed" }
+    }
+    finally { Pop-Location }
+}
 foreach ($preview in @("theme-comparison.png", "world-clocks.png", "query-chart.png")) {
     $path = Join-Path "artifacts\previews" $preview
     if (Test-Path -LiteralPath $path) {
@@ -28,12 +47,21 @@ foreach ($preview in @("theme-comparison.png", "world-clocks.png", "query-chart.
     }
 }
 $version = ([xml](Get-Content -LiteralPath "src\MagDeer.App\MagDeer.App.csproj" -Raw)).Project.PropertyGroup.Version
+$pluginPackage = Join-Path $PSScriptRoot "artifacts\Dayz-Server-Monitor-$version.streamDeckPlugin"
+if (-not $SkipStreamDeck) {
+    Move-Item -LiteralPath "artifacts\com.iron-panda666.dayz-server-monitor.streamDeckPlugin" -Destination $pluginPackage -Force
+}
 $publish = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Join-Path $PSScriptRoot "artifacts\release-$version" }
 Invoke-DotNet -Arguments @("publish", "src\MagDeer.App", "-c", "Release", "-p:PublishProfile=Portable", "--configfile", "NuGet.Config", "--output", $publish)
 Copy-Item -LiteralPath "README.md", "README.cs.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "config.example.json" -Destination $publish -Force
 Copy-Item -LiteralPath "docs" -Destination $publish -Recurse -Force
 $portableZip = Join-Path $PSScriptRoot "artifacts\Dayz-Server-Monitor-$version-win-x64.zip"
 $portableFiles = @("DayzServerMonitor.exe", "README.md", "README.cs.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "config.example.json", "docs") | ForEach-Object { Join-Path $publish $_ }
+if (-not $SkipStreamDeck) {
+    $pluginCopy = Join-Path $publish ([IO.Path]::GetFileName($pluginPackage))
+    Copy-Item -LiteralPath $pluginPackage -Destination $pluginCopy -Force
+    $portableFiles += $pluginCopy
+}
 if (Test-Path -LiteralPath "artifacts\previews\theme-comparison.png") {
     $previewCopy = Join-Path $publish "theme-comparison.png"
     Copy-Item -LiteralPath "artifacts\previews\theme-comparison.png" -Destination $previewCopy -Force
@@ -53,8 +81,8 @@ Compress-Archive -LiteralPath $portableFiles -DestinationPath $portableZip -Forc
 $sourceStage = Join-Path $PSScriptRoot ("artifacts\source-stage-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $sourceStage -Force | Out-Null
 Copy-Item -LiteralPath "DayzServerMonitor.sln", "Directory.Build.props", "global.json", "NuGet.Config", ".gitignore", "README.md", "README.cs.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "build.ps1", "config.example.json" -Destination $sourceStage
-foreach ($folder in @("src", "tests", "docs", "tools")) {
-    Get-ChildItem -LiteralPath $folder -Recurse -File | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' } | ForEach-Object {
+foreach ($folder in @("src", "tests", "docs", "tools", "streamdeck")) {
+    Get-ChildItem -LiteralPath $folder -Recurse -File | Where-Object { $_.FullName -notmatch '[\\/](bin|obj|node_modules|logs)[\\/]' } | ForEach-Object {
         $relative = $_.FullName.Substring($PSScriptRoot.Length + 1)
         $destination = Join-Path $sourceStage $relative
         New-Item -ItemType Directory -Path (Split-Path $destination -Parent) -Force | Out-Null

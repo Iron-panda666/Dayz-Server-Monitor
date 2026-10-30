@@ -22,6 +22,8 @@ public partial class MainWindow : Window
     private readonly NtpClient ntpClient = new();
     private readonly MonitorClock clock = new();
     private readonly QueryRefreshGuard refreshGuard = new();
+    private StreamDeckBridge? deckBridge;
+    private DeckSnapshot deckSnapshot = new();
     private readonly CancellationTokenSource stop = new();
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly Notifications notifications;
@@ -71,6 +73,14 @@ public partial class MainWindow : Window
         if (settings.Maximized) WindowState = WindowState.Maximized;
         ApplyAppearance();
         if (settings.Fullscreen) EnterFullscreen();
+        try
+        {
+            deckBridge = new(App.DataRoot, () => Volatile.Read(ref deckSnapshot), async ct =>
+                await Dispatcher.InvokeAsync(RequestManualRefresh, DispatcherPriority.Normal, ct));
+            deckBridge.Start();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { ReportStorageError("Stream Deck: " + ex.Message); deckBridge = null; }
         timer.Start();
         Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
         Tick();
@@ -220,6 +230,24 @@ public partial class MainWindow : Window
         }
         else RecoveryPanel.Visibility = Visibility.Collapsed;
         UpdateRefreshButton();
+        UpdateDeckSnapshot(now, status, next, expected, interval);
+    }
+
+    private void UpdateDeckSnapshot(DateTimeOffset now, ServerStatus status, DateTimeOffset next, bool expected, int interval)
+    {
+        var latest = tracker.Latest;
+        var info = latest?.Success == true ? latest.Info : null;
+        Volatile.Write(ref deckSnapshot, new DeckSnapshot
+        {
+            Now = now, ServerName = settings.ServerName, Endpoint = settings.EndpointKey, Status = status.ToString(),
+            NextRestartAt = next, RestartExpected = expected, ScheduleConfirmed = settings.ScheduleConfirmed,
+            LogoutWarningMinutes = settings.LogoutWarningMinutes, KickWarningMinutes = settings.KickWarningMinutes,
+            LastQueryAt = latest?.At, LastSuccessAt = tracker.LastSuccess, QuerySuccess = latest?.Success == true,
+            Players = info?.Players, Capacity = info?.MaxPlayers, Queue = info?.Queue, RttMs = info is null ? null : latest?.RttMs,
+            GameClock = info?.GameClock, Polling = polling, RefreshRemainingSeconds = refreshGuard.RemainingSeconds,
+            QueryIntervalSeconds = interval,
+            History = Chart.Snapshot().Select(s => new DeckSample(QueryTimeline.TimeOf(s), s.Success ? s.Info?.Players : null, s.Success ? s.Info?.MaxPlayers : null)).ToArray()
+        });
     }
 
     private void ApplyAppearance()
@@ -328,7 +356,16 @@ public partial class MainWindow : Window
         Tick();
     }
 
-    private void RefreshClick(object sender, RoutedEventArgs e) { if (!polling && !configuring && !closing) pollTask = PollAsync(manual: true); }
+    private DeckRefreshResult RequestManualRefresh()
+    {
+        int remaining = refreshGuard.RemainingSeconds;
+        if (closing || configuring || polling || remaining > 0)
+            return new(false, remaining, closing ? "closing" : configuring ? "settings" : polling ? "polling" : "cooldown");
+        pollTask = PollAsync(manual: true);
+        UpdateDisplay(clock.UtcNow);
+        return new(true, refreshGuard.RemainingSeconds, "accepted");
+    }
+    private void RefreshClick(object sender, RoutedEventArgs e) => RequestManualRefresh();
     private void ConfigureClock()
     {
         bool changed = settings.NtpEnabled != clock.Enabled || !settings.NtpServer.Equals(clock.Server, StringComparison.OrdinalIgnoreCase);
@@ -450,9 +487,10 @@ public partial class MainWindow : Window
             stop.Cancel();
             Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPowerModeChanged;
             notifications.Dispose();
+            var bridgeStop = deckBridge?.DisposeAsync().AsTask() ?? Task.CompletedTask;
             // Flush the snapshot away from the UI thread. Network cleanup and saving run together.
             var save = Task.Run(() => JsonStorage.Write(App.ConfigPath, snapshot));
-            bool finished = await ShutdownDrain.WaitAsync([pollTask, ntpTask, save], TimeSpan.FromMilliseconds(1200));
+            bool finished = await ShutdownDrain.WaitAsync([pollTask, ntpTask, bridgeStop, save], TimeSpan.FromMilliseconds(1200));
             if (!finished || save.IsFaulted)
                 Debug.WriteLine("Dayz Server Monitor shutdown: background cleanup/save exceeded budget or failed.");
         }

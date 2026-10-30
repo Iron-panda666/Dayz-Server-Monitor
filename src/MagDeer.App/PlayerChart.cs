@@ -24,6 +24,7 @@ public sealed class PlayerChart : FrameworkElement
         InvalidateVisual();
     }
     public void Clear() { samples.Clear(); detail.IsOpen = false; InvalidateVisual(); }
+    public QueryResult[] Snapshot() => samples.ToArray();
     private string Time(DateTimeOffset at, bool seconds = false) => RestartSchedule.CzechTime(at)
         .ToString(Use24HourClock ? seconds ? "HH:mm:ss" : "HH:mm" : seconds ? "hh:mm:ss tt" : "hh:mm tt", CultureInfo.InvariantCulture);
     private string FullTime(DateTimeOffset at) => $"{RestartSchedule.CzechTime(at).ToString("d MMM yyyy", L.Culture)} {Time(at, true)} (UTC{RestartSchedule.CzechTime(at):zzz})";

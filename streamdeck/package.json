@@ -1,0 +1,24 @@
+{
+  "name": "dayz-server-monitor-streamdeck",
+  "version": "1.7.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "validate": "streamdeck validate com.iron-panda666.dayz-server-monitor.sdPlugin",
+    "pack": "streamdeck pack com.iron-panda666.dayz-server-monitor.sdPlugin --output ../artifacts"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "3.0.4"
+  },
+  "devDependencies": {
+    "@elgato/cli": "1.10.4",
+    "@resvg/resvg-js": "2.6.2",
+    "esbuild": "0.28.2"
+  }
+}

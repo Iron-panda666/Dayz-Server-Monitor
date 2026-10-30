@@ -4,7 +4,7 @@ Malá aplikace pro Windows, kterou si můžeš nechat otevřenou na druhém moni
 
 ## Spuštění
 
-V Releases stáhni `Dayz-Server-Monitor-1.6.1-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Funguje na Windows 10/11 x64. .NET je součástí balíčku, správce ani API klíč nepotřebuješ.
+V Releases stáhni `Dayz-Server-Monitor-1.7.0-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Funguje na Windows 10/11 x64. .NET je součástí balíčku, správce ani API klíč nepotřebuješ.
 
 Vedle EXE se ukládá `config.json`, historie je ve složce `data`. Při aktualizaci starou aplikaci zavři a obojí si ponech. V **Settings → Display** můžeš přepnout angličtinu na češtinu a vybrat světlý, tmavý, oranžový nebo šedozelený motiv.
 
@@ -18,11 +18,11 @@ Dotazy chodí přímo na server přes UDP. Měří se odezva A2S query, nikoli I
 
 Tlačítko **Obnovit** po zahájení dotazu odpočítává 20 sekund a nedovolí další ruční požadavek. Automatické dotazy běží dál podle plánu. Graf má datum a čas, po najetí myší uvidíš podrobnosti konkrétního měření.
 
-Výchozí časy 03/07/11/15/19/23 jsou příklad, který musíš ověřit pro svůj server. Nové předvolby mají plán označený jako nepotvrzený. Volitelný NTP zdroj upravuje jen hodiny této aplikace. Posun serverového času je výpočet; herní hodiny ani chat aplikace nečte.
+Výchozí časy 03/07/11/15/19/23 jsou příklad, který musíš ověřit pro svůj server. Nové předvolby mají plán označený jako nepotvrzený. Volitelný NTP zdroj upravuje jen hodiny této aplikace. Posun serverového času v hlavním okně je výpočet. Plugin pro Stream Deck umí navíc zobrazit herní čas zveřejněný v A2S, pokud jej server poskytne; dopočet a den/noc jsou označené odhady. Herní chat aplikace nečte.
 
 ## Vlastní sestavení
 
-Na Windows nainstaluj .NET 8 SDK a spusť `./build.ps1`, případně otevři `DayzServerMonitor.sln` ve Visual Studiu 2022 s podporou desktopového .NET. Ve složce `artifacts` vznikne portable EXE, distribuční ZIP a zdrojový ZIP. Build aplikaci neotevírá. Při hraní DayZ ji pro ověření sami nespouštíme ani nepřepínáme do popředí.
+Na Windows nainstaluj .NET 8 SDK a Node.js 24+ a spusť `./build.ps1`, případně otevři `DayzServerMonitor.sln` ve Visual Studiu 2022 s podporou desktopového .NET. Ve složce `artifacts` vznikne portable EXE, distribuční ZIP a zdrojový ZIP. Build aplikaci neotevírá. Při hraní DayZ ji pro ověření sami nespouštíme ani nepřepínáme do popředí.
 
 ## Jak aplikace vznikla
 
@@ -30,6 +30,8 @@ Je to hobby projekt vytvořený pomocí **vibe codingu s podporou AI**. Nápad a
 
 ## Stream Deck a licence
 
-Propojení se Stream Deckem je možné, ale plugin zatím součástí vydání není. Šlo by zobrazit odpočet, počet hráčů a přidat obnovení se stejnou 20sekundovou ochranou.
+Součástí vydání je plugin pro **Stream Deck MK.2**. Dvojklikem nainstaluj `Dayz-Server-Monitor-1.7.0.streamDeckPlugin` a přetáhni akci Cycle server information na klávesu. Krátký stisk střídá údaje, podržení jednu sekundu obnoví dotaz se společnou 20sekundovou ochranou. Akce Pinned server information udrží jeden vybraný pohled na klávese; můžeš si tak připravit více kláves vedle sebe. Výchozí popisky a náhledy jsou anglicky. Monitor musí běžet, může být minimalizovaný; plugin jej sám neotevírá. [Podrobný návod a omezení](docs/STREAM-DECK.md).
 
 Vlastní zdrojový kód i ikona T/R jsou pod [licencí MIT](LICENSE). Licence přibaleného .NET zůstávají zachované v [oznámeních třetích stran](THIRD_PARTY_NOTICES.md). Jde o nezávislý komunitní nástroj.
+
+Názvy DayZ, MAG, Sunnyvale a Stream Deck slouží k identifikaci hry, serverů a kompatibilního zařízení. Nejsme jejich oficiální produkt a MIT se nevztahuje na jejich značky. Používáme vlastní ikonu T/R. [Podrobnosti ke značkám](docs/TRADEMARKS.md).

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src ws://127.0.0.1:* ws://localhost:*; script-src 'self'; style-src 'self'">
+<title>Dayz Server Monitor settings</title><link rel="stylesheet" href="settings.css"></head>
+<body>
+ <h1>Dayz Server Monitor</h1>
+ <p>Start the Windows monitor yourself. This plugin never launches it. All keys follow the server selected in that monitor.</p>
+ <label for="view">View / starting view</label><select id="view"><option value="game">Game time</option><option value="restart" selected>Restart countdown</option><option value="players">Players</option><option value="history">Player history</option><option value="rtt">UDP RTT</option><option value="logout">Logout reminder</option></select>
+ <fieldset id="pages"><legend>Views included when cycling</legend>
+ <label><input type="checkbox" value="game" checked>Game time</label><label><input type="checkbox" value="restart" checked>Restart</label>
+ <label><input type="checkbox" value="players" checked>Players</label><label><input type="checkbox" value="history" checked>History</label>
+ <label><input type="checkbox" value="rtt" checked>UDP RTT</label><label><input type="checkbox" value="logout" checked>Logout reminder</label></fieldset>
+ <label for="label">Short server label (optional)</label><input id="label" maxlength="12" placeholder="Auto, e.g. MAG #2">
+ <label><input id="autoWarnings" type="checkbox" checked>Show restart warnings over the selected view</label>
+ <label for="dataDirectory">Monitor data folder (optional)</label><input id="dataDirectory" maxlength="1024" placeholder="Blank = newest running monitor">
+ <details><summary>Estimated day / night</summary><p>These are assumed in-game hours, not measured sunrise/sunset. DAY? / NIGHT? and ~ mark estimates. Missing server data shows N/A.</p>
+ <label for="sunrise">Assumed daytime starts at hour</label><input id="sunrise" type="number" min="0" max="23" value="6">
+ <label for="sunset">Assumed nighttime starts at hour</label><input id="sunset" type="number" min="0" max="23" value="18"></details>
+ <p id="validation" role="status"></p>
+ <p>Short press: next view (Cycle action). Hold 1 second: refresh. The 20-second limit is shared with the app and other keys. Settings save automatically.</p>
+ <p class="legal">Independent community tool. Not affiliated with or endorsed by Bohemia Interactive, MAG, Sunnyvale or Elgato. DayZ and other names remain the property of their respective owners.</p>
+ <script src="settings.js"></script>
+</body></html>

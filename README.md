@@ -10,7 +10,7 @@ It started with MAG DEER, but you can select another server or save your own. Th
 
 ## Get it running
 
-Download `Dayz-Server-Monitor-1.6.1-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed.
+Download `Dayz-Server-Monitor-1.7.0-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed.
 
 Settings are saved beside the EXE in `config.json`. History is kept in `data`. When updating, close the old copy and keep those two items. For a separate data folder, use:
 
@@ -44,11 +44,11 @@ A missing UDP reply does not prove the game server is down: the query service co
 
 The default example is 03:00, 07:00, 11:00, 15:00, 19:00 and 23:00 in **Europe/Prague**. Daylight saving time is handled by the time zone. Set the real schedule for your server and confirm it when you have checked it. Included server presets have **unconfirmed** schedules; a successful query does not confirm a restart plan.
 
-The optional offset clock is calculated from Prague time. It does not read DayZ's in-game clock or chat. Optional NTP corrects the time inside this app and leaves Windows time settings alone. See [NTP](docs/NTP.md) and [languages/world clocks](docs/LANGUAGES-AND-CLOCKS.md).
+The optional offset clock is calculated from Prague time. It is separate from the published in-game clock used by the Stream Deck plugin. The app does not read game chat. Optional NTP corrects the time inside this app and leaves Windows time settings alone. See [NTP](docs/NTP.md) and [languages/world clocks](docs/LANGUAGES-AND-CLOCKS.md).
 
 ## Build it
 
-Install the .NET 8 SDK on Windows, then run:
+Install the .NET 8 SDK and Node.js 24+ on Windows, then run:
 
 ```powershell
 .\build.ps1
@@ -60,7 +60,7 @@ To work in Visual Studio 2022, open `DayzServerMonitor.sln` with the .NET deskto
 
 ## Stream Deck
 
-Integration is possible, but a Stream Deck plugin is not included in this release. Useful actions would be a refresh key with the same twenty-second limit and keys showing players or time until restart. These should use the monitor's existing data so each key does not query the server separately.
+The release includes a plugin for **Stream Deck MK.2**, built with Elgato's official SDK. Install the `.streamDeckPlugin` file, then add a cycling key or pin different views to several keys. A short press changes the view; holding for one second requests a refresh with the same twenty-second limit as the app. Keys show the published/estimated in-game clock, restart countdown, players, a small history graph, UDP RTT or the logout reminder. The monitor must be running; the plugin never opens it or queries game servers on its own. [Installation, controls and limits](docs/STREAM-DECK.md).
 
 ## How it was made
 
@@ -68,4 +68,4 @@ This is a hobby project built with AI-assisted **vibe coding**. The idea and req
 
 ## License
 
-The source and T/R icon use the [MIT license](LICENSE). Bundled runtime notices are included separately in [third-party notices](THIRD_PARTY_NOTICES.md). This is an independent community project, with no official affiliation to MAG, Sunnyvale or the game publishers.
+The source and T/R icon use the [MIT license](LICENSE). Bundled runtime notices are included separately in [third-party notices](THIRD_PARTY_NOTICES.md). This is an independent community project, with no official affiliation to Bohemia Interactive, MAG, Sunnyvale, Valve or Elgato. Product/server names are descriptive references, not assets licensed by our MIT license. [Names and trademarks](docs/TRADEMARKS.md).

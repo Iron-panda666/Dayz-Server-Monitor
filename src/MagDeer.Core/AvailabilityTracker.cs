@@ -2,7 +2,11 @@ namespace MagDeer.Core;
 
 public enum ServerStatus { Online, Offline, QueryUnavailable, RestartExpected }
 public enum QueryFailure { None, Timeout, Network, InvalidResponse, UnsupportedCompression }
-public sealed record ServerInfo(string Name, string Map, string Game, byte Players, byte MaxPlayers, string Version);
+public sealed record ServerInfo(string Name, string Map, string Game, byte Players, byte MaxPlayers, string Version)
+{
+    public DayZGameClock? GameClock { get; init; }
+    public int? Queue { get; init; }
+}
 public sealed record QueryResult(DateTimeOffset At, ServerInfo? Info, double? RttMs, QueryFailure Failure, string Detail)
 {
     public bool Success => Info is not null && Failure == QueryFailure.None;

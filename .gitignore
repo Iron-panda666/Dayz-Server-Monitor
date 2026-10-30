@@ -8,3 +8,5 @@ config.json
 *.user
 
 cleanup-old-releases.ps1
+**/node_modules/
+streamdeck/**/*.sdPlugin/logs/

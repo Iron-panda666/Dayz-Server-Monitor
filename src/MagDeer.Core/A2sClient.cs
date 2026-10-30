@@ -109,16 +109,20 @@ public sealed class A2sClient
             throw new InvalidDataException("Neplatná základní pole A2S_INFO.");
         if (appId == 2400) reader.Skip(3); // The Ship extension
         var version = reader.CString();
+        string keywords = "";
+        ulong? gameId = null;
         if (reader.Remaining > 0)
         {
             var edf = reader.Byte();
             if ((edf & 0x80) != 0) reader.Skip(2);
             if ((edf & 0x10) != 0) reader.Skip(8);
             if ((edf & 0x40) != 0) { reader.Skip(2); reader.CString(); }
-            if ((edf & 0x20) != 0) reader.CString();
-            if ((edf & 0x01) != 0) reader.Skip(8);
+            if ((edf & 0x20) != 0) keywords = reader.CString();
+            if ((edf & 0x01) != 0) gameId = reader.UInt64();
         }
-        return new(name, map, game, players, max, version);
+        // Modern DayZ servers may put a placeholder in the legacy 16-bit AppID.
+        var extra = appId == 24492 || gameId == 221100 ? DayZKeywords.Parse(keywords) : default;
+        return new(name, map, game, players, max, version) { GameClock = extra.Clock, Queue = extra.Queue };
     }
 
     private sealed class UnsupportedPacketException(string message) : Exception(message);
@@ -135,6 +139,7 @@ public sealed class A2sClient
         public byte Byte() { var value = rest.Length > 0 ? rest[0] : throw new InvalidDataException("Zkrácená A2S odpověď."); Skip(1); return value; }
         public ushort UInt16() { if (rest.Length < 2) throw new InvalidDataException("Zkrácené číslo."); var value = BinaryPrimitives.ReadUInt16LittleEndian(rest); Skip(2); return value; }
         public uint UInt32() { if (rest.Length < 4) throw new InvalidDataException("Zkrácená hlavička."); var value = BinaryPrimitives.ReadUInt32LittleEndian(rest); Skip(4); return value; }
+        public ulong UInt64() { if (rest.Length < 8) throw new InvalidDataException("Zkrácený GameID."); var value = BinaryPrimitives.ReadUInt64LittleEndian(rest); Skip(8); return value; }
         public string CString()
         {
             int end = rest.IndexOf((byte)0);
