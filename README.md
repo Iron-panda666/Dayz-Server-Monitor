@@ -10,7 +10,7 @@ It started with MAG DEER, but you can select another server or save your own. Th
 
 ## Get it running
 
-Download `Dayz-Server-Monitor-1.7.0-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed.
+Download `Dayz-Server-Monitor-1.7.1-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed.
 
 Settings are saved beside the EXE in `config.json`. History is kept in `data`. When updating, close the old copy and keep those two items. For a separate data folder, use:
 
@@ -69,3 +69,5 @@ This is a hobby project built with AI-assisted **vibe coding**. The idea and req
 ## License
 
 The source and T/R icon use the [MIT license](LICENSE). Bundled runtime notices are included separately in [third-party notices](THIRD_PARTY_NOTICES.md). This is an independent community project, with no official affiliation to Bohemia Interactive, MAG, Sunnyvale, Valve or Elgato. Product/server names are descriptive references, not assets licensed by our MIT license. [Names and trademarks](docs/TRADEMARKS.md).
+
+Player counts keep the waiting queue separate: **121/121 +21 in queue** means 121 players in game and 21 waiting. The desktop card and Stream Deck key show a published zero as 0, and missing/unavailable queue data as N/A.

@@ -72,3 +72,15 @@ test('a responsive pipe with a frozen monitor clock is not shown as fresh', () =
   client.progressAt -= 4000; assert.equal(client.snapshot(), null);
   client.stop(); assert.equal(client.snapshot(), null);
 });
+test('full-server queue stays visible during refresh cooldown and missing queues are not zero', () => {
+  const full = { ...state, players: 121, capacity: 121, queue: 21, refreshRemainingSeconds: 20 };
+  const svg = renderKey(full, 'players');
+  assert.match(svg, />121\/121</); assert.match(svg, /\+21 IN QUEUE/); assert.match(svg, /WAIT 20s/);
+  assert.ok(!svg.includes('142/121'));
+  assert.match(renderKey({ ...full, queue: 0 }, 'players'), /QUEUE 0/);
+  assert.match(renderKey({ ...full, queue: null }, 'players'), /QUEUE N\/A/);
+  assert.match(renderKey({ ...full, querySuccess: false }, 'players'), /QUEUE N\/A/);
+  assert.match(renderKey({ ...full, lastQueryAt: '2026-10-30T10:00:00Z' }, 'players'), /QUEUE N\/A/);
+  const bitmap = new Resvg(svg, { fitTo: { mode: 'width', value: 72 } }).render();
+  assert.equal(bitmap.width, 72); assert.equal(bitmap.height, 72);
+});

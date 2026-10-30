@@ -36,7 +36,7 @@ const demo = { protocolVersion: 1, now: at, serverName: 'MAG MiddleAgedGamers #2
 const names = ['game', 'restart', 'players', 'history', 'rtt', 'logout'];
 let children = '';
 for (let i = 0; i < names.length; i++) {
-  const key = renderKey(demo, names[i], { autoWarnings: false });
+  const key = renderKey(names[i] === 'players' ? { ...demo, players: 121, queue: 21 } : demo, names[i], { autoWarnings: false });
   children += `<g transform="translate(${22 + i % 3 * 168},${48 + Math.floor(i / 3) * 170})">${key}<text x="72" y="161" text-anchor="middle" fill="#c7d3e0" font-size="12">${names[i].toUpperCase()}</text></g>`;
 }
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="548" height="400"><rect width="548" height="400" fill="#202833"/><text x="22" y="27" fill="#f5f8fc" font-size="15" font-family="Segoe UI,Arial">Dayz Server Monitor · MK.2 key designs · DEMO</text>${children}</svg>`;

@@ -1,6 +1,6 @@
 # Stream Deck MK.2
 
-The plugin uses the official Elgato SDK and is designed for the MK.2's 72 × 72-pixel keys. It works alongside Dayz Server Monitor 1.7.0 or later on Windows 10/11 x64. Stream Deck software **7.1 or later**, including its Node.js 24 runtime, is required. Users do not need to install Node.js separately.
+The plugin uses the official Elgato SDK and is designed for the MK.2's 72 × 72-pixel keys. It works alongside Dayz Server Monitor 1.7.1 or later on Windows 10/11 x64. Stream Deck software **7.1 or later**, including its Node.js 24 runtime, is required. Users do not need to install Node.js separately.
 
 ![English key designs, enlarged, example data](images/stream-deck-keys.png)
 
@@ -10,7 +10,7 @@ These are enlarged renders of the actual key images with demo values, not a phot
 
 1. Download and unpack the Windows ZIP. Carry over your config.json and data folder if upgrading. Keep the executable in a stable, writable folder.
 2. Start DayzServerMonitor.exe yourself when convenient and select the server to watch. The plugin never starts the monitor or brings its window forward. The monitor can be minimized.
-3. Double-click **Dayz-Server-Monitor-1.7.0.streamDeckPlugin** and accept the installation in Stream Deck. The file is also inside the Windows ZIP.
+3. Double-click **Dayz-Server-Monitor-1.7.1.streamDeckPlugin** and accept the installation in Stream Deck. The file is also inside the Windows ZIP.
 4. Find **Dayz Server Monitor** in the Stream Deck action list. Drag **Cycle server information** onto a key.
 5. Leave the action's default artwork/title in place. A custom image in Stream Deck can override the plugin's changing display.
 
@@ -28,7 +28,7 @@ All keys attached to the same monitor share its cached data and manual refresh g
 |---|---|
 | Game time | Published game clock, optionally extrapolated as ~HH:mm; DAY? / NIGHT? and current assumed speed |
 | Restart | Time until the next configured restart; PLAN? while the schedule is unconfirmed |
-| Players | Players / capacity, published queue when nonzero, otherwise age of the query |
+| Players | Players / capacity plus a separate queue line, e.g. 121/121 and +21 IN QUEUE; age/cooldown below |
 | History | One hour of player samples from the current monitor session, with gaps for missing replies |
 | UDP RTT | Query round-trip time and age of the query |
 | Logout | Time until the configured logout reminder, or LOG OUT NOW |
@@ -64,3 +64,5 @@ The Node tests include the actual bundled official-SDK plugin connected to a sim
 The CLI may report that the project URL returns 404 because this GitHub repository is private. That warning does not make the installer public or submit it to Marketplace. No Marketplace submission or Maker Agreement acceptance is performed by this project.
 
 Original code and the T/R icon are MIT-licensed. Elgato SDK and bundled runtime dependency licenses are preserved in the installer and docs/licenses/STREAMDECK-RUNTIME-NOTICES.md. Build tools are separate: the SVG renderer @resvg/resvg-js is MPL-2.0 and is used only during building/testing; its binary is not shipped in the plugin. See [names and trademarks](TRADEMARKS.md).
+
+The queue is separate from occupied slots: 121/121 +21 means 121 players in game and 21 waiting. A published zero shows QUEUE 0; an absent field, failed query or stale sample shows QUEUE N/A. Queue counts reflect the last query, not continuous live measurement. The player-history graph tracks occupied slots only.

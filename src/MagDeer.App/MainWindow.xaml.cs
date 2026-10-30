@@ -208,7 +208,7 @@ public partial class MainWindow : Window
             ServerStatus.RestartExpected => L.Text("RestartNotProven"),
             _ => tracker.Failures == 0 ? L.Text("Waiting") : L.Text("QueryFailures", tracker.Failures)
         };
-        PlayersText.Text = tracker.Latest is { Success: true, Info: { } info } ? $"{info.Players} / {info.MaxPlayers}" : "N/A";
+        PlayerCounts.Update(tracker.Latest);
         RttText.Text = tracker.Latest is { Success: true, RttMs: { } rtt } ? $"{rtt:0} ms" : "N/A";
         LastUpdateText.Text = tracker.LastSuccess is { } success ? L.Text("LastSuccess", RestartSchedule.CzechTime(success).ToString("d MMM HH:mm:ss", L.Culture)) : L.Text("NoSuccess");
         int interval = schedule.PollInterval(settings, now, tracker.RestartGap && tracker.ConfirmedQueryGap);

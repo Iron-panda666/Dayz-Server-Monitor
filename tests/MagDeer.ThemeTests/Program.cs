@@ -22,6 +22,21 @@ internal static class Program
         var app = new App();
         app.InitializeComponent();
         Localization.Apply("en");
+        Test("Player card keeps queue separate from capacity and distinguishes zero from unavailable", () =>
+        {
+            var card = new PlayerCountDisplay();
+            var full = new ServerInfo("Fixture", "deerisle", "DayZ", 121, 121, "demo") { Queue = 21 };
+            var result = new QueryResult(DateTimeOffset.UtcNow, full, 87, QueryFailure.None, "fixture");
+            card.Update(result);
+            Assert(card.PlayerText == "121 / 121" && card.QueueText == "+21 in queue", "Queue was added to occupied slots");
+            Layout(card, 162, 140);
+            Assert(card.DesiredSize.Width <= 162 && card.DesiredSize.Height <= 140, "Player card exceeds its intended size");
+            card.Update(result with { Info = full with { Queue = 0 } }); Assert(card.QueueText == "Queue: 0", "Published zero was not shown");
+            card.Update(result with { Info = full with { Queue = null } }); Assert(card.QueueText == "Queue: N/A", "Missing queue became zero");
+            card.Update(result with { Failure = QueryFailure.Timeout }); Assert(card.PlayerText == "N/A" && card.QueueText == "Queue: N/A", "Failure retained old metrics");
+            Localization.Apply("cs"); card.Update(result); Assert(card.QueueText == "+21 ve frontě", "Queue translation failed");
+            Localization.Apply("en");
+        });
         Test("Embedded original T/R ICO contains seven usable sizes", () =>
         {
             var resource = Application.GetResourceStream(new Uri("pack://application:,,,/DayzServerMonitor;component/Assets/app.ico"))!;
@@ -163,7 +178,7 @@ internal static class Program
     private static void RenderComparison(string path)
     {
         Localization.Apply("en");
-        const int width = 480, height = 400;
+        const int width = 480, height = 460;
         var images = new List<BitmapSource>();
         foreach (var choice in ThemeManager.Choices)
         {
@@ -181,8 +196,18 @@ internal static class Program
             metrics.ColumnDefinitions.Add(new ColumnDefinition()); metrics.ColumnDefinitions.Add(new ColumnDefinition());
             foreach (var (title, value, column) in new[] { (L.Text("Players"), "87 / 121", 0), ("UDP QUERY RTT", "32 ms", 1) })
             {
-                var content = new StackPanel(); content.Children.Add(Text(title, "MutedBrush", 11));
-                var number = Text(value, "MetricBrush", 30); number.FontWeight = FontWeights.SemiBold; content.Children.Add(number);
+                var content = new StackPanel();
+                if (column == 0)
+                {
+                    var counts = new PlayerCountDisplay();
+                    counts.Update(new(DateTimeOffset.Parse("2026-10-30T00:00:00Z", CultureInfo.InvariantCulture), new ServerInfo("DEMO", "deerisle", "DayZ", 121, 121, "demo") { Queue = 21 }, 32, QueryFailure.None, "DEMO"));
+                    content.Children.Add(counts);
+                }
+                else
+                {
+                    content.Children.Add(Text(title, "MutedBrush", 11));
+                    var number = Text(value, "MetricBrush", 30); number.FontWeight = FontWeights.SemiBold; content.Children.Add(number);
+                }
                 var card = new Border { Style = (Style)Application.Current.FindResource("Card"), Padding = new Thickness(15, 9, 15, 9), Child = content,
                     Margin = column == 0 ? new Thickness(0, 0, 8, 0) : new Thickness(0) };
                 Grid.SetColumn(card, column); metrics.Children.Add(card);

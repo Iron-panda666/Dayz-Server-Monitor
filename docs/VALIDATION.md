@@ -1,4 +1,4 @@
-# Validation · 1.7.0
+# Validation · 1.7.1
 
 The release is built for Windows x64 using .NET SDK 8.0.427. The automated checks cover the areas below. They do not establish multi-day reliability or confirm any provider's restart schedule.
 
@@ -30,10 +30,14 @@ The app does not read the game process, memory or chat. UDP query replies cannot
 
 ## Stream Deck release checks
 
-All 42 core checks, 10 WPF checks and 9 Node/plugin checks passed. The additional core checks exercise DayZ clock/queue keywords, the real named-pipe protocol, shared cooldown, unsupported-command rejection, discovery cleanup and bounded shutdown. The full A2S fixture also checks that extended clock fields reach ServerInfo without affecting player metrics.
+All 42 core checks, 11 WPF checks and 10 Node/plugin checks passed. The additional core checks exercise DayZ clock/queue keywords, the real named-pipe protocol, shared cooldown, unsupported-command rejection, discovery cleanup and bounded shutdown. The full A2S fixture also checks that extended clock fields reach ServerInfo without affecting player metrics.
 
 The plugin tests run the actual official-SDK bundle against a local simulated Stream Deck WebSocket host and a C# console bridge fixture. They cover live state delivery, short press, one-second hold, pinned keys, the cooldown shared across keys and MONITOR OFF after fixture shutdown. Separate checks cover assumed day/night boundary crossing, midnight, missing/invalid fields, N/A/stale data, optional restart overrides, SVG escaping, history gaps and real 72-pixel rasterization. No desktop Window or real Stream Deck app is opened. The fixture is isolated from real monitor discovery files and does not query a game server.
 
 Elgato CLI 1.10.4 validated and packaged the plugin. Its only warning is the private GitHub project URL returning 404 to anonymous requests. The installer has not been submitted to Marketplace. Physical MK.2 installation, actual key-lens readability, Stream Deck sleep/reconnect, cross-account ACL denial and long-running resource use are not claimed as tested.
 
 A real MAG DEER query on 30 October 2026 at 01:44:59 Prague time confirmed the final parser: 47/121 players, published game clock 02:52, base multiplier 4, extra night multiplier 4, queue 0 and UDP RTT about 134 ms. The first live check exposed a placeholder legacy AppID; the parser now also uses the extended Steam GameID and a regression fixture covers that form. This is one historical query, not a guarantee of present values or accurate sunlight prediction.
+
+## Queue display · 1.7.1
+
+The real WPF player card now distinguishes 121/121 plus 21 waiting, published zero, missing queue data and failed queries, with localized labels. Stream Deck rendering keeps the queue visible while a refresh countdown is shown, without adding it to occupied slots or graph samples. The updated English previews render both cases without desktop windows. Total: 42 core, 11 WPF and 10 plugin checks.

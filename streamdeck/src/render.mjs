@@ -67,7 +67,8 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '')
     const ageLabel = Number.isFinite(age) ? age < 60 ? `${age}s OLD` : `${Math.floor(age / 60)}m OLD` : 'NO QUERY';
     const footer = feedback || (state.refreshRemainingSeconds > 0 ? `WAIT ${state.refreshRemainingSeconds}s` : stale ? 'STALE' : '');
     if (['game', 'players', 'history', 'rtt'].includes(view) && !available) {
-      body += text(state.status === 'Offline' ? 'OFFLINE' : 'QUERY', 26, 9) + metric('N/A', '#ffdb7e') + text(footer || ageLabel, 64, 7);
+      body += text(state.status === 'Offline' ? 'OFFLINE' : 'QUERY', 26, 9) + metric('N/A', '#ffdb7e')
+        + (view === 'players' ? text('QUEUE N/A', 60, 8) + text(footer || ageLabel, 70, 6) : text(footer || ageLabel, 64, 7));
     } else if (view === 'game') {
       const game = estimatedGameClock(state, settings);
       body += text('GAME TIME', 24) + metric(game?.text ?? 'N/A', '#f4f8fb', 17)
@@ -77,7 +78,10 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '')
         + text(footer || (!state.scheduleConfirmed ? 'PLAN?' : 'CONFIRMED'), 63, 7);
     } else if (view === 'players') {
       const players = Number.isInteger(state.players) && Number.isInteger(state.capacity) ? `${state.players}/${state.capacity}` : 'N/A';
-      body += text('PLAYERS', 24) + metric(players) + text(footer || (state.queue > 0 ? `QUEUE ${state.queue}` : ageLabel), 63, 7);
+      const waiting = Number.isInteger(state.queue) && state.queue >= 0 && state.queue <= 10000 ? state.queue : null;
+      body += text('PLAYERS', 24) + metric(players)
+        + text(waiting === null ? 'QUEUE N/A' : waiting > 0 ? `+${waiting} IN QUEUE` : 'QUEUE 0', 60, 8, waiting > 0 ? '#ffdb7e' : '#b8cbd4')
+        + text(footer || ageLabel, 70, 6);
     } else if (view === 'rtt') {
       body += text('UDP RTT', 24) + metric(Number.isFinite(state.rttMs) ? `${Math.round(state.rttMs)} ms` : 'N/A', '#f4f8fb', 17) + text(footer || ageLabel, 63, 7);
     } else if (view === 'logout') {
