@@ -58,21 +58,22 @@ $manifest = [ordered]@{
 $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $destination "package.json") -Encoding utf8
 $files | ForEach-Object { (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant() + "  " + [IO.Path]::GetFileName($_) } | Set-Content -LiteralPath (Join-Path $destination "SHA256SUMS.txt") -Encoding utf8
 @"
-Dayz Server Monitor $Version - PORTABLE / NO INSTALLATION
+Dayz Server Monitor $Version
 
-1. Extract $portableName into a writable folder.
-2. Run DayzServerMonitor.exe. No setup wizard, administrator rights or separate .NET install is needed.
-3. Keep config.json and the data folder when updating. They are not included in the ZIP.
+Portable build for Windows 10/11 x64. Extract $portableName into a writable folder
+and run DayzServerMonitor.exe. The .NET runtime is included; no setup or admin rights needed.
 
-The Windows ZIP includes the monitor and, in a full build, the Stream Deck plugin installer.
-The .streamDeckPlugin is OPTIONAL and must be installed in the Elgato Stream Deck application.
-Installing that plugin does not install the monitor. The monitor remains portable.
-The standalone plugin is a convenience copy of the same installer inside the Windows ZIP.
-The source ZIP is for developers. SHA256SUMS.txt verifies the files in this folder.
-Nothing is launched or installed by packaging.
+Close the old copy before updating. Keep config.json and data; neither is in the ZIP.
 
-CZ: Prenosna verze bez instalace. Rozbal Windows ZIP a spust DayzServerMonitor.exe.
-Pri aktualizaci ponech config.json a data. Volitelny plugin pro Stream Deck se instaluje samostatne.
+The full Windows ZIP includes the Stream Deck installer. Install that optional plugin
+into Elgato Stream Deck. The monitor itself stays portable. The standalone plugin
+is the same file as the one in the Windows ZIP.
+
+The source ZIP contains the matching sources. SHA256SUMS.txt lists this folder's checksums.
+Packaging does not open the app or an installer.
+
+CZ: Přenosná verze bez instalace. Rozbal ZIP a spusť DayzServerMonitor.exe.
+Při aktualizaci ponech config.json a data. Plugin se instaluje do Elgato Stream Deck.
 "@ | Set-Content -LiteralPath (Join-Path $destination "README.txt") -Encoding utf8
 if ((Get-FileHash -LiteralPath $portable -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath (Join-Path $destination $portableName) -Algorithm SHA256).Hash) { throw "Portable package copy failed verification" }
 Write-Host "Portable packages: $destination"

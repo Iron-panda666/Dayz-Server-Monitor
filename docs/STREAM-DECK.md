@@ -8,7 +8,7 @@ The plugin uses Elgato's SDK and renders for 72 x 72-pixel MK.2 keys. It needs W
 
 1. Unpack the Windows ZIP. Keep `config.json` and `data` when upgrading.
 2. Start `DayzServerMonitor.exe` and select a server. It can stay minimized.
-3. Install `Dayz-Server-Monitor-1.9.1.streamDeckPlugin`, included in the ZIP and ReleasePackages folder.
+3. Install `Dayz-Server-Monitor-1.9.2.streamDeckPlugin`, included in the ZIP and ReleasePackages folder.
 4. Drag Cycle server information or Pinned server information from the Dayz Server Monitor action list onto a key.
 
 Direct installation needs no Marketplace account or extra driver. Run both apps under the same Windows account, without elevation. The plugin does not launch the monitor. A custom key image/title can cover its generated display.

@@ -7,8 +7,11 @@ Recorded release results for Windows x64, built with .NET SDK 8.0.427:
 | 1.8.0 | 42 | 15 | 11 | 68 |
 | 1.9.0 | 58 | 16 | 15 | 89 |
 | 1.9.1 | 58 | 20 | 15 | 93 |
+| 1.9.2 | 58 | 20 | 15 | 93 |
 
 These are automated check counts. The outstanding physical/live checks are listed at the end.
+
+Version 1.9.2 repackages the current app and documentation. The app/plugin version and HTTP user agent were updated; monitoring behavior is unchanged. All 93 checks passed before packaging.
 
 ## Query, time and storage
 

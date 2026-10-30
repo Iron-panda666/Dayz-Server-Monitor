@@ -32,7 +32,7 @@ test('real official-SDK plugin exchanges state with the C# pipe fixture and shar
     const reply = await client.request(); assert.equal(reply.state.players, 39); assert.equal(reply.monitors.length, 2); client.stop();
     if (!server.address()) await once(server, 'listening');
     const info = { application: { font: 'Segoe UI', language: 'en', platform: 'windows', platformVersion: '10', version: '7.1.0' },
-      plugin: { uuid: 'com.iron-panda666.dayz-server-monitor', version: '1.9.1.0' },
+      plugin: { uuid: 'com.iron-panda666.dayz-server-monitor', version: '1.9.2.0' },
       devices: [{ id: 'mock-mk2', name: 'MK.2 console fixture', type: 0, size: { columns: 5, rows: 3 } }], colors: {} };
     const connected = once(server, 'connection');
     plugin = spawn(process.execPath, ['bin/plugin.js', '-port', String(server.address().port), '-pluginUUID', 'fixture-plugin', '-registerEvent', 'registerPlugin', '-info', JSON.stringify(info)],

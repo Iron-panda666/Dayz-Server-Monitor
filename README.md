@@ -8,7 +8,7 @@ Windows monitor for DayZ servers, built for a second screen. It queries the serv
 
 ## Run it
 
-Download `Dayz-Server-Monitor-1.9.1-win-x64.zip`, unpack it into a writable folder and run `DayzServerMonitor.exe`. The .NET runtime is bundled. No installer, account, API key or admin rights needed.
+Download `Dayz-Server-Monitor-1.9.2-win-x64.zip`, unpack it into a writable folder and run `DayzServerMonitor.exe`. The .NET runtime is bundled. No installer, account, API key or admin rights needed.
 
 Settings go into `config.json` beside the EXE; query history goes into `data`. Close the old copy before updating and keep both. To use another data folder:
 
@@ -44,7 +44,7 @@ World clocks and 12/24-hour format are under Settings -> Time & clocks. Optional
 
 The local session counter uses the actual DayZ process start time. It excludes Steam and launchers but includes the game's menus. It is not a server-connection timer or Steam overlay counter. No game memory or chat is read.
 
-The ZIP includes `Dayz-Server-Monitor-1.9.1.streamDeckPlugin` for Stream Deck MK.2. A short press cycles views; a one-second hold requests a refresh. Each key can follow the desktop selection or a separate monitored server. Views include game time, restart countdown, players, history, UDP RTT, logout reminder and local session. The published game clock may be extrapolated between queries; day/night is an estimate. [Plugin installation and display details](docs/STREAM-DECK.md).
+The ZIP includes `Dayz-Server-Monitor-1.9.2.streamDeckPlugin` for Stream Deck MK.2. A short press cycles views; a one-second hold requests a refresh. Each key can follow the desktop selection or a separate monitored server. Views include game time, restart countdown, players, history, UDP RTT, logout reminder and local session. The published game clock may be extrapolated between queries; day/night is an estimate. [Plugin installation and display details](docs/STREAM-DECK.md).
 
 Settings -> Integrations has optional Prometheus metrics for Grafana, JSON for Home Assistant and service checks. Discord uses its operator's status report. Spotify, WhatsApp and Steam checks test web reachability from this PC. They do not establish global service health. [Configuration examples](docs/INTEGRATIONS.md) | [Other games and missing adapters](docs/MONITOR-TYPES.md).
 
@@ -56,8 +56,8 @@ Install .NET 8 SDK and Node.js 24+ on Windows:
 .\build.ps1
 ```
 
-The script builds the solution, runs the checks and packages the Windows EXE, plugin and source ZIP. Outputs go into `artifacts` and `ReleasePackages/v1.9.1`. It does not launch the app. For Visual Studio 2022, open `DayzServerMonitor.sln` with the .NET desktop workload installed.
+The script builds the solution, runs the checks and packages the Windows EXE, plugin and source ZIP. Outputs go into `artifacts` and `ReleasePackages/v1.9.2`. It does not launch the app. For Visual Studio 2022, open `DayzServerMonitor.sln` with the .NET desktop workload installed.
 
-Version 1.9.1 passed 58 core, 20 WPF and 15 plugin checks. Physical LCD/DPI behavior, the full settings workflow and multi-day operation still need testing. [Test results](docs/VALIDATION.md).
+Version 1.9.2 passed 58 core, 20 WPF and 15 plugin checks. Physical LCD/DPI behavior, the full settings workflow and multi-day operation still need testing. [Test results](docs/VALIDATION.md).
 
 This is a hobby project built with AI-assisted vibe coding. The source and T/R icon are MIT-licensed. Bundled dependencies keep their own [notices](THIRD_PARTY_NOTICES.md). The project has no official affiliation with Bohemia Interactive, MAG, Sunnyvale, Valve or Elgato. [Names and trademarks](docs/TRADEMARKS.md).
