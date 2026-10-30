@@ -1,5 +1,5 @@
 <Window x:Class="MagDeer.App.SettingsWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="{DynamicResource L.SettingsTitle}" Style="{StaticResource {x:Type Window}}" Width="720" Height="800" MinWidth="540" MinHeight="540" WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+ Title="{DynamicResource L.SettingsTitle}" Style="{StaticResource {x:Type Window}}" Width="720" Height="800" MinWidth="280" MinHeight="320" WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
   <Grid Margin="24">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <StackPanel Margin="0,0,0,18"><TextBlock Text="{DynamicResource L.SettingsHeading}" FontSize="26" FontWeight="Light"/><TextBlock Text="{DynamicResource L.SettingsIntro}" Foreground="{DynamicResource MutedBrush}" Margin="0,6,0,0"/></StackPanel>
@@ -31,6 +31,11 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="12,4,18,8">
           <TextBlock Text="{DynamicResource L.Theme}"/><ComboBox x:Name="ThemeBox" DisplayMemberPath="Label"/>
           <TextBlock Text="{DynamicResource L.ThemeNote}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/>
+          <TextBlock Text="{DynamicResource L.DisplayProfile}"/><ComboBox x:Name="DisplayProfileBox" DisplayMemberPath="Label"/>
+          <TextBlock Text="{DynamicResource L.DisplayProfileHelp}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/>
+          <CheckBox x:Name="MinimizeCloseBox" Content="{DynamicResource L.MinimizeOnClose}"/>
+          <TextBlock Text="{DynamicResource L.MinimizeTarget}"/><ComboBox x:Name="MinimizeTargetBox" DisplayMemberPath="Label"/>
+          <TextBlock Text="{DynamicResource L.CloseHelp}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/>
           <TextBlock Text="{DynamicResource L.Language}"/><ComboBox x:Name="LanguageBox" DisplayMemberPath="Label"/>
           <TextBlock Text="{DynamicResource L.LanguageNote}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,16"/>
           <CheckBox x:Name="NtpEnabledBox" Content="{DynamicResource L.NtpEnabled}"/>

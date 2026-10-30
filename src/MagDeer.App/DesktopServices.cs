@@ -62,11 +62,40 @@ public static class DesktopServices
         window.ResizeMode = ResizeMode.NoResize;
         SetWindowPos(handle, IntPtr.Zero, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x0014);
     }
+    public static void SizeForProfile(Window window, DisplayProfile profile)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
+        double scale = Math.Max(96, GetDpiForWindow(handle)) / 96.0;
+        var area = Forms.Screen.FromHandle(handle).WorkingArea;
+        window.Width = Math.Clamp(profile.PixelWidth / scale, window.MinWidth, Math.Max(window.MinWidth, area.Width / scale));
+        window.Height = Math.Clamp(profile.PixelHeight / scale, window.MinHeight, Math.Max(window.MinHeight, area.Height / scale));
+        window.Left = Math.Clamp(window.Left, area.Left / scale, Math.Max(area.Left / scale, area.Right / scale - window.Width));
+        window.Top = Math.Clamp(window.Top, area.Top / scale, Math.Max(area.Top / scale, area.Bottom / scale - window.Height));
+    }
+    public static void PlaceSettingsWindow(Window window, Window? owner)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
+        var screen = owner is null ? Forms.Screen.FromHandle(handle) : Forms.Screen.FromHandle(new WindowInteropHelper(owner).Handle);
+        if (screen.WorkingArea.Width < 560 || screen.WorkingArea.Height < 400)
+            screen = Screens.OrderByDescending(x => x.WorkingArea.Width * (long)x.WorkingArea.Height).First();
+        var area = screen.WorkingArea;
+        SetWindowPos(handle, IntPtr.Zero, area.Left, area.Top, 0, 0, 0x0015);
+        double scale = Math.Max(96, GetDpiForWindow(handle)) / 96.0;
+        window.Width = Math.Max(window.MinWidth, Math.Min(720, area.Width / scale - 24));
+        window.Height = Math.Max(window.MinHeight, Math.Min(800, area.Height / scale - 24));
+        window.Left = area.Left / scale + (area.Width / scale - window.Width) / 2;
+        window.Top = area.Top / scale + (area.Height / scale - window.Height) / 2;
+    }
 }
 
 public sealed class Notifications : IDisposable
 {
     public event Action<string>? Failed;
+    public event Action? ExitRequested;
+    private readonly Window window;
+    private bool hiddenToTray;
+    private WindowState restoreState;
+    private readonly Forms.ToolStripMenuItem restoreItem = new(), quitItem = new();
     private readonly Forms.NotifyIcon icon = new()
     {
         Icon = System.Drawing.SystemIcons.Information,
@@ -75,6 +104,7 @@ public sealed class Notifications : IDisposable
     };
     public Notifications(Window window)
     {
+        this.window = window;
         var resource = Application.GetResourceStream(new Uri("pack://application:,,,/DayzServerMonitor;component/Assets/app.ico"));
         if (resource is not null)
         {
@@ -82,7 +112,25 @@ public sealed class Notifications : IDisposable
             using var original = new System.Drawing.Icon(stream);
             icon.Icon = (System.Drawing.Icon)original.Clone();
         }
-        icon.BalloonTipClicked += (_, _) => { window.Show(); window.WindowState = WindowState.Normal; window.Activate(); };
+        var menu = new Forms.ContextMenuStrip(); menu.Items.Add(restoreItem); menu.Items.Add(quitItem);
+        icon.ContextMenuStrip = menu;
+        restoreItem.Click += (_, _) => Restore();
+        quitItem.Click += (_, _) => ExitRequested?.Invoke();
+        icon.DoubleClick += (_, _) => Restore();
+        icon.BalloonTipClicked += (_, _) => Restore();
+    }
+    public void Restore()
+    {
+        hiddenToTray = false; window.ShowInTaskbar = true; window.Show();
+        window.WindowState = restoreState == WindowState.Maximized ? WindowState.Maximized : WindowState.Normal;
+        window.Activate();
+    }
+    public void HideToTray()
+    {
+        try { icon.Visible = true; }
+        catch (System.ComponentModel.Win32Exception ex) { Failed?.Invoke(L.Text("NotificationAreaError", L.Error(ex))); window.WindowState = WindowState.Minimized; return; }
+        restoreState = window.WindowState; hiddenToTray = true;
+        window.ShowInTaskbar = false; window.Hide();
     }
     public void Show(MonitorSettings s, string title, string body)
     {
@@ -98,8 +146,9 @@ public sealed class Notifications : IDisposable
     }
     public void Configure(MonitorSettings s)
     {
-        try { icon.Visible = s.WindowsNotifications; }
+        restoreItem.Text = L.Text("Restore"); quitItem.Text = L.Text("Quit");
+        try { icon.Visible = hiddenToTray || s.WindowsNotifications || (s.MinimizeOnClose && s.MinimizeTarget == "Tray"); }
         catch (System.ComponentModel.Win32Exception ex) { Failed?.Invoke(L.Text("NotificationAreaError", L.Error(ex))); }
     }
-    public void Dispose() { icon.Visible = false; var image = icon.Icon; icon.Dispose(); image?.Dispose(); }
+    public void Dispose() { icon.Visible = false; var image = icon.Icon; var menu = icon.ContextMenuStrip; icon.Dispose(); menu?.Dispose(); image?.Dispose(); }
 }

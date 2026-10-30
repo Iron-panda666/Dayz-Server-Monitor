@@ -1,4 +1,4 @@
-# Validation · 1.7.2
+# Validation · 1.8.0
 
 The release is built for Windows x64 using .NET SDK 8.0.427. The automated checks cover the areas below. They do not establish multi-day reliability or confirm any provider's restart schedule.
 
@@ -16,7 +16,7 @@ The release is built for Windows x64 using .NET SDK 8.0.427. The automated check
 
 ## WPF checks without windows
 
-The tests load the compiled application resources without creating a Window or calling Show/Run. They check readable selected ComboBox labels, language updates, world-clock labels, all four themes and their text contrast. They render theme, world-clock and dated graph examples into PNG files. The application icon is checked from its embedded ICO resource.
+The tests load the compiled application resources without creating a Window or calling Show/Run. They check readable selected ComboBox labels, language updates, world-clock labels, all ten themes and their text contrast. They render theme, world-clock and dated graph examples into PNG files. The application icon is checked from its embedded ICO resource.
 
 Closing is deferred until after the original Closing event returns. The window is hidden, network tasks are canceled, and settings saving runs off the UI thread in parallel with cleanup. Cleanup has a 1.2-second wait budget. A stalled disk can still prevent the last settings write from finishing; normal local storage is expected for the portable data folder. The app does not forcibly kill another process.
 
@@ -30,7 +30,7 @@ The app does not read the game process, memory or chat. UDP query replies cannot
 
 ## Stream Deck release checks
 
-All 42 core checks, 11 WPF checks and 11 Node/plugin checks passed. The additional core checks exercise DayZ clock/queue keywords, the real named-pipe protocol, shared cooldown, unsupported-command rejection, discovery cleanup and bounded shutdown. The full A2S fixture also checks that extended clock fields reach ServerInfo without affecting player metrics.
+All 42 core checks, 15 WPF checks and 11 Node/plugin checks passed. The additional core checks exercise DayZ clock/queue keywords, the real named-pipe protocol, shared cooldown, unsupported-command rejection, discovery cleanup and bounded shutdown. The full A2S fixture also checks that extended clock fields reach ServerInfo without affecting player metrics.
 
 The plugin tests run the actual official-SDK bundle against a local simulated Stream Deck WebSocket host and a C# console bridge fixture. They cover live state delivery, short press, one-second hold, pinned keys, the cooldown shared across keys and MONITOR OFF after fixture shutdown. Separate checks cover assumed day/night boundary crossing, midnight, missing/invalid fields, N/A/stale data, optional restart overrides, SVG escaping, history gaps and real 72-pixel rasterization. No desktop Window or real Stream Deck app is opened. The fixture is isolated from real monitor discovery files and does not query a game server.
 
@@ -47,3 +47,13 @@ The real WPF player card now distinguishes 121/121 plus 21 waiting, published ze
 The plugin now sends SVG images as base64 data URLs, as required by the Stream Deck image API. Previously, raw SVG was forwarded by the SDK and the real host kept showing the static START THE APP icon; the simulated host had accepted that invalid payload. The integration fixture now rejects raw markup, and a round-trip encoding check covers the transmitted image.
 
 An access-denied pipe connection gets a separate CHECK ADMIN face instead of being mistaken for a closed monitor. A live local snapshot from the running 1.7.1 monitor succeeded after it was reopened without elevation; the user subsequently confirmed that the physical key displays server data. The monitor and its current-user-only pipe security are unchanged.
+
+## Adaptive dashboard and close options · 1.8.0
+
+The actual DashboardView is rendered without creating a Window, starting monitoring or changing foreground applications. Tests move the same chart and player controls through stacked, wide, bar, portrait and ribbon layouts and confirm their identity/data is retained. A separate layout sweep checks all 27 presets at 100%, 125%, 150% and 200% DPI, both compact states and with/without world clocks, checking essential tiles, bounds and overlap. These are geometry checks, not physical LCD acceptance. Small displays clamp to the minimum logical window size when DPI scaling would otherwise make it smaller.
+
+Ten complete palettes pass text and metric contrast checks, resource updates and JSON validation/roundtrip. The English previews include actual desktop, wide, 7.9/8.8/11.9-style bars, portrait, mini and ribbon dashboard controls. Representative hardware sizes, connection boundaries and source links are in [display research](DISPLAYS.md).
+
+The close-to-taskbar/tray options and display profile IDs are checked through settings validation/roundtrip. Code review confirms that hiding leaves the monitoring timer and Stream Deck bridge running, explicit Quit bypasses minimization, settings/bounds are saved before hiding, and the tray offers restore/quit. Main window startup is guarded against duplicate Loaded events. The full live tray/close workflow, DPI changes between physical screens, small-screen settings placement and extended continuous use still need hands-on verification. No physical LCD compatibility is claimed from rendering alone.
+
+The build places the Windows ZIP, source ZIP, standalone Stream Deck installer and checksum file together in the ignored local release folder. Published packages exclude private config.json and data. Total: 42 core + 15 WPF + 11 plugin checks.

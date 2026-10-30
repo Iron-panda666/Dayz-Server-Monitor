@@ -10,6 +10,7 @@ public sealed class PlayerChart : FrameworkElement
     public bool Use24HourClock { get; set; } = true;
     public PlayerChart()
     {
+        ClipToBounds = true;
         ToolTip = detail;
         ToolTipService.SetInitialShowDelay(this, 100);
         ToolTipService.SetShowDuration(this, 60000);
@@ -42,7 +43,8 @@ public sealed class PlayerChart : FrameworkElement
         base.OnRender(dc);
         if (ActualWidth < 1 || ActualHeight < 1) return;
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize));
-        double bottom = Math.Max(8, ActualHeight - 66);
+        bool times = ActualHeight >= 38, dates = ActualHeight >= 70, captionVisible = ActualHeight >= 110;
+        double bottom = Math.Max(8, ActualHeight - (captionVisible ? 66 : dates ? 44 : times ? 22 : 2));
         var grid = new Pen((Brush)Application.Current.FindResource("BorderBrush"), 1);
         dc.DrawLine(grid, new Point(0, bottom), new Point(ActualWidth, bottom));
         dc.DrawLine(grid, new Point(0, bottom / 2), new Point(ActualWidth, bottom / 2));
@@ -66,13 +68,15 @@ public sealed class PlayerChart : FrameworkElement
         var ticks = new[] { range.Start, range.Start + (range.End - range.Start) / 2, range.End };
         for (int i = 0; i < ticks.Length; i++)
         {
+            if (!times || (i == 0 && ActualWidth < 160)) continue;
             // Two labels suffice for small windows or a 12-hour clock.
             if (i == 1 && ActualWidth < (Use24HourClock ? 400 : 540)) continue;
             double x = i * (ActualWidth - 14) / 2 + 7;
             dc.DrawLine(grid, new Point(x, bottom), new Point(x, bottom + 4));
             DrawLabel(dc, Time(ticks[i]), muted, x, bottom + 6, i);
-            DrawLabel(dc, RestartSchedule.CzechTime(ticks[i]).ToString("d MMM yyyy", L.Culture), muted, x, bottom + 22, i);
+            if (dates) DrawLabel(dc, RestartSchedule.CzechTime(ticks[i]).ToString("d MMM yyyy", L.Culture), muted, x, bottom + 22, i);
         }
+        if (!captionVisible) return;
         var caption = L.Text("ChartLast", FullTime(QueryTimeline.TimeOf(samples[^1])));
         var text = Text(caption, muted);
         dc.PushClip(new RectangleGeometry(new Rect(0, bottom + 43, ActualWidth, 20)));

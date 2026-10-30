@@ -12,7 +12,13 @@ public static class ThemeManager
         new ThemeChoice("Light", "ThemeLight", false),
         new ThemeChoice("Dark", "ThemeDark", true),
         new ThemeChoice("Orange", "ThemeOrange", true),
-        new ThemeChoice("Spotify", "ThemeSpotify", true)
+        new ThemeChoice("Spotify", "ThemeSpotify", true),
+        new ThemeChoice("Ocean", "ThemeOcean", true),
+        new ThemeChoice("XP", "ThemeXP", false),
+        new ThemeChoice("Aero", "ThemeAero", false),
+        new ThemeChoice("Anime", "ThemeAnime", true),
+        new ThemeChoice("Matrix", "ThemeMatrix", true),
+        new ThemeChoice("Violet", "ThemeViolet", true)
     };
 
     public static bool IsDark(string theme) => Choices.FirstOrDefault(x => x.Id == theme)?.IsDark == true;
@@ -25,10 +31,36 @@ public static class ThemeManager
             var brush = (SolidColorBrush)new BrushConverter().ConvertFromString(color)!;
             brush.Freeze(); Application.Current.Resources[key] = brush;
         }
+        Brush caption = theme is "XP" or "Aero"
+            ? new LinearGradientBrush((Color)ColorConverter.ConvertFromString(theme == "XP" ? "#A8CFFF" : "#C5E6F6"),
+                (Color)ColorConverter.ConvertFromString(colors["HeaderBrush"]), 90)
+            : (Brush)Application.Current.Resources["HeaderBrush"];
+        caption.Freeze(); Application.Current.Resources["CaptionBackgroundBrush"] = caption;
+    }
+
+    private static IReadOnlyDictionary<string, string> Tint(string basis, params (string Key, string Color)[] values)
+    {
+        var colors = new Dictionary<string, string>(Colors(basis));
+        foreach (var (key, color) in values) colors[key] = color;
+        return colors;
     }
 
     public static IReadOnlyDictionary<string, string> Colors(string theme) => theme switch
     {
+        "Ocean" => Tint("Dark", ("BackgroundBrush", "#0B1D30"), ("PanelBrush", "#142E48"), ("HeaderBrush", "#10253D"),
+            ("AccentBrush", "#7CD8FF"), ("BorderBrush", "#406D92"), ("DeepBrush", "#0E2239"), ("AccentButtonBrush", "#234F72")),
+        "XP" => Tint("Light", ("BackgroundBrush", "#ECE9D8"), ("PanelBrush", "#FFFEF5"), ("HeaderBrush", "#DBE9FB"),
+            ("RaisedBrush", "#E6EDD6"), ("AccentBrush", "#174CA5"), ("BorderBrush", "#8AA4C2"), ("SuccessBrush", "#235C19"), ("AccentButtonBrush", "#D7E8CA")),
+        "Aero" => Tint("Light", ("BackgroundBrush", "#E8F3F9"), ("PanelBrush", "#F8FCFF"), ("HeaderBrush", "#E3F4FF"),
+            ("RaisedBrush", "#DCEBF6"), ("AccentBrush", "#075D91"), ("BorderBrush", "#99BED7"), ("DeepBrush", "#E6F2FA")),
+        "Anime" => Tint("Dark", ("BackgroundBrush", "#231A30"), ("PanelBrush", "#34243F"), ("HeaderBrush", "#2B2038"),
+            ("RaisedBrush", "#4D365B"), ("AccentBrush", "#FFB4DF"), ("BorderBrush", "#896391"), ("DeepBrush", "#291D34"), ("MetricBrush", "#FFF4FC"), ("AccentButtonBrush", "#543448")),
+        "Matrix" => Tint("Dark", ("BackgroundBrush", "#030A06"), ("PanelBrush", "#091A10"), ("HeaderBrush", "#07140C"),
+            ("RaisedBrush", "#173924"), ("DeepBrush", "#06110A"), ("TextBrush", "#BDFFD0"), ("MetricBrush", "#CAFFD8"),
+            ("MutedBrush", "#9DDBAD"), ("SubtleBrush", "#8EC69D"), ("AccentBrush", "#63FF94"), ("BorderBrush", "#326244"),
+            ("InputBrush", "#0B2114"), ("InputBorderBrush", "#59936C"), ("HoverBrush", "#244330"), ("SelectionBrush", "#21422D"), ("AccentButtonBrush", "#193A25")),
+        "Violet" => Tint("Dark", ("BackgroundBrush", "#1B1730"), ("PanelBrush", "#2B2545"), ("HeaderBrush", "#211C39"),
+            ("AccentBrush", "#C8B4FF"), ("BorderBrush", "#746294"), ("DeepBrush", "#201B36"), ("AccentButtonBrush", "#45345D")),
         "Dark" => new Dictionary<string, string>
         {
             ["BackgroundBrush"] = "#171C23", ["PanelBrush"] = "#252D38", ["RaisedBrush"] = "#364352",

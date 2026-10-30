@@ -39,7 +39,7 @@ if (-not $SkipStreamDeck) {
     }
     finally { Pop-Location }
 }
-foreach ($preview in @("theme-comparison.png", "world-clocks.png", "query-chart.png")) {
+foreach ($preview in @("theme-comparison.png", "world-clocks.png", "query-chart.png", "layout-desktop.png", "layout-wide.png", "layout-bar-79.png", "layout-bar-88.png", "layout-bar-119.png", "layout-portrait.png", "layout-mini.png", "layout-ribbon.png")) {
     $path = Join-Path "artifacts\previews" $preview
     if (Test-Path -LiteralPath $path) {
         New-Item -ItemType Directory -Path "docs\images" -Force | Out-Null
@@ -94,4 +94,28 @@ Compress-Archive -Path (Join-Path $sourceStage "*") -DestinationPath $sourceZip 
 Get-FileHash -LiteralPath $portableZip, $sourceZip -Algorithm SHA256 | Format-Table Hash, Path -AutoSize
 Write-Host "Ready: $portableZip"
 Write-Host "Source: $sourceZip"
+# A predictable handoff folder. Runtime configuration/history is never copied here.
+$handoff = Join-Path $PSScriptRoot "release"
+New-Item -ItemType Directory -Path $handoff -Force | Out-Null
+Copy-Item -LiteralPath $portableZip, $sourceZip -Destination $handoff -Force
+$hashFiles = @($portableZip, $sourceZip, (Join-Path $publish "DayzServerMonitor.exe"))
+if (-not $SkipStreamDeck) {
+    Copy-Item -LiteralPath $pluginPackage -Destination $handoff -Force
+    $hashFiles += $pluginPackage
+}
+$checksumPath = Join-Path $PSScriptRoot "artifacts\SHA256SUMS-$version.txt"
+$hashFiles | ForEach-Object { $hash = Get-FileHash -LiteralPath $_ -Algorithm SHA256; $hash.Hash.ToLowerInvariant() + "  " + [IO.Path]::GetFileName($_) } | Set-Content -LiteralPath $checksumPath -Encoding utf8
+Copy-Item -LiteralPath $checksumPath -Destination $handoff -Force
+@"
+Dayz Server Monitor $version
+
+Unpack Dayz-Server-Monitor-$version-win-x64.zip into a writable folder.
+The ZIP contains DayzServerMonitor.exe and, in a full build, the Stream Deck plugin installer.
+Keep config.json and data when updating. The source ZIP is separate.
+The EXE checksum refers to the executable inside the Windows ZIP.
+
+Rozbal Windows ZIP do zapisovatelne slozky. Obsahuje program i instalator pluginu pro Stream Deck.
+Pri aktualizaci ponech config.json a data. Aplikace ani instalace pluginu se samy nespousteji.
+"@ | Set-Content -LiteralPath (Join-Path $handoff "README.txt") -Encoding utf8
+Write-Host "Handoff: $handoff"
 # Deliberately never launch the desktop app, change foreground windows or modify Windows startup.

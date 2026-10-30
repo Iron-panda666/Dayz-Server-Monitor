@@ -20,6 +20,7 @@ public partial class SettingsWindow : Window
     {
         public override string ToString() => Label;
     }
+    private sealed record CloseOption(string Id, string Label);
 
     public SettingsWindow(MonitorSettings settings, bool canConfirmOffline, bool isOffline)
     {
@@ -29,6 +30,7 @@ public partial class SettingsWindow : Window
         if (profiles.Count == 0) profiles.Add(ServerProfile.From(settings));
         InitializeComponent();
         SourceInitialized += (_, _) => DesktopServices.TitleBarTheme(this, ThemeManager.IsDark(settings.Theme));
+        Loaded += (_, _) => DesktopServices.PlaceSettingsWindow(this, Owner);
         NameBox.Text = settings.ServerName; IpBox.Text = settings.IpAddress;
         GamePortBox.Text = settings.GamePort.ToString(); QueryPortBox.Text = settings.QueryPort.ToString();
         ScheduleBox.Text = string.Join(", ", settings.RestartTimes);
@@ -45,6 +47,11 @@ public partial class SettingsWindow : Window
         NotifyBox.IsChecked = settings.WindowsNotifications; StartupBox.IsChecked = settings.StartWithWindows;
         ThemeBox.ItemsSource = ThemeManager.Choices;
         ThemeBox.SelectedItem = ThemeManager.Choices.FirstOrDefault(x => x.Id == settings.Theme) ?? ThemeManager.Choices[0];
+        DisplayProfileBox.ItemsSource = DisplayProfiles.All;
+        DisplayProfileBox.SelectedItem = DisplayProfiles.All.First(x => x.Id == settings.DisplayProfile);
+        MinimizeCloseBox.IsChecked = settings.MinimizeOnClose;
+        MinimizeTargetBox.ItemsSource = new[] { new CloseOption("Tray", L.Text("TargetTray")), new CloseOption("Taskbar", L.Text("TargetTaskbar")) };
+        MinimizeTargetBox.SelectedIndex = settings.MinimizeTarget == "Taskbar" ? 1 : 0;
         LanguageBox.ItemsSource = L.Languages;
         LanguageBox.SelectedItem = L.Languages.First(x => x.Id == settings.Language);
         NtpEnabledBox.IsChecked = settings.NtpEnabled;
@@ -92,6 +99,9 @@ public partial class SettingsWindow : Window
             s.WindowsNotifications = NotifyBox.IsChecked == true; s.StartWithWindows = StartupBox.IsChecked == true;
             s.MonitorDevice = (MonitorBox.SelectedItem as DisplayOption)?.Device ?? "";
             s.Theme = (ThemeBox.SelectedItem as ThemeManager.ThemeChoice)?.Id ?? "Light";
+            s.DisplayProfile = (DisplayProfileBox.SelectedItem as DisplayProfile)?.Id ?? "Auto";
+            s.MinimizeOnClose = MinimizeCloseBox.IsChecked == true;
+            s.MinimizeTarget = (MinimizeTargetBox.SelectedItem as CloseOption)?.Id ?? "Tray";
             s.Language = (LanguageBox.SelectedItem as L.LanguageChoice)?.Id ?? "en";
             s.NtpEnabled = NtpEnabledBox.IsChecked == true;
             s.NtpServer = NtpServerBox.Text.Trim();

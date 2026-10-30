@@ -10,7 +10,7 @@ These are enlarged renders of the actual key images with demo values, not a phot
 
 1. Download and unpack the Windows ZIP. Carry over your config.json and data folder if upgrading. Keep the executable in a stable, writable folder.
 2. Start DayzServerMonitor.exe yourself when convenient and select the server to watch. The plugin never starts the monitor or brings its window forward. The monitor can be minimized.
-3. Double-click **Dayz-Server-Monitor-1.7.2.streamDeckPlugin** and accept the installation in Stream Deck. The file is also inside the Windows ZIP.
+3. Double-click **Dayz-Server-Monitor-1.8.0.streamDeckPlugin** and accept the installation in Stream Deck. The file is also inside the Windows ZIP.
 4. Find **Dayz Server Monitor** in the Stream Deck action list. Drag **Cycle server information** onto a key.
 5. Leave the action's default artwork/title in place. A custom image in Stream Deck can override the plugin's changing display.
 

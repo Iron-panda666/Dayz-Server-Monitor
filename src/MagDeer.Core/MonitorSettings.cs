@@ -20,6 +20,9 @@ public sealed class MonitorSettings
     public List<ServerProfile> SavedServers { get; set; } = [];
     public int ServerCatalogVersion { get; set; }
     public string Theme { get; set; } = "Light";
+    public string DisplayProfile { get; set; } = "Auto";
+    public bool MinimizeOnClose { get; set; }
+    public string MinimizeTarget { get; set; } = "Tray";
     public string Language { get; set; } = "en";
     public List<WorldClock> WorldClocks { get; set; } = [];
     public bool NtpEnabled { get; set; }
@@ -74,8 +77,10 @@ public sealed class MonitorSettings
             throw new ArgumentException("Upomínka odhlášení musí být 2–120 minut, očekávaný kick 1 až o minutu méně než odhlášení.");
         if (RestartEveryHours is < 1 or > 24 || !TimeOnly.TryParseExact(RestartAnchor, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
             throw new ArgumentException("Interval restartu musí být 1–24 hodin a výchozí čas ve formátu HH:mm.");
-        if (Theme is not ("Light" or "Dark" or "Orange" or "Spotify"))
-            throw new ArgumentException("Vzhled musí být Light, Dark, Orange nebo Spotify.");
+        if (Theme is not ("Light" or "Dark" or "Orange" or "Spotify" or "Ocean" or "XP" or "Aero" or "Anime" or "Matrix" or "Violet"))
+            throw new ArgumentException("ThemeInvalid");
+        if (!DisplayProfiles.All.Any(x => x.Id == DisplayProfile)) throw new ArgumentException("ProfileInvalid");
+        if (MinimizeTarget is not ("Tray" or "Taskbar")) throw new ArgumentException("CloseTargetInvalid");
         if (Language is not ("en" or "cs" or "pl" or "de" or "es")) throw new ArgumentException("LanguageInvalid");
         if (WorldClocks is null || WorldClocks.Count > 8 || WorldClocks.Any(x => x is null)) throw new ArgumentException("WorldClocksLimit");
         foreach (var clock in WorldClocks) clock.Validate();
@@ -88,7 +93,7 @@ public sealed class MonitorSettings
         if (!double.IsFinite(ServerOffsetHours) || ServerOffsetHours is < -24 or > 24)
             throw new ArgumentException("Posun serverového času musí být −24 až +24 hodin.");
         if (!double.IsFinite(Left) || !double.IsFinite(Top) || !double.IsFinite(Width) || !double.IsFinite(Height) ||
-            Width is < 460 or > 16000 || Height is < 400 or > 16000)
+            Width is < 128 or > 16000 || Height is < 96 or > 16000)
             throw new ArgumentException("Neplatná poloha nebo velikost okna.");
     }
 

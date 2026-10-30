@@ -19,3 +19,5 @@ References, checked 30 October 2026:
 - [Elgato SDK license](https://github.com/elgatosf/streamdeck/blob/main/LICENSE)
 - [Elgato plugin distribution](https://docs.elgato.com/streamdeck/sdk/introduction/distribution/)
 - [Elgato Marketplace Maker process](https://docs.elgato.com/marketplace/become-a-maker/)
+
+The Luna/XP, Glass/Aero, Sakura/anime and Terminal/Matrix theme names describe visual inspiration. Their colors, gradients and controls are original implementation; no Microsoft, film or anime artwork, logos, wallpapers or fonts are redistributed. Theme names do not imply affiliation or transfer any third-party trademark rights.

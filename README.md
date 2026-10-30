@@ -10,7 +10,7 @@ It started with MAG DEER, but you can select another server or save your own. Th
 
 ## Get it running
 
-Download `Dayz-Server-Monitor-1.7.2-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed.
+Download `Dayz-Server-Monitor-1.8.0-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed.
 
 Settings are saved beside the EXE in `config.json`. History is kept in `data`. When updating, close the old copy and keep those two items. For a separate data folder, use:
 
@@ -26,9 +26,15 @@ The app unpacks its bundled native runtime into the user's temporary folder on f
 - Restart countdown with configurable logout and kick reminders, optional sounds and Windows notifications.
 - Server reply status, player count and UDP query round-trip time.
 - A player graph with date/time labels and exact query details when you hover over a sample. A missing reply leaves a gap.
-- Light, dark, orange and gray/green themes, compact/fullscreen views, optional always-on-top, and saved monitor/window placement.
+- Ten complete themes, including Ocean blue, Luna/XP, Glass/Aero, Sakura and Terminal green/black, with saved monitor/window placement.
+- An adaptive dashboard with 27 display size presets for ordinary, narrow, landscape and portrait LCDs. A 32-point title bar replaces the tall header and bottom button strip.
+- Optional close-to-taskbar or close-to-tray behavior; monitoring and Stream Deck continue until you choose Quit monitor.
 
 English is the default language. Czech, Polish, German and Spanish are available in **Settings → Display**. The theme selector is at the top of that tab.
+
+[LCD research, sizing, layouts and controls](docs/DISPLAYS.md)
+
+![Adaptive dashboard in a short, wide window, demo values](docs/images/layout-wide.png)
 
 ![Player graph, example values](docs/images/query-chart.png)
 
@@ -55,6 +61,8 @@ Install the .NET 8 SDK and Node.js 24+ on Windows, then run:
 ```
 
 The script builds the Visual Studio solution, runs the console and WPF checks, and creates a self-contained single-file Windows x64 build plus source ZIP in `artifacts`. It never launches the desktop app. The WPF checks render controls into PNG files without opening windows.
+
+The local `release` folder also contains the Windows ZIP, source ZIP, Stream Deck installer and checksums together. The Windows ZIP includes the EXE and plugin installer, with no private configuration or history.
 
 To work in Visual Studio 2022, open `DayzServerMonitor.sln` with the .NET desktop development workload installed. No external NuGet package is needed beyond Microsoft's runtime/build packs. See [validation](docs/VALIDATION.md) for what has and has not been checked.
 

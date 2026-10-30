@@ -47,7 +47,8 @@ public partial class MainWindow : Window
     private static Brush Yellow => (Brush)Application.Current.FindResource("WarningBrush");
     private static Brush Red => (Brush)Application.Current.FindResource("DangerBrush");
     private static Brush Muted => (Brush)Application.Current.FindResource("MutedBrush");
-    private bool changingProfile;
+    private bool changingProfile, exitRequested, started;
+    private WindowState lastVisibleState;
     private static Brush Brush(string color) { var b = (SolidColorBrush)new BrushConverter().ConvertFromString(color)!; b.Freeze(); return b; }
 
     public MainWindow(MonitorSettings settings)
@@ -57,8 +58,12 @@ public partial class MainWindow : Window
         schedule = new(settings.RestartTimes);
         history = new(Path.Combine(App.DataRoot, "data", "history"), settings.HistoryRetentionDays);
         InitializeComponent();
+        Dashboard.ServerSelected += ServerSelectionChanged;
+        Dashboard.ClockSyncRequested += SyncNowClick;
         notifications = new(this);
         notifications.Failed += ReportStorageError;
+        notifications.ExitRequested += Quit;
+        Application.Current.SessionEnding += (_, _) => exitRequested = true;
         try { runtime = JsonStorage.Read<RuntimeState>(RuntimePath); }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         { runtime = new(); ReportStorageError(L.Text("LedgerReadError", L.Error(ex))); }
@@ -69,6 +74,9 @@ public partial class MainWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        if (started) return;
+        started = true;
+        StateChanged += (_, _) => { if (WindowState != WindowState.Minimized) lastVisibleState = WindowState; };
         DesktopServices.PlaceWindow(this, settings, false);
         if (settings.Maximized) WindowState = WindowState.Maximized;
         ApplyAppearance();
@@ -94,7 +102,7 @@ public partial class MainWindow : Window
         if (lastTickUtc is { } previous && Math.Abs(((now - previous) - Stopwatch.GetElapsedTime(lastTickTimestamp, tickStamp)).TotalSeconds) > 5)
         {
             // Observations made on another clock basis cannot establish a precise gap.
-            tracker = new(); lastAttempt = null; Chart.Clear();
+            tracker = new(); lastAttempt = null; Dashboard.Chart.Clear();
         }
         lastTickUtc = now; lastTickTimestamp = tickStamp;
         UpdateDisplay(now);
@@ -125,7 +133,7 @@ public partial class MainWindow : Window
         long queryStamp = Stopwatch.GetTimestamp();
         lastAttempt = queryStamp;
         var requestedAt = clock.UtcNow;
-        PollText.Text = L.Text("Polling");
+        Dashboard.PollText.Text = L.Text("Polling");
         try
         {
             var result = await client.QueryAsync(settings.IpAddress, settings.QueryPort, TimeSpan.FromSeconds(settings.QueryTimeoutSeconds), stop.Token);
@@ -136,7 +144,7 @@ public partial class MainWindow : Window
             if (Math.Abs((completedAt - requestedAt - elapsed).TotalSeconds) > 5) requestedAt = completedAt - elapsed;
             result = result with { SystemAt = result.At, At = completedAt, RequestedAt = requestedAt, TimeSource = clock.Source.ToString() };
             var recovery = tracker.Apply(result, settings.FailureThreshold, schedule);
-            Chart.Add(result);
+            Dashboard.Chart.Add(result);
             if (recovery is not null)
             {
                 runtime.Recoveries[settings.EndpointKey] = recovery;
@@ -160,7 +168,8 @@ public partial class MainWindow : Window
     private void UpdateRefreshButton()
     {
         int seconds = refreshGuard.RemainingSeconds;
-        RefreshButton.Content = seconds > 0 ? L.Text("RefreshCooldown", seconds) : L.Text("Refresh");
+        RefreshButton.Content = seconds > 0 ? seconds.ToString(CultureInfo.InvariantCulture) : "↻";
+        RefreshButton.ToolTip = seconds > 0 ? L.Text("RefreshCooldown", seconds) : L.Text("RefreshTip");
         RefreshButton.IsEnabled = !closing && !configuring && !polling && seconds == 0;
     }
 
@@ -170,37 +179,38 @@ public partial class MainWindow : Window
     private void UpdateDisplay(DateTimeOffset now)
     {
         var local = RestartSchedule.CzechTime(now);
-        ClockText.Text = LocalTime(now);
-        ClockText.FontSize = settings.Use24HourClock ? 108 : 86;
-        DateText.Text = local.ToString("D", L.Culture);
-        ServerClockText.Text = L.Text("ServerClock", local.AddHours(settings.ServerOffsetHours).ToString(settings.Use24HourClock ? "HH:mm" : "hh:mm tt", CultureInfo.InvariantCulture));
-        OffsetLabel.Text = L.Text("OffsetNote", settings.ServerOffsetHours.ToString("+0.##;-0.##;0", L.Culture));
-        WorldClocksPanel.Update(now, settings.Use24HourClock);
+        Dashboard.ClockText.Text = LocalTime(now);
+        Dashboard.ClockText.FontSize = settings.Use24HourClock ? 94 : 76;
+        Dashboard.DateText.Text = local.ToString("D", L.Culture);
+        Dashboard.ServerClockText.Text = L.Text("ServerClock", local.AddHours(settings.ServerOffsetHours).ToString(settings.Use24HourClock ? "HH:mm" : "hh:mm tt", CultureInfo.InvariantCulture));
+        Dashboard.OffsetLabel.Text = L.Text("OffsetNote", settings.ServerOffsetHours.ToString("+0.##;-0.##;0", L.Culture));
+        Dashboard.WorldClocksPanel.Update(now, settings.Use24HourClock);
         UpdateClockStatus();
         var next = schedule.Next(now);
         var remaining = next - now;
         var since = now - schedule.Previous(now);
         var expected = since < TimeSpan.FromMinutes(5) && (tracker.LastSuccess is null || tracker.LastSuccess < schedule.Previous(now));
-        CountdownLabel.Text = L.Text(expected ? "CountdownExpected" : "Countdown");
+        Dashboard.CountdownLabel.Text = L.Text(expected ? "CountdownExpected" : "Countdown");
         // Recompute from UTC instants each tick, never decrement a stored counter.
         var seconds = Math.Max(0, (long)Math.Ceiling(remaining.TotalSeconds));
-        CountdownText.Text = $"{seconds / 3600:00}:{seconds / 60 % 60:00}:{seconds % 60:00}";
+        Dashboard.CountdownText.Text = $"{seconds / 3600:00}:{seconds / 60 % 60:00}:{seconds % 60:00}";
         var accent = expected || remaining <= TimeSpan.FromMinutes(settings.KickWarningMinutes) ? Red : remaining <= TimeSpan.FromMinutes(settings.LogoutWarningMinutes) ? Yellow : Mint;
-        CountdownText.Foreground = settings.VisualAlerts ? accent : Mint;
-        NextRestartText.Text = LocalTime(next);
-        NextDateText.Text = RestartSchedule.CzechTime(next).ToString("d MMM · zzz", L.Culture);
-        LogoutText.Text = L.Text("LogoutAt", LocalTime(next.AddMinutes(-settings.LogoutWarningMinutes)));
-        KickText.Text = L.Text("KickAt", LocalTime(next.AddMinutes(-settings.KickWarningMinutes)));
-        WarningText.Foreground = settings.VisualAlerts ? accent : Muted;
-        WarningText.Text = expected ? L.Text("WarnExpected")
+        Dashboard.CountdownText.Foreground = settings.VisualAlerts ? accent : Mint;
+        Dashboard.NextRestartText.Text = LocalTime(next);
+        Dashboard.CompactNextRestart.Text = L.Text("NextRestart") + " · " + LocalTime(next);
+        Dashboard.NextDateText.Text = RestartSchedule.CzechTime(next).ToString("d MMM · zzz", L.Culture);
+        Dashboard.LogoutText.Text = L.Text("LogoutAt", LocalTime(next.AddMinutes(-settings.LogoutWarningMinutes)));
+        Dashboard.KickText.Text = L.Text("KickAt", LocalTime(next.AddMinutes(-settings.KickWarningMinutes)));
+        Dashboard.WarningText.Foreground = settings.VisualAlerts ? accent : Muted;
+        Dashboard.WarningText.Text = expected ? L.Text("WarnExpected")
             : remaining <= TimeSpan.FromMinutes(settings.KickWarningMinutes) ? L.Text("WarnKick", settings.KickWarningMinutes)
             : remaining <= TimeSpan.FromMinutes(settings.LogoutWarningMinutes) ? L.Text("WarnLogout", settings.LogoutWarningMinutes)
             : L.Text("WarnNormal");
         var status = tracker.Status(now, schedule, settings.FailureThreshold);
-        StatusText.Text = status switch { ServerStatus.Online => "ONLINE", ServerStatus.Offline => "OFFLINE", ServerStatus.RestartExpected => "RESTART EXPECTED", _ => "QUERY UNAVAILABLE" };
-        StatusDot.Fill = status == ServerStatus.Online ? Success : status == ServerStatus.Offline ? Red : Yellow;
-        StatusText.Foreground = StatusDot.Fill;
-        StatusHint.Text = status switch
+        Dashboard.StatusText.Text = status switch { ServerStatus.Online => "ONLINE", ServerStatus.Offline => "OFFLINE", ServerStatus.RestartExpected => "RESTART EXPECTED", _ => "QUERY UNAVAILABLE" };
+        Dashboard.StatusDot.Fill = status == ServerStatus.Online ? Success : status == ServerStatus.Offline ? Red : Yellow;
+        Dashboard.StatusText.Foreground = Dashboard.StatusDot.Fill;
+        Dashboard.StatusHint.Text = status switch
         {
             ServerStatus.Online when tracker.Failures > 0 => L.Text("Unverified", tracker.Failures, settings.FailureThreshold),
             ServerStatus.Online => L.Text("Responding"),
@@ -208,12 +218,12 @@ public partial class MainWindow : Window
             ServerStatus.RestartExpected => L.Text("RestartNotProven"),
             _ => tracker.Failures == 0 ? L.Text("Waiting") : L.Text("QueryFailures", tracker.Failures)
         };
-        PlayerCounts.Update(tracker.Latest);
-        RttText.Text = tracker.Latest is { Success: true, RttMs: { } rtt } ? $"{rtt:0} ms" : "N/A";
-        LastUpdateText.Text = tracker.LastSuccess is { } success ? L.Text("LastSuccess", RestartSchedule.CzechTime(success).ToString("d MMM HH:mm:ss", L.Culture)) : L.Text("NoSuccess");
+        Dashboard.PlayerCounts.Update(tracker.Latest);
+        Dashboard.RttText.Text = tracker.Latest is { Success: true, RttMs: { } rtt } ? $"{rtt:0} ms" : "N/A";
+        Dashboard.LastUpdateText.Text = tracker.LastSuccess is { } success ? L.Text("LastSuccess", RestartSchedule.CzechTime(success).ToString("d MMM HH:mm:ss", L.Culture)) : L.Text("NoSuccess");
         int interval = schedule.PollInterval(settings, now, tracker.RestartGap && tracker.ConfirmedQueryGap);
         int due = Math.Max(0, (int)Math.Ceiling(interval - (lastAttempt is { } attempt ? Stopwatch.GetElapsedTime(attempt).TotalSeconds : interval)));
-        PollText.Text = polling ? L.Text("Polling") : L.Text("NextQuery", due);
+        Dashboard.PollText.Text = polling ? L.Text("Polling") : L.Text("NextQuery", due);
         string failure = tracker.Latest?.Failure switch
         {
             QueryFailure.Timeout => L.Text("FailureTimeout", settings.QueryTimeoutSeconds),
@@ -221,14 +231,14 @@ public partial class MainWindow : Window
             QueryFailure.UnsupportedCompression => L.Text("FailureCompression"),
             QueryFailure.Network => L.Text("FailureNetwork"), _ => L.Text("Waiting")
         };
-        DetailText.Text = tracker.Latest?.Success == true ? L.Text("MapDetail", tracker.Latest.Info!.Map) : failure + L.Text("UdpUncertain");
-        DetailText.ToolTip = tracker.Latest?.Detail;
+        Dashboard.DetailText.Text = tracker.Latest?.Success == true ? L.Text("MapDetail", tracker.Latest.Info!.Map) : failure + L.Text("UdpUncertain");
+        Dashboard.DetailText.ToolTip = tracker.Latest?.Detail;
         if (runtime.Recoveries.TryGetValue(settings.EndpointKey, out var recovery))
         {
-            RecoveryPanel.Visibility = Visibility.Visible;
-            RecoveryText.Text = L.Text("Recovery", RestartSchedule.CzechTime(recovery.RecoveredAt).ToString("d MMM HH:mm:ss", L.Culture), LocalTime(recovery.LastFailure, true), recovery.FailedQueries);
+            Dashboard.RecoveryPanel.Visibility = Visibility.Visible;
+            Dashboard.RecoveryText.Text = L.Text("Recovery", RestartSchedule.CzechTime(recovery.RecoveredAt).ToString("d MMM HH:mm:ss", L.Culture), LocalTime(recovery.LastFailure, true), recovery.FailedQueries);
         }
-        else RecoveryPanel.Visibility = Visibility.Collapsed;
+        else Dashboard.RecoveryPanel.Visibility = Visibility.Collapsed;
         UpdateRefreshButton();
         UpdateDeckSnapshot(now, status, next, expected, interval);
     }
@@ -246,7 +256,7 @@ public partial class MainWindow : Window
             Players = info?.Players, Capacity = info?.MaxPlayers, Queue = info?.Queue, RttMs = info is null ? null : latest?.RttMs,
             GameClock = info?.GameClock, Polling = polling, RefreshRemainingSeconds = refreshGuard.RemainingSeconds,
             QueryIntervalSeconds = interval,
-            History = Chart.Snapshot().Select(s => new DeckSample(QueryTimeline.TimeOf(s), s.Success ? s.Info?.Players : null, s.Success ? s.Info?.MaxPlayers : null)).ToArray()
+            History = Dashboard.Chart.Snapshot().Select(s => new DeckSample(QueryTimeline.TimeOf(s), s.Success ? s.Info?.Players : null, s.Success ? s.Info?.MaxPlayers : null)).ToArray()
         });
     }
 
@@ -254,29 +264,30 @@ public partial class MainWindow : Window
     {
         Localization.Apply(settings.Language);
         ThemeManager.Apply(settings.Theme);
-        WorldClocksPanel.Configure(settings.WorldClocks);
+        Dashboard.WorldClocksPanel.Configure(settings.WorldClocks);
         Topmost = settings.AlwaysOnTop;
-        ExtendedPanel.Visibility = settings.CompactMode ? Visibility.Collapsed : Visibility.Visible;
-        ServerClockText.Visibility = OffsetLabel.Visibility = settings.ShowServerTime ? Visibility.Visible : Visibility.Collapsed;
-        PlanBadgeText.Text = L.Text(settings.ScheduleConfirmed ? "PlanConfirmed" : "PlanUnconfirmed");
-        PlanBadgeText.Foreground = settings.ScheduleConfirmed ? Success : Yellow;
-        PlanBadge.Background = (Brush)Application.Current.FindResource(settings.ScheduleConfirmed ? "SuccessSurfaceBrush" : "WarningSurfaceBrush");
-        ServerNameText.Text = settings.ServerName;
-        EndpointText.Text = $"{settings.IpAddress}:{settings.GamePort}  /  Query UDP {settings.QueryPort}  /  Europe/Prague: {string.Join(" · ", settings.RestartTimes)}";
+        Dashboard.Configure(settings);
+        UpdateCaption();
+        Dashboard.ServerClockText.Visibility = Dashboard.OffsetLabel.Visibility = settings.ShowServerTime ? Visibility.Visible : Visibility.Collapsed;
+        Dashboard.PlanBadgeText.Text = L.Text(settings.ScheduleConfirmed ? "PlanConfirmed" : "PlanUnconfirmed");
+        Dashboard.PlanBadgeText.Foreground = settings.ScheduleConfirmed ? Success : Yellow;
+        Dashboard.PlanBadge.Background = (Brush)Application.Current.FindResource(settings.ScheduleConfirmed ? "SuccessSurfaceBrush" : "WarningSurfaceBrush");
+        Dashboard.ServerNameText.Text = settings.ServerName;
+        Dashboard.EndpointText.Text = $"{settings.IpAddress}:{settings.GamePort}  /  Query UDP {settings.QueryPort}  /  Europe/Prague: {string.Join(" · ", settings.RestartTimes)}";
         notifications.Configure(settings);
         changingProfile = true;
-        ServerSelector.ItemsSource = settings.SavedServers.ToArray();
-        ServerSelector.SelectedItem = settings.SavedServers.FirstOrDefault(p => p.IpAddress == settings.IpAddress && p.QueryPort == settings.QueryPort && p.Name == settings.ServerName);
+        Dashboard.ServerSelector.ItemsSource = settings.SavedServers.ToArray();
+        Dashboard.ServerSelector.SelectedItem = settings.SavedServers.FirstOrDefault(p => p.IpAddress == settings.IpAddress && p.QueryPort == settings.QueryPort && p.Name == settings.ServerName);
         changingProfile = false;
-        Chart.Use24HourClock = settings.Use24HourClock;
-        Chart.InvalidateVisual();
+        Dashboard.Chart.Use24HourClock = settings.Use24HourClock;
+        Dashboard.Chart.InvalidateVisual();
         UpdateRefreshButton();
     }
 
     private async void ServerSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (changingProfile || ServerSelector.SelectedItem is not ServerProfile profile || closing) return;
-        configuring = true; ServerSelector.IsEnabled = false; RefreshButton.IsEnabled = false;
+        if (changingProfile || Dashboard.ServerSelector.SelectedItem is not ServerProfile profile || closing) return;
+        configuring = true; Dashboard.ServerSelector.IsEnabled = false; RefreshButton.IsEnabled = false;
         await pollTask;
         if (closing) return;
         var next = settings.Copy(); profile.ApplyTo(next);
@@ -284,10 +295,10 @@ public partial class MainWindow : Window
         catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
         {
             ReportStorageError(L.Text("ServerChangeError", L.Error(ex)));
-            configuring = false; ServerSelector.IsEnabled = true; ApplyAppearance(); return;
+            configuring = false; Dashboard.ServerSelector.IsEnabled = true; ApplyAppearance(); return;
         }
-        settings = next; schedule = new(settings.RestartTimes); tracker = new(); lastAttempt = null; Chart.Clear();
-        configuring = false; ServerSelector.IsEnabled = true;
+        settings = next; schedule = new(settings.RestartTimes); tracker = new(); lastAttempt = null; Dashboard.Chart.Clear();
+        configuring = false; Dashboard.ServerSelector.IsEnabled = true;
         ApplyAppearance(); Tick();
     }
 
@@ -297,7 +308,7 @@ public partial class MainWindow : Window
         try { JsonStorage.Write(RuntimePath, runtime); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { ReportStorageError(L.Text("LedgerError", L.Error(ex))); }
     }
-    private void ReportStorageError(string message) { StorageErrorText.Text = message; StorageErrorText.Visibility = Visibility.Visible; }
+    private void ReportStorageError(string message) { Dashboard.StorageErrorText.Text = message; Dashboard.StorageErrorText.Visibility = Visibility.Visible; }
     private void SaveSettings()
     {
         CaptureBounds();
@@ -308,7 +319,7 @@ public partial class MainWindow : Window
     {
         var r = fullscreen ? normalBounds : WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
         if (!r.IsEmpty) { settings.Left = r.Left; settings.Top = r.Top; settings.Width = Math.Max(MinWidth, r.Width); settings.Height = Math.Max(MinHeight, r.Height); }
-        settings.Maximized = fullscreen ? normalState == WindowState.Maximized : WindowState == WindowState.Maximized;
+        settings.Maximized = fullscreen ? normalState == WindowState.Maximized : (WindowState == WindowState.Minimized ? lastVisibleState : WindowState) == WindowState.Maximized;
         settings.Fullscreen = fullscreen;
         settings.MonitorDevice = System.Windows.Forms.Screen.FromHandle(new System.Windows.Interop.WindowInteropHelper(this).Handle).DeviceName;
     }
@@ -326,6 +337,7 @@ public partial class MainWindow : Window
         var next = dialog.Result!;
         var endpointChanged = next.EndpointKey != settings.EndpointKey;
         var monitorChanged = next.MonitorDevice != settings.MonitorDevice;
+        var displayChanged = next.DisplayProfile != settings.DisplayProfile;
         CaptureBounds();
         next.Left = settings.Left; next.Top = settings.Top; next.Width = settings.Width; next.Height = settings.Height;
         next.Maximized = settings.Maximized; next.Fullscreen = fullscreen;
@@ -340,7 +352,7 @@ public partial class MainWindow : Window
         ConfigureClock();
         schedule = new(settings.RestartTimes);
         history = new(Path.Combine(App.DataRoot, "data", "history"), settings.HistoryRetentionDays);
-        if (endpointChanged) { tracker = new(); lastAttempt = null; Chart.Clear(); }
+        if (endpointChanged) { tracker = new(); lastAttempt = null; Dashboard.Chart.Clear(); }
         else if (dialog.ConfirmOffline) tracker.ConfirmOffline();
         else tracker.ClearOffline();
         if (monitorChanged)
@@ -351,7 +363,9 @@ public partial class MainWindow : Window
             DesktopServices.PlaceWindow(this, settings, true);
             if (wasFullscreen) EnterFullscreen();
         }
+        if (displayChanged) ApplyDisplayProfile();
         ApplyAppearance();
+        SaveSettings();
         configuring = false;
         Tick();
     }
@@ -406,31 +420,87 @@ public partial class MainWindow : Window
     private void UpdateClockStatus()
     {
         var source = clock.Source;
-        ClockSourceText.Text = ntpSyncing ? L.Text("ClockSynchronizing", settings.NtpServer) : source switch
+        Dashboard.ClockSourceText.Text = ntpSyncing ? L.Text("ClockSynchronizing", settings.NtpServer) : source switch
         {
             ClockSource.Ntp => L.Text("ClockNtp", settings.NtpServer, clock.OffsetFromWindowsMilliseconds.ToString("+0.0;-0.0;0.0", L.Culture)),
             ClockSource.NtpHoldover => L.Text("ClockHoldover", settings.NtpServer),
             ClockSource.WindowsFallback => L.Text("ClockFallback", settings.NtpServer),
             _ => L.Text("ClockWindows")
         };
-        ClockSourceText.Foreground = source == ClockSource.Ntp ? Success : source is ClockSource.NtpHoldover or ClockSource.WindowsFallback ? Yellow : Muted;
-        ClockSourceText.ToolTip = clock.LastDetail;
-        NtpDetailText.Visibility = clock.Enabled && clock.LastSample is not null ? Visibility.Visible : Visibility.Collapsed;
+        Dashboard.ClockSourceText.Foreground = source == ClockSource.Ntp ? Success : source is ClockSource.NtpHoldover or ClockSource.WindowsFallback ? Yellow : Muted;
+        Dashboard.ClockSourceText.ToolTip = clock.LastDetail;
+        Dashboard.NtpDetailText.Visibility = clock.Enabled && clock.LastSample is not null ? Visibility.Visible : Visibility.Collapsed;
         if (clock.LastSample is { } sample)
-            NtpDetailText.Text = L.Text("NtpLastSync", RestartSchedule.CzechTime(sample.UtcAtReceive).ToString("d MMM HH:mm:ss", L.Culture), sample.DelayMilliseconds.ToString("0.0", L.Culture));
-        SyncNowButton.Visibility = settings.NtpEnabled ? Visibility.Visible : Visibility.Collapsed;
-        SyncNowButton.IsEnabled = !configuring && !ntpSyncing && !ntpDenied &&
+            Dashboard.NtpDetailText.Text = L.Text("NtpLastSync", RestartSchedule.CzechTime(sample.UtcAtReceive).ToString("d MMM HH:mm:ss", L.Culture), sample.DelayMilliseconds.ToString("0.0", L.Culture));
+        Dashboard.SyncNowButton.Visibility = settings.NtpEnabled ? Visibility.Visible : Visibility.Collapsed;
+        Dashboard.SyncNowButton.IsEnabled = !configuring && !ntpSyncing && !ntpDenied &&
             (lastNtpAttempt is null || Stopwatch.GetElapsedTime(lastNtpAttempt.Value).TotalSeconds >= Math.Max(64, clock.LastFailure == NtpFailure.RateLimited ? ntpRetrySeconds : 64));
     }
     private void SyncNowClick(object sender, RoutedEventArgs e)
     {
-        if (SyncNowButton.IsEnabled && settings.NtpEnabled) ntpTask = SynchronizeNtpAsync();
+        if (Dashboard.SyncNowButton.IsEnabled && settings.NtpEnabled) ntpTask = SynchronizeNtpAsync();
     }
     private void OnPowerModeChanged(object sender, Microsoft.Win32.PowerModeChangedEventArgs e)
     {
         if (e.Mode != Microsoft.Win32.PowerModes.Resume || closing) return;
         _ = Dispatcher.InvokeAsync(() => { if (!closing) { clock.Invalidate(); lastNtpAttempt = null; lastAttempt = null; Tick(); } });
     }
+    private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e) => UpdateCaption();
+    private void UpdateCaption()
+    {
+        if (CaptionRow is null) return;
+        bool hidden = fullscreen || ActualWidth < 260;
+        CaptionRow.Height = new GridLength(hidden ? 0 : 32);
+        CaptionBar.Visibility = hidden ? Visibility.Collapsed : Visibility.Visible;
+        CaptionTitle.Visibility = ActualWidth < 470 ? Visibility.Collapsed : Visibility.Visible;
+        OuterFrame.BorderThickness = new Thickness(fullscreen ? 0 : 1);
+    }
+    private void ApplyDisplayProfile()
+    {
+        var profile = DisplayProfiles.All.First(x => x.Id == settings.DisplayProfile);
+        if (profile.Id == "Auto") return;
+        if (fullscreen) ExitFullscreen();
+        WindowState = WindowState.Normal;
+        DesktopServices.SizeForProfile(this, profile);
+    }
+    private void MoreClick(object sender, RoutedEventArgs e)
+    {
+        DashboardMenu.PlacementTarget = (UIElement)sender;
+        DashboardMenu.IsOpen = true;
+    }
+    private void DashboardMenuOpened(object sender, RoutedEventArgs e)
+    {
+        DashboardMenu.Items.Clear();
+        MenuItem Add(string label, Action clicked, bool check = false, bool selected = false)
+        {
+            var item = new MenuItem { Header = label, IsCheckable = check, IsChecked = selected };
+            item.Click += (_, _) => clicked(); DashboardMenu.Items.Add(item); return item;
+        }
+        Add(L.Text("Refresh"), () => RequestManualRefresh()).IsEnabled = RefreshButton.IsEnabled;
+        Add(L.Text("Settings"), () => SettingsClick(this, new RoutedEventArgs()));
+        Add(L.Text("Compact"), () => CompactClick(this, new RoutedEventArgs()), true, settings.CompactMode);
+        Add(L.Text("Fullscreen"), () => FullscreenClick(this, new RoutedEventArgs()), true, fullscreen);
+        Add(L.Text("AlwaysTop"), () => { settings.AlwaysOnTop = !settings.AlwaysOnTop; Topmost = settings.AlwaysOnTop; SaveSettings(); }, true, settings.AlwaysOnTop);
+        var profiles = new MenuItem { Header = L.Text("DisplayProfile") };
+        foreach (var profile in DisplayProfiles.All)
+        {
+            var item = new MenuItem { Header = profile.Label, IsCheckable = true, IsChecked = settings.DisplayProfile == profile.Id };
+            item.Click += (_, _) => { settings.DisplayProfile = profile.Id; ApplyDisplayProfile(); SaveSettings(); };
+            profiles.Items.Add(item);
+        }
+        DashboardMenu.Items.Add(profiles);
+        var themes = new MenuItem { Header = L.Text("Theme") };
+        foreach (var theme in ThemeManager.Choices)
+        {
+            var item = new MenuItem { Header = theme.Label, IsCheckable = true, IsChecked = settings.Theme == theme.Id };
+            item.Click += (_, _) => { settings.Theme = theme.Id; ApplyAppearance(); SaveSettings(); };
+            themes.Items.Add(item);
+        }
+        DashboardMenu.Items.Add(themes);
+        DashboardMenu.Items.Add(new Separator());
+        Add(L.Text("Quit"), Quit);
+    }
+    private void Quit() { exitRequested = true; Close(); }
     private void CompactClick(object sender, RoutedEventArgs e) { settings.CompactMode = !settings.CompactMode; ApplyAppearance(); SaveSettings(); }
     private void FullscreenClick(object sender, RoutedEventArgs e) { if (fullscreen) ExitFullscreen(); else EnterFullscreen(); SaveSettings(); }
     private void EnterFullscreen()
@@ -440,6 +510,7 @@ public partial class MainWindow : Window
         normalState = WindowState;
         fullscreen = true;
         DesktopServices.Fullscreen(this);
+        UpdateCaption();
     }
     private void ExitFullscreen()
     {
@@ -447,9 +518,12 @@ public partial class MainWindow : Window
         fullscreen = false; ResizeMode = ResizeMode.CanResize;
         Left = normalBounds.Left; Top = normalBounds.Top; Width = normalBounds.Width; Height = normalBounds.Height;
         WindowState = normalState;
+        UpdateCaption();
     }
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.F5) { RefreshClick(sender, e); e.Handled = true; }
+        if (e.Key == Key.OemComma && Keyboard.Modifiers == ModifierKeys.Control) { SettingsClick(sender, e); e.Handled = true; }
         if (e.Key == Key.F11) { FullscreenClick(sender, e); e.Handled = true; }
         if (e.Key == Key.Escape && fullscreen) { ExitFullscreen(); SaveSettings(); e.Handled = true; }
     }
@@ -469,6 +543,13 @@ public partial class MainWindow : Window
     private void OnClosing(object? sender, CancelEventArgs e)
     {
         if (allowClose) return;
+        if (!exitRequested && !closing && settings.MinimizeOnClose)
+        {
+            e.Cancel = true; SaveSettings();
+            if (settings.MinimizeTarget == "Tray") notifications.HideToTray();
+            else WindowState = WindowState.Minimized;
+            return;
+        }
         e.Cancel = true;
         if (closing) return;
         closing = true;

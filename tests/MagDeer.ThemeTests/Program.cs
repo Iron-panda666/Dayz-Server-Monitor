@@ -78,9 +78,9 @@ internal static class Program
             Assert(((TextBlock)row.Children[1]).Text == "04:59 PM", "12-hour format not applied");
             strip.Configure([]); Assert(strip.Visibility == Visibility.Collapsed, "Empty strip still visible");
         });
-        Test("All four theme choices validate and roundtrip in config", () =>
+        Test("All ten theme choices validate and roundtrip in config", () =>
         {
-            Assert(ThemeManager.Choices.Count == 4, "Missing a requested theme");
+            Assert(ThemeManager.Choices.Count == 10, "Missing a requested theme");
             foreach (var choice in ThemeManager.Choices)
             {
                 var settings = new MonitorSettings { Theme = choice.Id };
@@ -134,8 +134,11 @@ internal static class Program
             }
         });
 
+        ResponsiveChecks.Run(Test, Assert);
+
         if (args.Length == 2 && args[0] == "--render")
         {
+            Test("Render real adaptive dashboards at LCD dimensions", () => ResponsiveChecks.Render(Path.GetDirectoryName(args[1])!));
             Test("Render comparison using real WPF card styles without any windows", () => RenderComparison(args[1]));
             Test("Render world clocks without any windows", () => RenderWorldClocks(Path.Combine(Path.GetDirectoryName(args[1])!, "world-clocks.png")));
             Test("Render dated query chart with irregular samples and unavailable gap", () => RenderChart(Path.Combine(Path.GetDirectoryName(args[1])!, "query-chart.png")));
@@ -225,7 +228,7 @@ internal static class Program
         var visual = new DrawingVisual();
         using (var drawing = visual.RenderOpen())
             for (int i = 0; i < images.Count; i++) drawing.DrawImage(images[i], new Rect(i % 2 * width, i / 2 * height, width, height));
-        var combined = new RenderTargetBitmap(width * 2, height * 2, 96, 96, PixelFormats.Pbgra32); combined.Render(visual);
+        var combined = new RenderTargetBitmap(width * 2, height * ((images.Count + 1) / 2), 96, 96, PixelFormats.Pbgra32); combined.Render(visual);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
         using var file = File.Create(path); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(combined)); encoder.Save(file);
     }
