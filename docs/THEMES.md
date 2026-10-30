@@ -1,18 +1,24 @@
 # Themes
 
-Choose a theme at the top of **Settings → Appearance → Whole-window theme**. It changes the whole window, including cards, text, controls and graphs. The choice is saved in config.json.
+Choose Settings -> Appearance -> Whole-window theme. The palette covers cards, inputs, menus, text and graphs. It is saved in `config.json`.
 
-| Theme | Background | Cards | Main numbers | Accent |
+| Theme / config key | Background | Cards | Main numbers | Accent |
 |---|---|---|---|---|
 | Light | #EEF3F7 | #FFFFFF | #102438 | #005DA8 |
 | Dark | #171C23 | #252D38 | #FFFFFF | #90E8FF |
 | Orange | #211B17 | #342920 | #FFFFFF | #FFB15C |
-| Gray/green retro | #313131 | #333333 | #FFFFFF | #BDF39B |
+| Gray/green retro / Spotify | #313131 | #333333 | #FFFFFF | #BDF39B |
+| Ocean | #0B1D30 | #142E48 | #FFFFFF | #7CD8FF |
+| Luna / XP | #ECE9D8 | #FFFEF5 | #102438 | #174CA5 |
+| Glass / Aero | #E8F3F9 | #F8FCFF | #102438 | #075D91 |
+| Sakura / Anime | #231A30 | #34243F | #FFF4FC | #FFB4DF |
+| Terminal / Matrix | #030A06 | #091A10 | #CAFFD8 | #63FF94 |
+| Violet | #1B1730 | #2B2545 | #FFFFFF | #C8B4FF |
 
-The last palette is stored under the legacy config key `Spotify`. It was inspired by color values in a historical Windows Mobile theme. No original art, branding, fonts or extracted resources are included.
+The retro palette keeps the old config key `Spotify`. Its colors were inspired by a historical Windows Mobile theme; no extracted assets are shipped. Luna and Glass use gradients, without desktop blur. Terminal is static.
 
-Main player numbers have at least 7:1 contrast against their cards. The theme checks also verify normal text and status colors against the surfaces used by the application. Switching an existing card between themes is tested so its background and text stay in sync.
+Automated checks verify text contrast and changes to existing controls when switching themes. Main player numbers exceed 7:1 against their cards.
 
-![Four theme examples](images/theme-comparison.png)
+![Theme preview renders](images/theme-comparison.png)
 
-These examples are rendered from the actual WPF styles, with fixed demo values and no desktop window.
+The image uses the actual WPF styles with fixed sample data.

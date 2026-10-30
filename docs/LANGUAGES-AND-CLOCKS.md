@@ -1,20 +1,22 @@
-# Languages and world clocks · 1.3
+# Languages and world clocks
 
-The default UI language is **English**. Settings → Appearance → Application language offers exactly five choices: English (EN), Čeština (CZ), Polski (PL), Deutsch (DE) and Español (ES). The setting is stored as `Language: en/cs/pl/de/es`. A configuration from an older version without this field defaults to English. Saving settings applies the selected language without restarting the monitor. Server names and custom city names remain exactly as entered. Technical status codes (ONLINE, OFFLINE, QUERY UNAVAILABLE, RESTART EXPECTED), time-zone IDs, original diagnostic details and operating-system error messages are not translated.
+English is the default. Settings -> Appearance -> Application language offers EN, CZ, PL, DE and ES. Saving applies the language without restarting. Translations are embedded; server names and custom city labels stay as entered. Status codes, time-zone IDs and original OS/query diagnostics remain untranslated.
 
-UI labels, settings, date names, reminder text, query-status explanations and common validation errors have embedded translations. They require no online service or key. Language changes do not change the restart schedule, notification identity or UDP endpoint.
+`Language` stores `en`, `cs`, `pl`, `de` or `es`. Older configs without the field use English. Language changes leave the restart schedule and query endpoint alone.
 
-## Add world clocks
+## World clocks
 
-Open **Settings → Time & clocks → Add or edit a world clock**. Choose a city preset or select a time zone, enter a city/label and optional country abbreviation, then click **Add clock**. To modify an existing row, select it, edit the fields and click **Update selected**. Finally click **Save settings**. The list supports removal, reordering and temporarily hiding a clock. Up to eight clocks can be stored; all are optional and the default list is empty.
+Open Settings -> Time & clocks -> Add or edit a world clock. Pick a preset or time zone, enter a city label and optional country code, then use Add clock. To edit one, select its row and use Update selected. Save settings applies the list. Up to eight clocks; removal, reordering and hiding are supported.
 
-Presets include Prague, London, Berlin, Warsaw, Madrid, New York, Los Angeles, Tokyo, Sydney, Dubai, Delhi and UTC. The time-zone list also offers all zones available in Windows. A custom label may describe any city or place using the selected zone; the app does not infer a zone from the spelling of the city or the country code. Changing only a label does not change the clock's zone.
+Presets: Prague, London, Berlin, Warsaw, Madrid, New York, Los Angeles, Tokyo, Sydney, Dubai, Delhi and UTC. The zone list also includes Windows zones. The city name is just a label; choose its time zone explicitly.
 
-Each clock shows **City · Country** above its time. The country code may be blank. The small line below the time shows the local date and current UTC offset; this identifies date changes and daylight-saving shifts. The app uses each zone's Windows/.NET daylight-saving rules rather than a fixed numeric offset. US and European clock changes can therefore occur on different dates. India’s half-hour offset and Australian southern-hemisphere daylight saving are supported. The 12/24-hour preference applies to all clocks.
+Each clock shows city/country, local time, date and UTC offset. Windows/.NET time-zone rules handle DST, including different US/European change dates, India's half-hour offset and Australian seasons. The 12/24-hour setting applies to all clocks.
 
-The main clock stays **Prague · CZ / Europe/Prague**, because restart times are configured in Czech local time. Added world clocks are display-only. Their presence, order, labels or time zones never move a scheduled restart. Every tick uses the same absolute system time to avoid clocks drifting apart. Clock controls and resolved time-zone objects are created once when settings are applied; a tick only updates text.
+The main clock and restart plan stay in Europe/Prague. World clocks only affect the display. Controls and resolved zones are built when settings are applied; each tick updates their text from the same time source.
 
 ## JSON example
+
+Merge these fields into the existing configuration:
 
 ```json
 {
@@ -27,8 +29,8 @@ The main clock stays **Prague · CZ / Europe/Prague**, because restart times are
 }
 ```
 
-These are properties to merge into the existing configuration, not a replacement for all server/window settings. Both IANA zone IDs used above and valid Windows time-zone IDs are accepted when available. Invalid IDs and more than eight entries are rejected without overwriting the original configuration.
+IANA IDs and Windows IDs work where the installed system supports them. Invalid zones or more than eight clocks are rejected.
 
-Build output is written to the versioned directory under `artifacts`. To carry over preferences, close the old monitor when convenient and copy its `config.json` and optional `data` folder to the new folder, or launch the new EXE with `--data-dir` pointing at the original data directory. Only one monitor can use a given data directory at a time.
+When moving to a new build folder, close the old copy and carry over `config.json` and `data`. Alternatively use `--data-dir` with the existing folder. Only one monitor instance can use that folder at a time.
 
-The image `world-clocks.png` is an offscreen WPF demonstration at a fixed timestamp, not a live screenshot or current server information. No product window was opened for testing while DayZ was running.
+`world-clocks.png` is an offscreen render at a fixed timestamp. Test coverage is recorded in [VALIDATION.md](VALIDATION.md).

@@ -1,55 +1,57 @@
 # Dayz Server Monitor
 
-Malá aplikace pro Windows, kterou si můžeš nechat otevřenou na druhém monitoru při hraní DayZ. Ukazuje počet hráčů, poslední úspěšnou odpověď a odpočet do plánovaného restartu.
+Monitor DayZ serverů pro Windows 10/11 x64. Vznikl pro druhý displej při hraní. Posílá UDP dotazy, ukládá počty hráčů a ukazuje odpočet do nastaveného restartu. C# / .NET 8, WPF.
+
+[English](README.md) | [Stažení](../../releases/latest)
 
 ## Spuštění
 
-**Přenosná (portable) verze bez instalace.** V Releases stáhni `Dayz-Server-Monitor-1.9.1-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Funguje na Windows 10/11 x64. .NET je součástí balíčku, správce ani API klíč nepotřebuješ. [ReleasePackages a přehled balíčků](ReleasePackages/README.md).
+Stáhni `Dayz-Server-Monitor-1.9.1-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Je to portable verze bez instalace. .NET je přibalený, správce ani API klíč nepotřebuješ.
 
-Vedle EXE se ukládá `config.json`, historie je ve složce `data`. Při aktualizaci starou aplikaci zavři a nový ZIP rozbal do stejné složky; konfiguraci a historii ponech. V **Settings → Appearance / Nastavení → Vzhled** můžeš přepnout angličtinu na češtinu a vybrat z deseti motivů, včetně modrého Ocean, Luna ve stylu XP, Glass ve stylu Aero, Sakura a zelenočerného Terminal.
+Nastavení je v `config.json`, historie ve složce `data` vedle EXE. Před aktualizací starou kopii zavři a obojí ponech. Jinou datovou složku lze zadat při spuštění:
 
-Horní lišta má běžných 32 bodů. Ovládání je v záhlaví a nabídce **⋯**, spodní pás tlačítek odpadl. Při zkrácení a roztažení okna se panely s údaji a graf přesunou doprava; na výšku se skládají pod sebe. Nabídka obsahuje 27 velikostních profilů. **F11** vyplní monitor, **Esc** vrátí okno, pravé tlačítko otevře ovládání i bez záhlaví. [Rozbor LCD, rozlišení, rozměry a profily](docs/DISPLAYS.md).
+```powershell
+.\DayzServerMonitor.exe --data-dir "D:\Dayz Monitor Data"
+```
 
-V nastavení můžeš zapnout, aby křížek aplikaci místo ukončení minimalizoval na hlavní panel nebo skryl k hodinám. Nastavení i rozměry okna se uloží. Ze skrytí ji obnovíš dvojklikem na ikonu; přes **Quit monitor / Ukončit monitor** ji úplně vypneš. Monitoring a Stream Deck při minimalizaci pokračují.
+Při prvním spuštění se nativní část .NET rozbalí do dočasné složky uživatele. Pokud zapneš start s Windows, EXE nepřesouvej. [Obsah balíčků a kontrolní součty](ReleasePackages/README.md).
 
-Hotové balíčky jsou také v místní složce `ReleasePackages/v1.9.1`. Windows ZIP obsahuje přenosný program i instalátor pluginu pro Stream Deck. Samostatně se instaluje pouze volitelný plugin do aplikace Elgato. Žádná instalace ani aplikace se při sestavení sama nespouští.
+## Nastavení a měření
 
-## K čemu slouží
+Server vybereš nahoře v okně. Předvolby obsahují čtyři MAG adresy a 12 Sunnyvale DayZ serverů. Zdroje adres a data ověření jsou v [seznamu serverů](docs/SERVERS.md).
 
-V horním seznamu vybereš server; další můžeš přidat v nastavení. Připravené jsou čtyři MAG adresy dohledané na webu provozovatele a 12 Sunnyvale. MAG zdroje byly ověřené 30. října 2026; dostupnost query je samostatné, starší měření. Název serveru ani odpověď UDP neprokazují vlastníka. Podrobnosti jsou v [seznamu serverů](docs/SERVERS.md).
+V Settings -> Appearance, česky Nastavení -> Vzhled, je jazyk a deset motivů. Výchozí je angličtina, další jazyky jsou čeština, polština, němčina a španělština. Uložené servery lze přejmenovat, upravit nebo smazat. Přepnutí profilu ponechá platné úpravy v návrhu. Jedno Uložit nastavení je použije, Zrušit je zahodí. [Návod k nastavení](docs/SETTINGS.md).
 
-Seznamy se řadí abecedně. V nastavení vyber profil a uprav ho; při přepnutí na další server se platné změny ponechají v návrhu. Jedno **Uložit nastavení** použije vše společně. Přejmenování ani změna IP nevytváří duplikát. **Nový** přidá další profil, **Smazat** po potvrzení odstraní vybraný; historii ponechá a poslední profil chrání. Zrušit zahodí rozpracované změny. U každého profilu lze zapnout sledování na pozadí, nejvýše u šestnácti. Každá klávesa Stream Decku si pak vybere vlastní sledovaný server.
+A2S_INFO se posílá každých 300 s, posledních 15 minut před restartem po 30 s a v restartovém okně po 15 s. Ruční obnova má 20s ochranu společnou se Stream Deckem. Sleduje se vybraný server a nejvýše 16 profilů zapnutých pro běh na pozadí.
 
-Nastavení má sedm přehledných sekcí: **Servery**, **Restarty a upozornění**, **Monitoring a data**, **Vzhled**, **Čas a hodiny**, **Integrace** a **Chování aplikace**. Vlevo je navigace, v úzkém okně ji nahradí rozbalovací výběr. Pole se skládají pod sebe a Uložit/Zrušit zůstává dole. Motiv a jazyk jsou nahoře ve Vzhledu, NTP u hodin, historie u monitoringu a zavírání do lišty v Chování aplikace. [Návod se skutečnými anglickými náhledy](docs/SETTINGS.md).
+Graf má čas dotazu, podrobnosti po najetí myší a mezery u neúspěšných měření. Zápis `121/121 +21 ve frontě` znamená 121 hráčů ve hře a 21 čekajících. Chybějící údaj je N/A. Měří se UDP query RTT včetně challenge, ne ICMP ping.
 
-Drobný údaj o délce session sleduje skutečný proces hry DayZ, nikoli Steam ani launcher, který někdy zůstává zapnutý. Obnovuje se po pěti sekundách a zahrnuje i herní menu. Není to čas připojení ke konkrétnímu serveru ani přesný čítač Steam overlaye. Když přístup k údaji selže, ukáže N/A. Paměť hry se nečte. Stejný údaj má vlastní stránku Stream Decku.
+Timeout sám neprokazuje výpadek hry. Query port může být blokovaný nebo nemusí odpovídat. Opakované chyby vedou na QUERY UNAVAILABLE; OFFLINE se potvrzuje ručně. Obnovení odpovědí se zaznamená do historie.
 
-Hodiny a plán restartů používají Europe/Prague včetně letního času. Můžeš si přidat světové hodiny, města a zkratky zemí. Předstih upozornění na odhlášení i očekávaný kick nastavíš po minutách. Zvuk a Windows oznámení jsou volitelné.
+Plán restartů je v sekci Restarty a upozornění. Výchozí příklad je 03:00, 07:00, 11:00, 15:00, 19:00 a 23:00 v Europe/Prague, včetně letního času. Pro přibalené servery není ověřený. Upozornění na odhlášení a kick nastavíš po minutách.
 
-Dotazy chodí přímo na vybraný server a na servery výslovně zapnuté pro pozadí přes UDP. Měří se odezva A2S query, nikoli ICMP ping. Když odpověď nepřijde, ukáže se N/A a v grafu mezera. Jeden timeout neznamená OFFLINE; opakované chyby znamenají nedostupné query a skutečné vypnutí hry z nich nelze prokázat. OFFLINE se potvrzuje ručně v nastavení.
+Okno se přeuspořádá podle poměru stran. Má 27 velikostních profilů pro běžné monitory, úzké pásy i displeje na výšku. F11 přepíná fullscreen, Esc ho ukončí. Křížek může program ukončit, minimalizovat na panel nebo skrýt k hodinám. Monitoring při skrytí pokračuje. [LCD a ovládání](docs/DISPLAYS.md).
 
-Tlačítko **Obnovit** po zahájení dotazu odpočítává 20 sekund a nedovolí další ruční požadavek. Automatické dotazy běží dál podle plánu. Graf má datum a čas, po najetí myší uvidíš podrobnosti konkrétního měření.
+## Hodiny a Stream Deck
 
-Výchozí časy 03/07/11/15/19/23 jsou příklad, který musíš ověřit pro svůj server. Nové předvolby mají plán označený jako nepotvrzený. Volitelný NTP zdroj upravuje jen hodiny této aplikace. Posun serverového času v hlavním okně je výpočet. Plugin pro Stream Deck umí navíc zobrazit herní čas zveřejněný v A2S, pokud jej server poskytne; dopočet a den/noc jsou označené odhady. Herní chat aplikace nečte.
+Světové hodiny, formát 12/24 h a NTP jsou v sekci Čas a hodiny. NTP upravuje jen čas této aplikace, nastavení Windows nemění. Posun serverového času je výpočet z českého času. [Hodiny](docs/LANGUAGES-AND-CLOCKS.md) | [NTP](docs/NTP.md).
 
-V kartě **Integrace** lze zapnout HTTP export: `/metrics` pro Prometheus → Grafana a `/api/snapshots` pro REST senzory Home Assistant. Používá uložená měření a nezvyšuje počet dotazů na hru. Výchozí stav je vypnuto, adresa 127.0.0.1 dovolí jen místní PC. Přístup z LAN je volitelný, bez přihlášení, jen pro důvěryhodnou síť; aplikace firewall nemění. [Příklady zapojení](docs/INTEGRATIONS.md).
+Délka session vychází ze spuštění skutečného procesu DayZ. Steam ani launcher se nepočítá, herní menu ano. Není to délka připojení k serveru ani přesný čítač Steam overlaye. Paměť hry a chat se nečtou.
 
-Volitelné sledování služeb ukazuje hlášení provozovatele Discordu a dostupnost webů Spotify, WhatsApp Web a Steam Store z tohoto PC. Odpovídající web není důkazem funkčního přihlašování, zpráv nebo matchmakingu. Chyba kontroly je N/A, nikoli automaticky plošný výpadek. Výsledky jsou v nastavení, na samostatně vybraných klávesách Stream Decku a v exportu. Zprávy ani účty nečteme. [Ostatní hry a skutečný rozsah podpory](docs/MONITOR-TYPES.md).
+V ZIPu je `Dayz-Server-Monitor-1.9.1.streamDeckPlugin` pro MK.2. Krátký stisk střídá pohledy, podržení jednu sekundu vyžádá obnovu. Každá klávesa může sledovat jiný zapnutý server. Ukazuje herní čas, restart, hráče, graf, UDP RTT, upomínku odhlášení nebo místní session. Herní čas musí server zveřejňovat; dopočet a den/noc jsou odhady. [Instalace a význam údajů](docs/STREAM-DECK.md).
 
-## Vlastní sestavení
+V Integracích lze zapnout export pro Prometheus/Grafanu a REST senzory Home Assistant. Čte už naměřená data, neposílá další dotazy na hru. Volitelné kontroly služeb berou hlášení Discordu a dostupnost webů Spotify, WhatsApp a Steam z tohoto PC. Odpověď webu neprokazuje funkčnost celé služby. [Příklady konfigurace](docs/INTEGRATIONS.md) | [Podpora dalších her](docs/MONITOR-TYPES.md).
 
-Na Windows nainstaluj .NET 8 SDK a Node.js 24+ a spusť `./build.ps1`, případně otevři `DayzServerMonitor.sln` ve Visual Studiu 2022 s podporou desktopového .NET. Ve složce `artifacts` vznikne portable EXE, distribuční ZIP a zdrojový ZIP. Build aplikaci neotevírá. Při hraní DayZ ji pro ověření sami nespouštíme ani nepřepínáme do popředí.
+## Sestavení
 
-## Jak aplikace vznikla
+Na Windows s .NET 8 SDK a Node.js 24+ spusť:
 
-Je to hobby projekt vytvořený pomocí **vibe codingu s podporou AI**. Nápad a požadavky vycházejí z hraní DayZ; AI pomáhala s psaním a postupným laděním kódu. Funkce přibývaly po malých krocích. Co se ověřovalo a co ještě potřebuje vyzkoušet v praxi, je popsané v [ověření](docs/VALIDATION.md). Hlášení chyb a nápady z běžného používání jsou vítané.
+```powershell
+.\build.ps1
+```
 
-## Stream Deck a licence
+Nebo otevři `DayzServerMonitor.sln` ve Visual Studiu 2022 s desktopovým .NET. Build provede kontroly a připraví EXE, plugin a zdrojový ZIP do `artifacts` a `ReleasePackages/v1.9.1`. Aplikaci nespouští.
 
-Součástí vydání je plugin pro **Stream Deck MK.2**. Dvojklikem nainstaluj `Dayz-Server-Monitor-1.9.1.streamDeckPlugin` a přetáhni akci Cycle server information na klávesu. Krátký stisk střídá údaje, podržení jednu sekundu obnoví dotaz se společnou 20sekundovou ochranou. Akce Pinned server information udrží jeden vybraný pohled na klávese; můžeš si tak připravit více kláves vedle sebe. Výchozí popisky a náhledy jsou anglicky. Monitor musí běžet, může být minimalizovaný; plugin jej sám neotevírá. [Podrobný návod a omezení](docs/STREAM-DECK.md).
+Verze 1.9.1 prošla 58 základními, 20 WPF a 15 pluginovými kontrolami. Fyzické LCD/DPI, celý průchod nastavením a několikadenní provoz ještě potřebují ruční ověření. [Výsledky testů](docs/VALIDATION.md).
 
-Vlastní zdrojový kód i ikona T/R jsou pod [licencí MIT](LICENSE). Licence přibaleného .NET zůstávají zachované v [oznámeních třetích stran](THIRD_PARTY_NOTICES.md). Jde o nezávislý komunitní nástroj.
-
-Názvy DayZ, MAG, Sunnyvale a Stream Deck slouží k identifikaci hry, serverů a kompatibilního zařízení. Nejsme jejich oficiální produkt a MIT se nevztahuje na jejich značky. Používáme vlastní ikonu T/R. [Podrobnosti ke značkám](docs/TRADEMARKS.md).
-
-Karta hráčů i klávesa Stream Decku zobrazují frontu samostatně: **121/121 +21 ve frontě** znamená 121 hráčů ve hře a 21 čekajících. Nula se ukáže jen tehdy, když ji server skutečně zveřejní; chybějící údaj nebo chyba dotazu znamená N/A.
+Je to hobby projekt vzniklý pomocí vibe codingu s podporou AI. Vlastní kód a ikona T/R mají [licenci MIT](LICENSE). Přibalené závislosti mají vlastní [licenční oznámení](THIRD_PARTY_NOTICES.md). Nejde o oficiální produkt Bohemia Interactive, MAG, Sunnyvale, Valve ani Elgato. [Názvy a značky](docs/TRADEMARKS.md).

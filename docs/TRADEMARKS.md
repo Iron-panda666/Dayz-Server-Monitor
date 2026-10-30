@@ -1,25 +1,23 @@
-# Names, trademarks and independent status
+# Names and licenses
 
-Dayz Server Monitor is an independent community utility. It is not affiliated with, authorized by or endorsed by Bohemia Interactive a.s., MAG / MiddleAgedGamers, Sunnyvale, Valve or Elgato / Corsair.
+Dayz Server Monitor is an independent hobby project. It has no affiliation with or endorsement from Bohemia Interactive a.s., MAG / MiddleAgedGamers, Sunnyvale, Valve or Elgato / Corsair.
 
-DayZ is a trademark or registered trademark of Bohemia Interactive a.s. Other product and community names remain the property of their respective owners. Their names identify the game, public servers or compatible devices discussed by this project. The MIT license for our source code does not grant rights to third-party names, marks, logos or game content.
+The source and original T/R icon are MIT-licensed. That license does not cover third-party names, logos or game content. DayZ is a trademark or registered trademark of Bohemia Interactive a.s.; other names belong to their owners.
 
-References to Minecraft, Rust, Counter-Strike, PlanetSide 2, Project Zomboid, WARDOGS, Spotify, Discord, WhatsApp, Steam, Grafana and Home Assistant describe protocols, public service checks or integration targets. No affiliation or endorsement by their owners is claimed. Their artwork, music, messages and account data are not included. Linking a public status endpoint does not make it part of this project's MIT license or guarantee its continuing availability.
+Minecraft, Rust, Counter-Strike, PlanetSide 2, Project Zomboid, WARDOGS, Spotify, Discord, WhatsApp, Steam, Grafana and Home Assistant identify games, protocols or integration targets. Their names do not imply endorsement. Public status endpoints remain external services.
 
-The T/R icon is original project artwork. We do not bundle the DayZ logo, MAG or Sunnyvale logos, extracted game assets, music, maps, fonts or official Elgato artwork. Key images are generated from our own text, shapes and graphs.
+The app ships no DayZ/MAG/Sunnyvale logos, game assets, music, maps, fonts or Elgato artwork. Key graphics use the project's own text, shapes and graphs. The Luna/XP, Glass/Aero, Sakura/anime and Terminal/Matrix names describe visual references; the palettes and controls are original, without third-party artwork.
 
-Server names are public identifiers and may include words such as OFFICIAL in the name received from a server or listed in a preset. Those words are the server's self-description, not a claim that this monitor or plugin is an official product.
+A server's name may contain OFFICIAL. That is its self-description, not an ownership check or an official status for this app.
 
-Bohemia's published rules allow original tools and describe fair use of its marks while requiring that work does not appear to be an official product. This is the basis for the descriptive references here, not an individual endorsement or a blanket trademark license. A disclaimer alone does not authorize otherwise infringing use. No separate permission from MAG or Sunnyvale is claimed.
+Bohemia's published usage rules are the reference for descriptive DayZ naming here. No individual permission or blanket trademark license is claimed. A disclaimer alone does not authorize use of someone else's assets.
 
-The Stream Deck plugin uses Elgato's official SDK. It is a third-party plugin, not an Elgato-produced plugin. GitHub distribution and Marketplace publication are separate: listing on Marketplace requires its Maker Agreement and review. This repository has not been submitted to Marketplace. Selling, rebranding or adding third-party art should trigger a fresh review of the relevant terms.
+The Stream Deck plugin uses Elgato's SDK. It has not been submitted to Marketplace. Direct GitHub distribution is separate from Marketplace listing, which requires the Maker Agreement and review. Rebranding, selling or adding third-party artwork would need a fresh check of the applicable terms.
 
-References, checked 30 October 2026:
+References checked on 30 October 2026:
 
-- [Bohemia Interactive Game Content Usage Rules](https://portal.bohemia.net/community/game-content-usage-rules)
+- [Bohemia Game Content Usage Rules](https://portal.bohemia.net/community/game-content-usage-rules)
 - [Elgato branding guidelines](https://docs.elgato.com/guidelines/branding/)
 - [Elgato SDK license](https://github.com/elgatosf/streamdeck/blob/main/LICENSE)
-- [Elgato plugin distribution](https://docs.elgato.com/streamdeck/sdk/introduction/distribution/)
-- [Elgato Marketplace Maker process](https://docs.elgato.com/marketplace/become-a-maker/)
-
-The Luna/XP, Glass/Aero, Sakura/anime and Terminal/Matrix theme names describe visual inspiration. Their colors, gradients and controls are original implementation; no Microsoft, film or anime artwork, logos, wallpapers or fonts are redistributed. Theme names do not imply affiliation or transfer any third-party trademark rights.
+- [Plugin distribution](https://docs.elgato.com/streamdeck/sdk/introduction/distribution/)
+- [Marketplace Maker process](https://docs.elgato.com/marketplace/become-a-maker/)

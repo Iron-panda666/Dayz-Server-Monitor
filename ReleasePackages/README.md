@@ -1,22 +1,24 @@
-# ReleasePackages · portable Windows application
+# ReleasePackages
 
-**Dayz Server Monitor is portable. No installation is required.** Extract the Windows ZIP into a writable folder and run `DayzServerMonitor.exe`. No administrator rights or separate .NET installation are needed. Settings stay in `config.json`; history stays in `data`. Keep both when updating.
+Portable build for Windows 10/11 x64. Unpack the ZIP into a writable folder and run `DayzServerMonitor.exe`. The .NET runtime is included. No setup or admin rights needed.
 
-## Version 1.9.1
+Close the running copy before updating. Keep `config.json` and `data`.
 
-| Download | Purpose |
+## Downloads for 1.9.1
+
+| File | Contents |
 |---|---|
-| [Portable Windows x64 ZIP — no installation](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/download/v1.9.1/Dayz-Server-Monitor-1.9.1-win-x64.zip) | Monitor EXE, documentation and optional Stream Deck installer together |
-| [Stream Deck plugin installer](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/download/v1.9.1/Dayz-Server-Monitor-1.9.1.streamDeckPlugin) | Optional standalone copy of the installer already inside the Windows ZIP |
-| [Source ZIP](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/download/v1.9.1/Dayz-Server-Monitor-1.9.1-source.zip) | Source matching the released application |
-| [Published SHA-256 checksums](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/download/v1.9.1/SHA256SUMS-1.9.1.txt) | Verify the published downloads |
+| [Windows x64 ZIP](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/download/v1.9.1/Dayz-Server-Monitor-1.9.1-win-x64.zip) | EXE, documentation and optional Stream Deck installer |
+| [Stream Deck installer](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/download/v1.9.1/Dayz-Server-Monitor-1.9.1.streamDeckPlugin) | Same installer as the one in the Windows ZIP |
+| [Source ZIP](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/download/v1.9.1/Dayz-Server-Monitor-1.9.1-source.zip) | Sources for this release |
+| [SHA-256 checksums](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/download/v1.9.1/SHA256SUMS-1.9.1.txt) | Checksums for the published files |
 
-The repository and its downloads are private. Sign in with a GitHub account that has access.
+The repo is private. Downloads require a GitHub account with access.
 
-The monitor stays portable. The optional `.streamDeckPlugin` is installed separately **into Elgato Stream Deck**. It does not install or automatically start the monitor.
+Only the optional `.streamDeckPlugin` is installed, into Elgato Stream Deck. The monitor itself stays portable and the plugin does not start it.
 
-Local builds create `ReleasePackages/v1.9.1/` with a clearly named `Dayz-Server-Monitor-1.9.1-portable-win-x64.zip`, plugin, source, instructions, `package.json` and `SHA256SUMS.txt`. The portable ZIP is a byte-identical copy of the Windows ZIP linked above; the local checksum file uses its portable filename. Generated binary folders are kept out of source Git history; downloadable binaries are attached to the GitHub release.
+A local build puts the files in `ReleasePackages/v1.9.1/`, with `README.txt`, `package.json` and `SHA256SUMS.txt`. Its `Dayz-Server-Monitor-1.9.1-portable-win-x64.zip` is identical to the published Windows ZIP; only the name differs. Generated packages are ignored by Git and uploaded as release assets.
 
-Run `build.ps1` for future versions. To collect an already built version without rebuilding or launching anything, use `tools/New-ReleasePackages.ps1` with the version and existing artifact paths. Packaging verifies that the EXE and optional plugin are inside the Windows ZIP and excludes private runtime configuration/history.
+Run `build.ps1` to build and package. To collect existing artifacts, use `tools/New-ReleasePackages.ps1` with their paths and version. It checks the embedded EXE and plugin against the supplied files and rejects private config/history in the ZIP. Neither command installs or opens the app.
 
-**Česky:** Jde o přenosnou verzi **bez instalace**. Stačí rozbalit ZIP a spustit EXE. Při aktualizaci ponech `config.json` a `data`. Samostatnou instalaci do aplikace Elgato vyžaduje pouze volitelný plugin pro Stream Deck.
+Česky: přenosná verze bez instalace. Rozbal ZIP a spusť EXE. Při aktualizaci ponech `config.json` a `data`. Volitelný plugin se instaluje do Elgato Stream Deck.

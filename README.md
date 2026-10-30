@@ -2,90 +2,62 @@
 
 ![T/R icon](docs/images/app-icon.png)
 
-A small Windows app for keeping an eye on a DayZ server while you play. Leave it on a second screen to see the player count, the last successful reply and how long is left until the next planned restart.
+Windows monitor for DayZ servers, built for a second screen. It queries the server over UDP, logs player counts and shows the time left before a configured restart. C# / .NET 8, WPF. Runs on Windows 10/11 x64.
 
-It started with MAG DEER, but you can select another server or save your own. The included list has four MAG addresses traced to the operator's website and twelve Sunnyvale DayZ presets. MAG address references were checked on 30 October 2026; query observations are dated separately in the [server list](docs/SERVERS.md).
+[Česky](README.cs.md) | [Downloads](../../releases/latest) | [MIT license](LICENSE)
 
-[Česky](README.cs.md) · [Download the Windows build](../../releases/latest) · [MIT license](LICENSE)
+## Run it
 
-## Get it running
+Download `Dayz-Server-Monitor-1.9.1-win-x64.zip`, unpack it into a writable folder and run `DayzServerMonitor.exe`. The .NET runtime is bundled. No installer, account, API key or admin rights needed.
 
-**Portable Windows application — no installation required.** Download `Dayz-Server-Monitor-1.9.1-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed. [ReleasePackages and download guide](ReleasePackages/README.md).
-
-Settings are saved beside the EXE in `config.json`. History is kept in `data`. When updating, close the old copy and keep those two items. For a separate data folder, use:
+Settings go into `config.json` beside the EXE; query history goes into `data`. Close the old copy before updating and keep both. To use another data folder:
 
 ```powershell
 .\DayzServerMonitor.exe --data-dir "D:\Dayz Monitor Data"
 ```
 
-The app unpacks its bundled native runtime into the user's temporary folder on first launch. If you enable startup with Windows, keep the EXE in a stable location.
+The single-file build extracts its native runtime into the user's temp folder on first launch. If you enable startup with Windows, leave the EXE at a fixed path. [Package contents and checksums](ReleasePackages/README.md).
 
-## What you see
+## Using the monitor
 
-- Large Prague clock, optional world clocks with your own city labels, and 12/24-hour formats.
-- Restart countdown with configurable logout and kick reminders, optional sounds and Windows notifications.
-- Server reply status, player count and UDP query round-trip time.
-- A player graph with date/time labels and exact query details when you hover over a sample. A missing reply leaves a gap.
-- Ten complete themes, including Ocean blue, Luna/XP, Glass/Aero, Sakura and Terminal green/black, with saved monitor/window placement.
-- An adaptive dashboard with 27 display size presets for ordinary, narrow, landscape and portrait LCDs. A 32-point title bar replaces the tall header and bottom button strip.
-- Optional close-to-taskbar or close-to-tray behavior; monitoring and Stream Deck continue until you choose Quit monitor.
-- A small local DayZ session counter that tracks the game process, separately from Steam and the launcher.
-- Edit, rename and delete saved servers; alphabetical selection and optional background monitoring for up to sixteen saved servers.
-- A separate server per Stream Deck key, plus optional cached-data export for Prometheus/Grafana and Home Assistant.
-- Optional Discord operator-status reports and Spotify, WhatsApp Web and Steam Store reachability checks, with their limits clearly labelled.
+Select a server at the top of the window. The default list has four MAG addresses and twelve Sunnyvale DayZ servers. Address sources and dated query results are in [SERVERS.md](docs/SERVERS.md).
 
-English is the default language. Czech, Polish, German and Spanish are available in **Settings → Appearance**, alongside the theme selector. Settings now use seven focused sections, with a compact selector in narrow windows and Save/Cancel always reachable. [Settings guide and actual previews](docs/SETTINGS.md).
+A2S_INFO requests run every 300 s, every 30 s during the last 15 minutes before a restart and every 15 s in the restart window. Manual refresh has a 20 s cooldown shared with Stream Deck. Only the selected server and profiles enabled for background monitoring are queried. Up to 16 saved profiles can run in the background.
 
-[LCD research, sizing, layouts and controls](docs/DISPLAYS.md)
+The player graph includes query times and gaps for failed replies. `121/121 +21 in queue` means 121 players in game and 21 waiting. Missing values show N/A. UDP query RTT includes the challenge exchange; it is not ICMP ping.
 
-![Adaptive dashboard in a short, wide window, demo values](docs/images/layout-wide.png)
+A timeout cannot tell a stopped game server from a blocked query port. Repeated failures show QUERY UNAVAILABLE. OFFLINE needs manual confirmation. When replies resume, the app records the recovery time.
 
-![Player graph, example values](docs/images/query-chart.png)
+Set your restart plan in Settings -> Restarts & alerts. The example is 03:00, 07:00, 11:00, 15:00, 19:00 and 23:00 in Europe/Prague, including DST. These times have not been verified for the included servers. Logout and kick reminders are adjustable in whole minutes.
 
-## How it checks a server
+Settings -> Appearance contains the ten themes and language selector. English is the default; Czech, Polish, German and Spanish are included. Profiles can be edited or deleted under Servers. One Save settings applies the dialog's changes; Cancel discards them. See the [settings guide](docs/SETTINGS.md).
 
-The app sends A2S_INFO directly to the server's UDP query port. It handles the challenge exchange and measures that exchange's round-trip time. This is UDP query RTT, rather than an ICMP ping. The selected server and only explicitly enabled background servers are queried; saving a preset alone does not query it.
+The window reflows for wide strips and portrait displays. There are 27 size presets, fullscreen and optional close-to-tray/taskbar behavior. [LCD sizes and controls](docs/DISPLAYS.md).
 
-By default it checks every five minutes, every thirty seconds in the last fifteen minutes before a planned restart, and every fifteen seconds during the restart window. **Refresh** has a twenty-second countdown to prevent repeated manual requests. Automatic monitoring keeps its own schedule.
+![Wide dashboard with example values](docs/images/layout-wide.png)
 
-A missing UDP reply does not prove the game server is down: the query service could be unavailable or filtered. One timeout never switches the app to OFFLINE, and failed measurements show N/A. Repeated failures produce QUERY UNAVAILABLE; OFFLINE requires manual confirmation in settings. A detected recovery records when query replies resumed.
+![Player graph with example queries](docs/images/query-chart.png)
 
-In **Settings → Servers**, choose a profile to edit it. Switching profiles keeps valid edits in the dialog's draft; **Save settings** applies all changes together. **New server** creates another profile; **Delete server** removes the selection after confirmation and keeps the history. Cancel discards the draft. The last saved server is protected. A checked **Monitor this server in the background** keeps that endpoint available to its own Stream Deck keys while another server is selected on the desktop. Restart plans/reminders have their own **Restarts & alerts** section; NTP and world clocks are under **Time & clocks**.
+## Clocks and Stream Deck
 
-The session counter reads the start time of the actual DayZ game process every five seconds. It excludes Steam, launchers and dedicated servers. Game menus count toward this local runtime. It is not Steam's overlay counter or time connected to a particular server; access problems show N/A. No game memory or chat is read.
+World clocks and 12/24-hour format are under Settings -> Time & clocks. Optional NTP changes this app's time source, not Windows time. The offset clock is calculated from Prague time. [Clock setup](docs/LANGUAGES-AND-CLOCKS.md) | [NTP details](docs/NTP.md).
 
-## Restart times need checking
+The local session counter uses the actual DayZ process start time. It excludes Steam and launchers but includes the game's menus. It is not a server-connection timer or Steam overlay counter. No game memory or chat is read.
 
-The default example is 03:00, 07:00, 11:00, 15:00, 19:00 and 23:00 in **Europe/Prague**. Daylight saving time is handled by the time zone. Set the real schedule for your server and confirm it when you have checked it. Included server presets have **unconfirmed** schedules; a successful query does not confirm a restart plan.
+The ZIP includes `Dayz-Server-Monitor-1.9.1.streamDeckPlugin` for Stream Deck MK.2. A short press cycles views; a one-second hold requests a refresh. Each key can follow the desktop selection or a separate monitored server. Views include game time, restart countdown, players, history, UDP RTT, logout reminder and local session. The published game clock may be extrapolated between queries; day/night is an estimate. [Plugin installation and display details](docs/STREAM-DECK.md).
 
-The optional offset clock is calculated from Prague time. It is separate from the published in-game clock used by the Stream Deck plugin. The app does not read game chat. Optional NTP corrects the time inside this app and leaves Windows time settings alone. See [NTP](docs/NTP.md) and [languages/world clocks](docs/LANGUAGES-AND-CLOCKS.md).
+Settings -> Integrations has optional Prometheus metrics for Grafana, JSON for Home Assistant and service checks. Discord uses its operator's status report. Spotify, WhatsApp and Steam checks test web reachability from this PC. They do not establish global service health. [Configuration examples](docs/INTEGRATIONS.md) | [Other games and missing adapters](docs/MONITOR-TYPES.md).
 
-## Build it
+## Build
 
-Install the .NET 8 SDK and Node.js 24+ on Windows, then run:
+Install .NET 8 SDK and Node.js 24+ on Windows:
 
 ```powershell
 .\build.ps1
 ```
 
-The script builds the Visual Studio solution, runs the console and WPF checks, and creates a self-contained single-file Windows x64 build plus source ZIP in `artifacts`. It never launches the desktop app. The WPF checks render controls into PNG files without opening windows.
+The script builds the solution, runs the checks and packages the Windows EXE, plugin and source ZIP. Outputs go into `artifacts` and `ReleasePackages/v1.9.1`. It does not launch the app. For Visual Studio 2022, open `DayzServerMonitor.sln` with the .NET desktop workload installed.
 
-The local `ReleasePackages/v1.9.1` folder contains the portable Windows ZIP, source ZIP, Stream Deck installer and checksums together. The Windows ZIP includes the EXE and plugin installer, with no private configuration or history. Only the optional Stream Deck plugin requires installation into Elgato Stream Deck.
+Version 1.9.1 passed 58 core, 20 WPF and 15 plugin checks. Physical LCD/DPI behavior, the full settings workflow and multi-day operation still need testing. [Test results](docs/VALIDATION.md).
 
-To work in Visual Studio 2022, open `DayzServerMonitor.sln` with the .NET desktop development workload installed. No external NuGet package is needed beyond Microsoft's runtime/build packs. See [validation](docs/VALIDATION.md) for what has and has not been checked.
-
-## Stream Deck
-
-The release includes a plugin for **Stream Deck MK.2**, built with Elgato's official SDK. Install the `.streamDeckPlugin` file, then add a cycling key or pin different views to several keys. A short press changes the view; holding for one second requests a refresh with the same twenty-second limit per endpoint as the app. Keys show the published/estimated in-game clock, restart countdown, players, a small history graph, UDP RTT, logout reminder or local DayZ session. Choose a different enabled server for each key, or follow the desktop selection. The monitor must be running; the plugin never opens it or queries game servers on its own. [Installation, controls and limits](docs/STREAM-DECK.md).
-
-**Settings → Integrations** also contains optional service-availability checks and a read-only HTTP exporter. Grafana uses its Prometheus data source; Home Assistant uses REST sensors. Exporting cached observations adds no game-server traffic. Defaults keep network export and service checks off. [Setup examples and source limits](docs/INTEGRATIONS.md) · [Other games: implemented support and planned adapters](docs/MONITOR-TYPES.md).
-
-## How it was made
-
-This is a hobby project built with AI-assisted **vibe coding**. The idea and requirements grew out of playing DayZ, with AI helping to write and refine the code along the way. Features were added in small steps, with the checks and remaining gaps recorded in [validation](docs/VALIDATION.md). Bug reports and practical suggestions are welcome.
-
-## License
-
-The source and T/R icon use the [MIT license](LICENSE). Bundled runtime notices are included separately in [third-party notices](THIRD_PARTY_NOTICES.md). This is an independent community project, with no official affiliation to Bohemia Interactive, MAG, Sunnyvale, Valve or Elgato. Product/server names are descriptive references, not assets licensed by our MIT license. [Names and trademarks](docs/TRADEMARKS.md).
-
-Player counts keep the waiting queue separate: **121/121 +21 in queue** means 121 players in game and 21 waiting. The desktop card and Stream Deck key show a published zero as 0, and missing/unavailable queue data as N/A.
+This is a hobby project built with AI-assisted vibe coding. The source and T/R icon are MIT-licensed. Bundled dependencies keep their own [notices](THIRD_PARTY_NOTICES.md). The project has no official affiliation with Bohemia Interactive, MAG, Sunnyvale, Valve or Elgato. [Names and trademarks](docs/TRADEMARKS.md).

@@ -1,37 +1,37 @@
-# Settings · 1.9.1
+# Settings
 
-Settings use a section list on the left. In a window narrower than 680 logical pixels, a compact section selector replaces that list and form columns stack vertically. Each section scrolls independently; **Cancel** and **Save settings** remain at the bottom of the window.
+Settings in 1.9.1 have seven sections. The list is on the left; below 680 logical pixels wide it becomes a dropdown. Form fields stack vertically in narrow windows. Each page scrolls, with Cancel and Save settings kept below it.
 
-![Actual settings surface, English demonstration](images/settings-overview.png)
+![Settings with example values](images/settings-overview.png)
 
-| Section | What belongs here |
+| Section | Contents |
 |---|---|
-| Servers | Saved profiles, New/Delete, name, IP/game/query ports and background monitoring |
-| Restarts & alerts | Selected server's Prague restart plan, confirmation, logout/kick reminders and notification style |
-| Monitoring & data | Query intervals, timeout/failure rules, manual offline confirmation, local DayZ session and history storage |
-| Appearance | Whole-window theme, language, display/size preset, compact mode and always on top |
-| Time & clocks | 12/24-hour format, calculated offset clock, NTP and world-clock list/editor |
-| Integrations | Stream Deck guidance, optional online-service checks and Grafana/Home Assistant export |
+| Servers | Saved profiles, New/Delete, name, IP and ports, background monitoring |
+| Restarts & alerts | Selected server's Prague schedule, confirmation, logout/kick reminders and notification style |
+| Monitoring & data | Poll intervals, timeout/failure rules, offline confirmation, local session and history |
+| Appearance | Theme, language, display/size preset, compact mode and always on top |
+| Time & clocks | 12/24-hour format, offset display, NTP and world clocks |
+| Integrations | Stream Deck setup notes, service checks and Grafana/Home Assistant export |
 | App behavior | Close-to-tray/taskbar and startup with Windows |
 
-The server name above Servers/Restarts identifies which profile is being edited. Restart times use **Europe/Prague**, independently of world clocks or the display format. The existing global polling/notification settings retain their scope; this reorganization does not give every server different polling intervals.
+The profile name above Servers and Restarts identifies the server being edited. Poll intervals and notification style are shared settings. Restart times use Europe/Prague.
 
-## One dialog, one final save
+## Editing profiles
 
-Choose a saved server to edit it. Moving between sections keeps the same controls and their contents. Switching to another server keeps valid changes in the dialog's draft, including a renamed profile. You can edit several profiles, then apply them together with **Save settings**. The old separate Edit/Save server buttons are no longer needed.
+Choose a saved server to edit it. Switching sections keeps the fields intact. Switching servers keeps valid changes in the dialog's draft, so several profiles can be edited before one Save settings. The profile selected at that point becomes the desktop selection.
 
-**New server** keeps the current valid profile draft before opening an empty new form. Leaving an untouched empty New form does not add a blank server. Invalid/incomplete profile values prevent switching profiles and show a validation message rather than silently losing the edit. **Delete server** still asks for confirmation and protects the last saved profile. It removes the entry from the draft, retaining historical data.
+New server keeps the current valid draft and opens an empty form. Leaving an untouched empty form adds nothing. Invalid profile values stop the switch and show an error. Delete server asks for confirmation, protects the last profile and leaves historical data on disk.
 
-**Cancel** discards all profile/world-clock/global-setting drafts. Nothing is written to the real configuration until Save settings succeeds. The profile selected when saving becomes the desktop's selected server, as before.
+Cancel discards profile, world-clock and other setting changes made in this dialog. The configuration is written only after Save settings succeeds.
 
-## Keep optional details out of the way
+## Optional controls
 
-The repeating restart generator, world-clock editor and latest service results are expandable. NTP connection details and HTTP export details are collapsed/disabled when their feature is off. Close destination is disabled until minimize-on-close is enabled. Disabled NTP/export settings keep their last saved connection values; an unfinished hidden edit cannot prevent turning the feature off.
+The repeating schedule generator, world-clock editor and service results are expandable. NTP/export connection details are collapsed and disabled while the feature is off. Their last saved connection values are retained. Minimize destination is disabled until minimize-on-close is enabled.
 
-Theme and language are the first card in Appearance. Selecting a world clock opens its editor. The date/time/source limits and service-check meanings are unchanged; see [clocks](LANGUAGES-AND-CLOCKS.md), [NTP](NTP.md) and [integrations](INTEGRATIONS.md).
+Theme and language are at the top of Appearance. Selecting a world clock opens its editor. Details: [world clocks](LANGUAGES-AND-CLOCKS.md), [NTP](NTP.md) and [integrations](INTEGRATIONS.md).
 
-![Restarts and reminders, English dark-theme demonstration](images/settings-restarts.png)
+![Restart settings in the dark theme](images/settings-restarts.png)
 
-![Compact section selector and vertically stacked fields](images/settings-narrow.png)
+![Settings in a narrow window](images/settings-narrow.png)
 
-These are renders of the actual WPF settings control with example values, without opening a desktop window or changing the running app. They are not photographs of physical LCDs. Geometry checks cover all seven sections in five languages, three palettes and 360/720/940-pixel logical widths. The real dialog on physical monitors still needs normal hands-on use.
+The images are renders of the WPF control with sample data. Layout checks cover all seven sections in five languages, three palettes and 360/720/940 logical widths. Physical monitor and full dialog checks are listed in [VALIDATION.md](VALIDATION.md).

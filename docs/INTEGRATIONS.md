@@ -1,32 +1,38 @@
-# Multiple monitors, Stream Deck, Grafana and Home Assistant
+# Multiple servers and data export
 
-These features are included in **1.9.0**. They are optional; existing settings keep background monitoring, service checks and HTTP export off.
+Background monitoring, service checks and HTTP export were added in 1.9.0. They are off by default.
 
-## Keep several game servers running
+## Select servers for Stream Deck
 
-1. Open **Settings → Servers** and choose a saved server to edit it.
-2. Check **Monitor this server in the background**. Repeat for the servers you want; switching profiles keeps valid edits in the dialog draft.
-3. Choose **Save settings** to apply the draft. Cancel discards edits and deletions.
-4. On each Stream Deck key, choose **Server for this key → Reload monitored servers**, then select its server. Leave **Follow desktop selection** for the original behavior.
+1. Open Settings -> Servers and choose a profile.
+2. Enable Monitor this server in the background. Repeat for the profiles you need.
+3. Save settings. Switching profiles keeps valid edits in the dialog draft; Cancel discards them.
+4. In each key's Stream Deck settings, use Reload monitored servers and choose Server for this key. Follow desktop selection keeps the original behavior.
 
-Up to 16 saved servers can be enabled, in addition to the desktop selection. Duplicate IP/query-port pairs are queried once. The desktop server is excluded from background polling while selected. Every endpoint has its own restart schedule, cached metrics, bounded history and shared twenty-second manual refresh restriction. The normal/before-restart/restart intervals remain the global settings. Background queries run one at a time, so a group of timeouts can delay its other samples; the desktop query remains independent. Each key's history contains at most 120 observations from the current app run.
+Up to 16 saved profiles can be enabled alongside the desktop selection. Duplicate IP/query-port pairs are polled once. Each endpoint has its own restart plan, history and 20 s manual refresh guard. Poll intervals are shared settings. Background requests run serially, so several timeouts can delay later samples; the desktop query runs independently.
 
-All game observations are also appended to the existing local JSONL history, with their endpoint. The history file's retention and 16 MB/day cap apply to all servers together. Background restart warnings appear on the relevant Stream Deck keys. Desktop sounds/Windows notifications follow the desktop selection. Selecting pages on a key and reading exported data never sends an extra game query. A disabled/deleted target shows **SERVER / N/A / CHECK SELECTION**, without silently switching that key to another server. App and plugin 1.9+ are needed for targeting.
+Each key holds up to 120 samples from the current app run. Game observations also go into the local JSONL files, with a shared 16 MB/day limit and configured retention. Restart warnings appear on the relevant keys. Desktop sounds/Windows notifications follow the desktop selection.
 
-## Export cached readings
+Changing a key's view or reading an export does not query the game. A removed/disabled target shows SERVER / N/A / CHECK SELECTION rather than another server. Target selection needs app and plugin 1.9+.
 
-In **Settings → Integrations**, enable **read-only HTTP export**. The default is `127.0.0.1:9187`, accessible from the same PC only.
+## HTTP export
 
-- `http://127.0.0.1:9187/metrics`: Prometheus text format for collection by Prometheus and display in Grafana.
-- `http://127.0.0.1:9187/api/snapshots`: JSON containing a `servers` array for Home Assistant REST sensors or another local dashboard.
+Enable read-only HTTP export under Settings -> Integrations. Default bind: `127.0.0.1:9187`, this PC only.
 
-The exporter returns cached state only. It does not accept refresh commands, expose configuration/history files or make automatic firewall changes. It uses a normal user TCP port; URL reservations and administrator privileges are unnecessary. It runs only while the monitor is running, including when hidden in the tray. A port/bind error appears in the monitor's error area.
+| Path | Format/use |
+|---|---|
+| `http://127.0.0.1:9187/metrics` | Prometheus text for collection and Grafana |
+| `http://127.0.0.1:9187/api/snapshots` | JSON `servers` array for HA REST sensors or another dashboard |
 
-To use another machine on your LAN, enter this Windows PC's **specific LAN IPv4 address** in settings, then use that address in the examples. The endpoint has no authentication/TLS and exposes server names, IPs, measurements and the local session duration. Use it only on a trusted private network; do not forward the port to the internet. Windows Firewall may need a private-network rule that you manage yourself. `0.0.0.0` is rejected to avoid accidentally exposing every interface. The app stores no Grafana/HA credentials and needs no paid service.
+Both paths serve cached state. There are no control commands or config/history file endpoints. Export runs while the monitor is running, including tray mode. Bind/port errors appear in its error area. No URL reservation, admin access or automatic firewall change is needed.
 
-## Prometheus → Grafana
+For another LAN machine, bind to this PC's specific LAN IPv4 address and use it in the examples. `0.0.0.0` is rejected. Windows Firewall may need a private-network rule.
 
-Add to your Prometheus configuration; replace the example address with the monitor PC's configured address:
+**The export has no authentication or TLS. Use a trusted LAN and do not forward it to the internet.** It exposes server names, addresses, measurements and local session duration. Grafana/HA credentials are not stored by the app.
+
+## Prometheus -> Grafana
+
+Replace the address with the monitor PC's configured bind address:
 
 ```yaml
 scrape_configs:
@@ -36,7 +42,7 @@ scrape_configs:
       - targets: ['192.168.1.50:9187']
 ```
 
-Use Prometheus as your Grafana data source. Example queries:
+Select Prometheus as the Grafana data source. Example queries:
 
 ```promql
 dayz_monitor_players{endpoint="217.182.198.57:2303"}
@@ -45,13 +51,13 @@ dayz_monitor_next_restart_timestamp_seconds - time()
 dayz_monitor_query_success
 ```
 
-The exporter provides players, capacity, queue, UDP RTT in seconds, last-success Unix timestamp, next configured restart and schedule confirmation. Missing/failed player, capacity, queue and RTT measurements are **omitted**, rather than fabricated as zero. `query_success = 0` means the last query failed; it does not prove the game is offline. Grafana collection does not increase the game's polling rate. Check the last-success timestamp to distinguish old cached observations from recent ones. Configure Grafana's no-data display/alerts accordingly. The restart timestamp always refers to the configured schedule, including an unconfirmed plan.
+Metrics include players, capacity, queue, UDP RTT in seconds, last-success timestamp, next configured restart and schedule confirmation. Missing/failed player, capacity, queue and RTT values are omitted. `query_success = 0` means the last query failed, not a proven game outage. Use last-success time to check sample age and configure Grafana's no-data handling. Restart timestamps follow the configured plan even if it is unconfirmed.
 
-Service readings use `dayz_monitor_service_ok` with a `scope` label. Provider incidents produce zero; unknown checks are omitted. `WebReachability = 1` means the web endpoint replied from this PC, not that login, matchmaking, music streaming or messaging are working globally.
+Service metrics use `dayz_monitor_service_ok` and a `scope` label. Operator incidents give zero; unknown checks are omitted. `WebReachability = 1` only means the web endpoint replied from this PC.
 
-## Home Assistant REST sensors
+## Home Assistant
 
-This example shares one HTTP fetch between status and players. Replace the address and endpoint. Numeric unavailable values become `none`, not zero.
+One HTTP fetch supplies both sensors. Replace the address and endpoint:
 
 ```yaml
 rest:
@@ -73,19 +79,21 @@ rest:
           {{ rows[0].players if rows and rows[0].querySuccess and rows[0].players is not none else none }}
 ```
 
-The JSON also exposes `capacity`, `queue`, `rttMs`, `lastQueryAt`, `lastSuccessAt`, `nextRestartAt`, `scheduleConfirmed` and optional `gameSession`. Service entries have `service` with state, source URL, scope, check time and description. Use the stable `endpoint` field rather than an array index. If the monitor is closed or PC sleeps, HA's fetch fails and sensors become unavailable. Historical JSONL is not bulk-imported into Grafana/HA; collection starts with current snapshots. No MQTT discovery, remote write/push or cloud account setup is included.
+Missing numeric values return `none`, not zero. JSON also contains `capacity`, `queue`, `rttMs`, query/success times, restart time/confirmation and optional `gameSession`. Services have a `service` object with state, source, scope, check time and description. Select by `endpoint`, not array index.
 
-## Spotify, Discord, WhatsApp and Steam availability
+HA reports unavailable when the monitor stops or PC sleeps. Collection begins with current snapshots; historical JSONL is not imported. There is no MQTT discovery, remote write/push or cloud setup.
 
-Enable **Monitor Discord, Spotify, WhatsApp and Steam services** in the Integrations tab. Save settings; live results are visible when reopening that tab. They also appear in Stream Deck's server selector and HTTP JSON. Fixed public endpoints are checked every five minutes, with the same twenty-second manual refresh guard per service.
+## Service checks
 
-| Service | Source | Meaning |
+Enable Monitor Discord, Spotify, WhatsApp and Steam services, save and reopen Integrations for results. Services also appear in the key selector and JSON. Checks run every five minutes, with a per-service 20 s manual limit.
+
+| Service | Source | What the result covers |
 |---|---|---|
-| Discord | [Official status JSON](https://discordstatus.com/api/v2/status.json) | Provider report: OK or ISSUE; inaccessible/unrecognized replies are N/A. A provider report may lag an incident. |
-| Spotify | [Spotify web player](https://open.spotify.com/) | WEB OK: its web entry point replied from this PC; playback/account/backend not tested. |
-| WhatsApp | [WhatsApp Web](https://web.whatsapp.com/) | WEB OK: web entry point only. Meta's WhatsApp Business API status does not establish consumer WhatsApp availability. |
-| Steam Store | [Steam store](https://store.steampowered.com/) | WEB OK: store front door only, not Steam login, community, downloads or game coordinators. |
+| Discord | [Operator status JSON](https://discordstatus.com/api/v2/status.json) | OK/ISSUE from the provider, which may lag an incident |
+| Spotify | [Web player](https://open.spotify.com/) | Web entry point from this PC |
+| WhatsApp | [WhatsApp Web](https://web.whatsapp.com/) | Web entry point; WhatsApp Business API status does not cover consumer WhatsApp |
+| Steam Store | [Store](https://store.steampowered.com/) | Store entry point, not login, community, downloads or game coordinators |
 
-Redirects count as an answering web entry point. HTTP blocks, timeouts, connection errors and malformed operator replies show **N/A / CHECK UNKNOWN**, never a global OFFLINE verdict. Credentials, messages, local client state and account sessions are not accessed. Each selected service key shows SERVICE automatically, regardless of its saved game-information page. Further monitoring types and limits are described in [monitor types](MONITOR-TYPES.md).
+Redirects count as a replying entry point. Blocks, timeouts and invalid status replies show N/A / CHECK UNKNOWN. WEB OK does not prove that playback, messaging or other backends work globally. No account login, messages or local client state is accessed. A service key shows SERVICE regardless of its saved game-information view. [Other monitor types](MONITOR-TYPES.md).
 
-The sample configuration follows the official [Home Assistant REST integration](https://www.home-assistant.io/integrations/rest/) and [Prometheus exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). Export transport is covered by local HTTP fixtures; a real Grafana/HA installation and its dashboard are not configured or validated by the build.
+References: [HA REST](https://www.home-assistant.io/integrations/rest/) and [Prometheus format](https://prometheus.io/docs/instrumenting/exposition_formats/). Local export fixtures have passed; a real HA/Grafana deployment and its LAN/firewall setup have not been tested here.

@@ -1,19 +1,21 @@
-# Games and online service types
+# Games and services
 
-The app keeps its Dayz Server Monitor name. Several A2S-compatible games can use the same direct-query monitor; other protocols need separate adapters. Do not point A2S at an unrelated game port and interpret silence as a confirmed outage.
+Version 1.9.1 queries A2S endpoints directly. Other protocols need their own adapters. Set the actual query port; the app does not discover servers or guess ports.
 
-| Type | Current 1.9.0 support | Limits / evidence |
+| Game/service | Implemented support | Details |
 |---|---|---|
-| DayZ | Direct UDP A2S_INFO, challenge, Source split replies | Live MAG/Sunnyvale checks plus packet fixtures. Optional DayZ clock/queue only when published. |
-| Rust | Generic Source A2S_INFO parser | [Facepunch describes A2S discovery](https://support.facepunchstudios.com/hc/en-us/articles/360019452718-No-servers-showing). Enter the real query port; no live Rust acceptance is claimed. DayZ clock/queue extensions are not applied. |
-| Counter-Strike: Source / CS2 | Generic Source A2S_INFO parser | Public query-enabled dedicated servers only. Matchmaking/coordinator health is a separate service. No live server acceptance claimed. |
-| Counter-Strike 1.6 | Source-format replies and legacy single-packet GoldSource 0x6D replies | Parser fixtures include truncation checks. Legacy GoldSource split framing and compressed BZip2 responses are not supported; these show N/A. No live server acceptance claimed. |
-| Project Zomboid | Generic A2S for a Steam-query-enabled server | The [developer documents Steam queries on the game port](https://projectzomboid.com/blog/news/2022/09/the-good-life/). That is a dated B41 reference; verify the actual build/configuration. No custom game-clock extraction or live acceptance claimed. |
-| Minecraft Java | **Not implemented** | Needs TCP Server List Ping, distinct from optional UDP GameSpy query. [Paper documents enable-status](https://docs.papermc.io/paper/reference/server-properties/). Bedrock needs a separate UDP/RakNet adapter. |
-| PlanetSide 2 | **Not implemented** | Official [Daybreak Census REST/events](https://census.daybreakgames.com/) is an external service with service-ID/rate-limit requirements; not a direct community A2S endpoint. |
-| WARDOGS (BULKHEAD / Team17) | **Not verified or implemented** | [Official Steam listing](https://store.steampowered.com/app/1867240/). A documented provider-supported query interface has not been established here. A third-party server-list API is not treated as the game's official API or as proof of direct A2S support. |
-| Discord / Spotify / WhatsApp / Steam | Optional public-status/web-reachability checks | See [integrations](INTEGRATIONS.md). Operator report versus local web response is always distinguished. No personal data or messages. |
+| DayZ | UDP A2S_INFO, challenge and Source split replies | Published DayZ clock/queue fields are optional |
+| Rust | Generic Source A2S_INFO | [Facepunch's A2S description](https://support.facepunchstudios.com/hc/en-us/articles/360019452718-No-servers-showing) |
+| Counter-Strike: Source / CS2 | Generic Source A2S_INFO | Query-enabled dedicated servers; matchmaking/coordinator health is separate |
+| Counter-Strike 1.6 | Source format and single-packet GoldSource 0x6D | Legacy GoldSource split packets and compressed BZip2 replies show N/A |
+| Project Zomboid | Generic A2S where Steam queries are enabled | [B41 developer note](https://projectzomboid.com/blog/news/2022/09/the-good-life/) places Steam queries on the game port; check the deployed build/config |
+| Minecraft Java/Bedrock | Not implemented | Java needs TCP Server List Ping; optional GameSpy query is separate. Bedrock needs UDP/RakNet. [Paper's enable-status setting](https://docs.papermc.io/paper/reference/server-properties/) |
+| PlanetSide 2 | Not implemented | [Daybreak Census](https://census.daybreakgames.com/) has REST/events, service IDs and rate limits |
+| WARDOGS | Not implemented | [BULKHEAD/Team17 game](https://store.steampowered.com/app/1867240/). A supported direct-query interface has not been verified here |
+| Discord, Spotify, WhatsApp and Steam | Optional service checks | Operator report or local web reachability, depending on service. [Setup](INTEGRATIONS.md) |
 
-There is no game-specific auto-discovery or preset query-port guessing. Add a saved server with its IP, game port and actual A2S query port; server lists remain alphabetically sorted. The restart plan is always user configuration, never inferred from another game's default. Non-DayZ fields that do not exist stay N/A. The local session line continues to describe **DayZ only**; it does not silently become a Rust/CS playtime tracker.
+DayZ has live MAG/Sunnyvale query checks as well as fixtures. Rust, CS and Project Zomboid have protocol/parser support but no live server acceptance recorded here. WARDOGS third-party listings have not been treated as an official API.
 
-Next adapters should supply their own transport label, timeout/validation rules and optional capabilities (players, capacity, map, game clock, queue). Minecraft TCP RTT must not be displayed as UDP RTT. An API outage, blocked local access and a game-server outage must remain different outcomes. The existing multi-monitor selector and export are designed to carry separate cached snapshots for these future adapters; the table above describes what is actually shipped, not a promise that those adapters already exist.
+Saved profiles sort by name. Each restart plan is user configuration, not a game default. Unsupported game clock/queue fields stay N/A. The local session counter tracks DayZ only.
+
+A future adapter needs its own transport label, validation and timeout handling. Minecraft TCP timing must not be labelled UDP RTT. An API failure or blocked query cannot establish a game-server outage.

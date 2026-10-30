@@ -1,71 +1,67 @@
-# Display layouts, LCD presets and window controls
+# Displays and window controls
 
-The dashboard rearranges the same live controls as the window changes shape. Widening a short window moves the countdown, metrics and graph to the right of the clock. A tall, narrow window stacks them vertically. Resizing keeps the player samples, queue, countdown and query cooldown; it does not send an extra server query.
+The dashboard reuses its controls when the window changes shape. A wide window puts metrics beside the clock; portrait mode stacks them. Resizing keeps the samples and cooldown without sending another query.
 
-The title bar is **32 device-independent pixels** high, rather than the old 58. At Windows 150% scaling this is 48 physical pixels. Refresh, settings and the more menu share the title bar. There is no bottom button strip.
+The title bar is 32 device-independent pixels high. At 150% scaling it occupies 48 physical pixels. Refresh, settings and the More menu are in that bar.
 
-Use **⋯ → Display size preset** or **Settings → Appearance**. There are 27 choices: Auto, Desktop, twelve landscape/portrait pairs and Square. A preset resizes the window in physical pixels, subject to Windows DPI and the current monitor's available area. It does not change Windows resolution, rotation or scaling. Manual resizing remains adaptive after selecting a preset. Auto keeps the current window size. The last actual position and size are saved.
+Choose More -> Display size preset or Settings -> Appearance. There are 27 presets: Auto, Desktop, twelve landscape/portrait pairs and Square. Sizes are physical-pixel targets, limited by Windows DPI and the available screen area. They do not change Windows resolution or rotation. Auto keeps the current window size; manual resizing remains available.
 
-**F11** fills the current monitor and hides the title bar; **Esc** leaves fullscreen. Below 260 logical pixels wide the title bar also hides automatically. Right-click anywhere on the dashboard, or use **Shift+F10**, to open the same controls. **F5** requests a refresh with the shared twenty-second limit. **Ctrl+,** opens settings. On a tiny secondary LCD, settings use a larger connected screen if available.
-
-## Sizes found in manufacturer documentation
-
-These are representative products and usable design targets, not market-share measurements or hardware tested with this app. Check the exact model and its native pixels; the diagonal alone does not determine the layout. Landscape and portrait numbers below are the same panel rotated in Windows.
-
-| Family / example | Native pixels or landscape equivalent | Portrait equivalent | Physical reference and use |
-|---|---|---|---|
-| [Waveshare 3.5″ HDMI](https://www.waveshare.com/wiki/3.5inch_HDMI_LCD) | 480 × 320 | 320 × 480 | Small case window; prioritize time, restart, slots and status |
-| [Waveshare 5″ HDMI H](https://www.waveshare.com/5inch-HDMI-LCD-H.htm) | 800 × 480 | 480 × 800 | Compact external/case dashboard |
-| [Waveshare 7″ HDMI H](https://files.waveshare.com/upload/5/58/7inch_HDMI_LCD_%28H%29_User_Manual.pdf) | 1024 × 600 | 600 × 1024 | Small general-purpose secondary monitor; native pixels differ from accepted input signals |
-| [Waveshare 7.9″ Touch Monitor](https://docs.waveshare.net/7.9inch_Touch_Monitor/) | 1280 × 400 | 400 × 1280 | Manufacturer: enclosure 211 × 73 × 20 mm; display area about 191 × 60 mm |
-| [Waveshare 8.8″ Side Monitor](https://www.waveshare.com/wiki/8.8inch_Side_Monitor) | 1920 × 480 | 480 × 1920 | Long case/under-monitor strip; HDMI video and separate USB power |
-| [Waveshare 11.9″ Touch Monitor](https://www.waveshare.com/wiki/11.9inch_Touch_Monitor) | 1480 × 320 | 320 × 1480 | Manufacturer: enclosure 290.5 × 73 × 21.5 mm; very shallow bar |
-| [Thermaltake 3.9″ LCD kit](https://thermaltake.com/products/3-9-lcd-screen-kit) | 480 × 128 content, depending on orientation | 128 × 480 | Controlled by TT RGB Plus over USB; this is **not** evidence of a Windows desktop display |
-
-The 11.9″ source contains a copied 400 × 1280 sentence in its PC instructions; its product overview, parameters and video timing specify 320 × 1480. The preset uses the latter. These physical dimensions are manufacturer claims, not our measurements.
-
-The other presets are generic window sizes: 1280 × 800, 1366 × 768, 1920 × 1080, 1920 × 1200, 2560 × 1440, their rotated versions, and 720 × 720. They are useful for ordinary second monitors as well as custom enclosures. “Micro ribbon” is a layout target, not a claim of Thermaltake compatibility.
-
-## Connection matters
-
-The WPF app works on a display that **Windows recognizes as an extended desktop monitor**: HDMI/DisplayPort, USB-C carrying video, or a USB display adapter with an appropriate Windows display driver. USB can mean power, touch, video, or a proprietary command channel; a connector does not establish compatibility.
-
-USB-only sensor panels that accept JPG/GIF or vendor commands need a separate device integration. This release does not implement those vendor protocols. Raspberry Pi DSI/SPI panels likewise do not become PC monitors just because their pixel dimensions match a preset. AIDA64 is not needed for supported Windows desktop displays.
-
-## Responsive modes
-
-| Window shape | Arrangement |
+| Control | Action |
 |---|---|
-| Ordinary tall desktop | Large clock, countdown, metric row, history, details |
-| Short / wide | Clock and details left; countdown, metrics and graph right |
-| Very wide bar | Clock, countdown, metric column and graph across the screen |
-| Portrait | Clock and countdown above status, player slots, RTT and history |
-| Small 480 × 320 class | Five essential tiles; graph/details return when more room is available |
-| Shallow ribbon | Clock, restart, players, status and RTT; small decorative text is reduced |
+| F11 / Esc | Enter / leave fullscreen |
+| F5 | Request a refresh, subject to the 20 s limit |
+| Ctrl+, | Open settings |
+| Right-click / Shift+F10 | Open the dashboard menu |
 
-In the smallest modes, secondary details, world clocks or the graph may be hidden to keep the essential numbers readable. Data collection continues. Compact mode hides the graph and detailed address block explicitly. A preset cannot create extra physical pixels; inspect the actual LCD before relying on small labels at a distance.
+Fullscreen hides the title bar. It also hides below 260 logical pixels wide; the context menu remains available. Settings move to a larger connected screen when the secondary LCD is too small.
 
-![Real dashboard on a wide window, English demo data](images/layout-wide.png)
+## Panel references
 
-![Real dashboard for a 1280 × 400 bar, English demo data](images/layout-bar-79.png)
+These manufacturer references were used for layout targets. No physical panel acceptance has been recorded for this app. Portrait dimensions assume rotation in Windows.
 
-These are renders of the actual WPF dashboard at the stated pixel sizes. They omit the operating window frame and use example server values. They are not photos of connected LCDs.
+| Panel | Landscape pixels | Portrait pixels | Notes |
+|---|---|---|---|
+| [Waveshare 3.5" HDMI](https://www.waveshare.com/wiki/3.5inch_HDMI_LCD) | 480 x 320 | 320 x 480 | Small case display |
+| [Waveshare 5" HDMI H](https://www.waveshare.com/5inch-HDMI-LCD-H.htm) | 800 x 480 | 480 x 800 | Compact secondary screen |
+| [Waveshare 7" HDMI H](https://files.waveshare.com/upload/5/58/7inch_HDMI_LCD_%28H%29_User_Manual.pdf) | 1024 x 600 | 600 x 1024 | Native resolution differs from some accepted input timings |
+| [Waveshare 7.9" Touch Monitor](https://docs.waveshare.net/7.9inch_Touch_Monitor/) | 1280 x 400 | 400 x 1280 | Enclosure 211 x 73 x 20 mm; display area about 191 x 60 mm |
+| [Waveshare 8.8" Side Monitor](https://www.waveshare.com/wiki/8.8inch_Side_Monitor) | 1920 x 480 | 480 x 1920 | HDMI video, separate USB power |
+| [Waveshare 11.9" Touch Monitor](https://www.waveshare.com/wiki/11.9inch_Touch_Monitor) | 1480 x 320 | 320 x 1480 | Enclosure 290.5 x 73 x 21.5 mm |
+| [Thermaltake 3.9" LCD kit](https://thermaltake.com/products/3-9-lcd-screen-kit) | 480 x 128 content | 128 x 480 | TT RGB Plus USB panel, not verified as a Windows desktop display |
 
-## Themes
+Dimensions are the manufacturers' figures, not measurements made for this project. The 11.9" instructions contain a conflicting 400 x 1280 sentence; the product parameters and timing table specify 320 x 1480, which the preset uses.
 
-Light, Dark, Orange, retro grey/green, Ocean, Luna (XP inspired), Glass (Aero inspired), Sakura (anime pink/violet), Terminal (Matrix green/black), and Violet. All use complete palettes, including inputs and menus, with player-number contrast above 7:1 in automated checks.
+Other targets are 1280 x 800, 1366 x 768, 1920 x 1080, 1920 x 1200, 2560 x 1440, their rotated forms and 720 x 720. Micro ribbon is a window-size target, not a Thermaltake driver.
 
-Luna and Glass use original light gradients; Glass does not enable desktop blur/transparency. Sakura uses an original palette, without character artwork. Terminal is static rather than animated code rain, to suit continuous low-load display. No Windows, anime, film or third-party artwork is included.
+The app needs a display exposed to Windows as an extended desktop. HDMI/DisplayPort, USB-C video and USB display adapters with suitable drivers fit that model. USB power/touch or a vendor command channel alone does not. JPG/GIF sensor panels and Pi DSI/SPI panels need different integrations; those are not implemented. AIDA64 is not required.
 
-## Closing and remembering settings
+## Layouts
 
-Configuration is saved in `config.json` beside the portable executable, or in the folder supplied through `--data-dir`. Theme, language, server profiles, clocks, display preset, close behavior and the last window bounds are retained. Saving settings applies immediately; closing or hiding captures the current bounds too.
+| Shape | Arrangement |
+|---|---|
+| Tall desktop | Clock, countdown, metrics, history and details |
+| Short/wide | Clock/details left, countdown/metrics/graph right |
+| Wide strip | Clock, countdown, metric column and graph across |
+| Portrait | Clock/countdown above status, players, RTT and history |
+| 480 x 320 class | Essential tiles; graph/details return with more room |
+| Shallow ribbon | Clock, restart, players, status and RTT with smaller labels removed |
 
-By default, **× quits**. Enable **Settings → App behavior → Close button minimizes instead of quitting**, then choose:
+Small modes may hide world clocks, details or the graph. Collection continues. Compact mode explicitly hides the graph and address details. Check readability on the actual LCD at the intended distance.
 
-- **Windows taskbar:** the existing window minimizes to the taskbar.
-- **Notification area:** the window hides and the T/R icon remains beside the clock. Double-click it, or choose Open monitor, to restore. Windows may place the icon inside its overflow menu.
+![Wide layout with sample data](images/layout-wide.png)
 
-Monitoring, restart alerts and Stream Deck keep running while minimized or hidden. To stop them, choose **Quit monitor** in the dashboard menu or tray menu. Quitting bypasses the minimize option. Windows session termination also bypasses it.
+![1280 x 400 layout with sample data](images/layout-bar-79.png)
 
-When updating, close the running executable and unpack the new Windows ZIP into the same writable folder. The ZIP contains the EXE and Stream Deck installer, but no private `config.json` or `data` folder, so existing settings/history are preserved. Install the included `.streamDeckPlugin` only when updating the plugin as well.
+These renders use the WPF dashboard without the OS window frame. They are not photos of connected panels.
+
+## Themes and closing
+
+The ten [themes](THEMES.md) cover the whole window. Luna/Glass use original gradients, without Aero blur; Sakura has no character artwork and Terminal uses no animation.
+
+Settings are in `config.json` beside the EXE or in the `--data-dir` folder. Window bounds and screen choice are saved along with the selected theme, profiles and clocks.
+
+The close button quits by default. Settings -> App behavior -> Close button minimizes instead of quitting changes it to taskbar minimization or hiding beside the clock. Double-click the tray icon or use Open monitor to restore it. Windows may put the icon in the overflow area.
+
+Monitoring, alerts and Stream Deck continue while hidden. Quit monitor in the dashboard/tray menu stops them. Quit and Windows session termination bypass minimize-on-close.
+
+For an update, close the app and unpack the new ZIP into its writable folder, keeping `config.json` and `data`. The optional Stream Deck installer is included; install it when updating the plugin too.

@@ -1,83 +1,59 @@
-# Validation · 1.9.1
+# Validation
 
-The release is built for Windows x64 using .NET SDK 8.0.427. The automated checks cover the areas below. They do not establish multi-day reliability or confirm any provider's restart schedule.
+Recorded release results for Windows x64, built with .NET SDK 8.0.427:
 
-## Core checks
+| Version | Core | WPF | Plugin | Total |
+|---|---:|---:|---:|---:|
+| 1.8.0 | 42 | 15 | 11 | 68 |
+| 1.9.0 | 58 | 16 | 15 | 89 |
+| 1.9.1 | 58 | 20 | 15 | 93 |
 
-- Direct UDP A2S_INFO, challenge exchange, reordered/duplicate split fragments, invalid and truncated packets, timeout and cancellation. Compressed BZip2 responses are rejected as unavailable rather than misread.
-- Player metrics become N/A on missing replies. One failed query does not mean OFFLINE. Query gaps and recoveries are tracked separately from proof of game availability.
-- Prague restart scheduling across midnight, spring DST gaps and autumn duplicate times; alert deduplication across refresh and saved sessions.
-- Independent server profiles, minute-based reminders, catalog migration, preservation of custom settings and the fifty-profile limit.
-- Exactly twenty monotonic seconds between manual refresh requests, concurrent-click protection, wall-clock changes and automatic restart polling.
-- Graph positions based on actual query start times, irregular spacing and date changes.
-- Optional NTP calculations and packet validation, rate limits/denial, era rollover, cancellation, holdover and fallback.
-- JSON settings, local history and retention; five-language translation completeness; world-clock zones and custom labels.
-- Shutdown of completed, faulted and canceled tasks, plus a worker that never completes. A bounded drain prevents that worker from holding shutdown open indefinitely.
+These are automated check counts. The outstanding physical/live checks are listed at the end.
 
-## WPF checks without windows
+## Query, time and storage
 
-The tests load the compiled application resources without creating a Window or calling Show/Run. They check readable selected ComboBox labels, language updates, world-clock labels, all ten themes and their text contrast. They render theme, world-clock and dated graph examples into PNG files. The application icon is checked from its embedded ICO resource.
+A2S fixtures cover direct UDP replies, challenge exchange, reordered/duplicate Source fragments, invalid/truncated packets, timeout and cancellation. Compressed BZip2 replies are rejected. Single-packet GoldSource 0x6D parsing has truncation checks too.
 
-Closing is deferred until after the original Closing event returns. The window is hidden, network tasks are canceled, and settings saving runs off the UI thread in parallel with cleanup. Cleanup has a 1.2-second wait budget. A stalled disk can still prevent the last settings write from finishing; normal local storage is expected for the portable data folder. The app does not forcibly kill another process.
+Availability checks keep failed metrics at N/A, distinguish transient failures from query gaps and record recovery only after a measured gap. OFFLINE requires manual confirmation. The 20 s refresh guard is tested with concurrent requests and monotonic time.
 
-## Live checks and limits
+Schedule checks cover Prague DST gaps/duplicate times, midnight, UTC countdowns and persisted alert deduplication. NTP checks cover offset/delay, reply validation, rate/denial responses, the 2036 era rollover, holdover/fallback and cancellation. [NTP measurements](NTP.md).
 
-Nineteen public DayZ endpoints were checked once on 29 October 2026. Seventeen responded: five MAG and twelve Sunnyvale. See [the included list](SERVERS.md). These are historical observations, not a promise of current availability. The verification output is kept locally, rather than publishing anyone's runtime configuration or history.
+Storage tests cover JSON roundtrips, JSONL retention, profile edits/deletion, draft isolation, catalog migration and preserved custom settings/removals. Translation checks compare all five languages and placeholders. Graph tests use real query-start spacing, date changes and missing samples.
 
-No desktop monitor was opened or activated for this release while DayZ could be running. Closing behavior is covered by code review and bounded-task checks; the complete live window workflow has not been manually timed. Multi-monitor DPI changes, Windows startup registration, notification delivery, suspend/resume and several days of continuous operation still need hands-on testing.
+Session checks select the actual DayZ executable in the current Windows session, excluding Steam/launchers/dedicated servers. They cover a game started before the monitor, clock jumps, process exit/PID reuse and unknown/multiple cases. The implementation reads process metadata, not memory or chat.
 
-The app does not read the game process, memory or chat. UDP query replies cannot prove that joining the game will work.
+## WPF and closing
 
-## Stream Deck release checks
+WPF tests load compiled resources and render controls to PNG without creating a Window or starting monitoring. They check selected ComboBox labels, embedded ICO sizes, language changes, world clocks and all ten palettes. Player numbers exceed 7:1 contrast. Existing controls keep their data and update their colors across layout/theme changes.
 
-All 42 core checks, 15 WPF checks and 11 Node/plugin checks passed. The additional core checks exercise DayZ clock/queue keywords, the real named-pipe protocol, shared cooldown, unsupported-command rejection, discovery cleanup and bounded shutdown. The full A2S fixture also checks that extended clock fields reach ServerInfo without affecting player metrics.
+Dashboard geometry checks cover 27 presets at 100%, 125%, 150% and 200% DPI, with both compact states and world-clock visibility. Settings checks cover all seven pages in five languages, three palettes and 360/720/940 logical widths. They verify retained fields, sidebar/dropdown navigation, footer bounds and disabled export details. [Settings renders](SETTINGS.md) | [LCD references](DISPLAYS.md).
 
-The plugin tests run the actual official-SDK bundle against a local simulated Stream Deck WebSocket host and a C# console bridge fixture. They cover live state delivery, short press, one-second hold, pinned keys, the cooldown shared across keys and MONITOR OFF after fixture shutdown. Separate checks cover assumed day/night boundary crossing, midnight, missing/invalid fields, N/A/stale data, optional restart overrides, SVG escaping, history gaps and real 72-pixel rasterization. No desktop Window or real Stream Deck app is opened. The fixture is isolated from real monitor discovery files and does not query a game server.
+The dialog controller was reviewed for profile draft handling and Cancel behavior. The new settings tests render the view and forward actions; they do not run the full modal dialog workflow.
 
-Elgato CLI 1.10.4 validated and packaged the plugin. Its only warning is the private GitHub project URL returning 404 to anonymous requests. The installer has not been submitted to Marketplace. The plugin was updated in place and live output on the physical MK.2 was confirmed by the user on 30 October 2026. Installer UI, detailed key-lens readability, Stream Deck sleep/reconnect, cross-account ACL denial and long-running resource use are not claimed as tested.
+Closing hides the main window, cancels network work and saves settings off the UI thread. Cleanup has a 1.2 s wait budget. Task checks cover finished, faulted, cancelled and permanently stalled workers. A stalled disk can still prevent the final write. Tray hiding keeps the timer and bridge running; explicit Quit and Windows shutdown bypass minimize-on-close.
 
-A real MAG DEER query on 30 October 2026 at 01:44:59 Prague time confirmed the final parser: 47/121 players, published game clock 02:52, base multiplier 4, extra night multiplier 4, queue 0 and UDP RTT about 134 ms. The first live check exposed a placeholder legacy AppID; the parser now also uses the extended Steam GameID and a regression fixture covers that form. This is one historical query, not a guarantee of present values or accurate sunlight prediction.
+## Stream Deck and export
 
-## Queue display · 1.7.1
+Node tests run the bundled official-SDK plugin against a simulated WebSocket host and real C# pipe fixture. They cover separate server keys, endpoint selection/list delivery, per-server refresh protection, short press/hold behavior and monitor disconnect. Render tests cover missing/stale metrics, queue separation, game-clock extrapolation, session/service faces, optional restart overrides, escaped SVG and 72-pixel rasterization.
 
-The real WPF player card now distinguishes 121/121 plus 21 waiting, published zero, missing queue data and failed queries, with localized labels. Stream Deck rendering keeps the queue visible while a refresh countdown is shown, without adding it to occupied slots or graph samples. The updated English previews render both cases without desktop windows. Total: 42 core, 11 WPF and 10 plugin checks.
+Multi-monitor fixtures check opt-in polling, deduplicated endpoints, isolated metrics/history and rejected missing targets. HTTP fixtures check cached JSON, Prometheus labels/content type, missing values and rejection of control/config paths. Mock service replies distinguish operator incidents, local web access and blocked checks.
 
-## Stream Deck image repair · 1.7.2
+Elgato CLI 1.10.4 validated/packed the plugin. The recorded warning is the private repo URL returning 404 anonymously. Package checks compare the embedded EXE/plugin with standalone files, exclude private config/history and compare source ZIP files with the committed sources. Packages include SHA-256 sums.
 
-The plugin now sends SVG images as base64 data URLs, as required by the Stream Deck image API. Previously, raw SVG was forwarded by the SDK and the real host kept showing the static START THE APP icon; the simulated host had accepted that invalid payload. The integration fixture now rejects raw markup, and a round-trip encoding check covers the transmitted image.
+## Live observations
 
-An access-denied pipe connection gets a separate CHECK ADMIN face instead of being mistaken for a closed monitor. A live local snapshot from the running 1.7.1 monitor succeeded after it was reopened without elevation; the user subsequently confirmed that the physical key displays server data. The monitor and its current-user-only pipe security are unchanged.
+On 29 October 2026, 17 of 19 public DayZ endpoints replied: five MAG-labelled endpoints and twelve Sunnyvale. The current catalog has 16 entries after the separate MAG source check. [Addresses and provenance](SERVERS.md).
 
-## Adaptive dashboard and close options · 1.8.0
+A MAG DEER query on 30 October at 01:44:59 Prague time returned 47/121 players, game clock 02:52, base speed 4x, extra night speed 4x, queue 0 and about 134 ms UDP RTT. It exposed a placeholder legacy AppID; the parser now also accepts the extended Steam GameID, with a regression fixture.
 
-The actual DashboardView is rendered without creating a Window, starting monitoring or changing foreground applications. Tests move the same chart and player controls through stacked, wide, bar, portrait and ribbon layouts and confirm their identity/data is retained. A separate layout sweep checks all 27 presets at 100%, 125%, 150% and 200% DPI, both compact states and with/without world clocks, checking essential tiles, bounds and overlap. These are geometry checks, not physical LCD acceptance. Small displays clamp to the minimum logical window size when DPI scaling would otherwise make it smaller.
+On 30 October, Discord's status JSON reported operational and Spotify, WhatsApp Web and Steam Store returned HTTP 200 headers. Those web checks did not exercise login, playback, messaging or matchmaking.
 
-Ten complete palettes pass text and metric contrast checks, resource updates and JSON validation/roundtrip. The English previews include actual desktop, wide, 7.9/8.8/11.9-style bars, portrait, mini and ribbon dashboard controls. Representative hardware sizes, connection boundaries and source links are in [display research](DISPLAYS.md).
+The user confirmed physical MK.2 output on 30 October after the image fix. That fix sends base64 SVG data URLs instead of raw SVG; the host fixture now rejects the old payload. Access denial also has a separate face instead of MONITOR OFF.
 
-The close-to-taskbar/tray options and display profile IDs are checked through settings validation/roundtrip. Code review confirms that hiding leaves the monitoring timer and Stream Deck bridge running, explicit Quit bypasses minimization, settings/bounds are saved before hiding, and the tray offers restore/quit. Main window startup is guarded against duplicate Loaded events. The full live tray/close workflow, DPI changes between physical screens, small-screen settings placement and extended continuous use still need hands-on verification. No physical LCD compatibility is claimed from rendering alone.
+Version 1.7.1 added queue separation in the WPF card and key display. Version 1.8.0 added the dashboard layouts and close options. Version 1.9.0 added local session, profile handling, multiple targets and export. Version 1.9.1 added the settings reorganization. These records describe those builds, not a new live check on every documentation edit.
 
-That release placed its packages in the older local handoff folder. Published packages excluded private config.json and data. Total for 1.8.0: 42 core + 15 WPF + 11 plugin checks.
+## Still untested
 
-## Profiles, local session, multiple monitors and export · 1.9.0
+The full live settings/tray/close workflow, measured shutdown time, physical LCD readability and DPI changes between displays need manual checks. The same applies to startup registration, notification delivery, suspend/resume, Stream Deck sleep/reconnect, cross-account denial and several days of resource use.
 
-Core checks cover exact game executable selection (excluding Steam/launchers/dedicated servers and other Windows sessions), startup after an already running game, monotonic runtime across wall-clock jumps, process exit/PID reuse and unknown/multiple cases. WPF checks retain a small, translated session line. This is local process runtime including menus, not authoritative Steam overlay or server-connected time.
-
-Profile tests cover rename/IP edits in place, duplicate-name rejection, draft isolation, deletion/last-profile protection, alphabetical ordering and catalog v2 migration without restoring deleted presets. MAG provenance uses a dated allowlist of IP/game-port pairs, not a server-name heuristic or authenticated identity. Official MAG pages were checked on 30 October 2026; an existing Badlands profile is retained but marked unverified.
-
-Multi-monitor fixtures verify opt-in, endpoint deduplication, isolated successful/failed metrics and history, cadence and refresh protection. Named-pipe fixtures select independent targets, route refreshes, list endpoints and reject unknown targets. The actual official-SDK plugin fixture displays different counts on separate keys and confirms refreshing one does not change the other. A target mismatch from an older app cannot display the wrong server. Service faces cover operator incidents, web-only reachability and unknown results. New multiple-server/session/service workflows still need physical MK.2 acceptance.
-
-Local HTTP tests check Prometheus content type, escaped labels, missing measurements instead of false zeroes, separate service scope, cached JSON and read-only rejection of control/config paths. Mock public-service responses distinguish operator incidents, web access and blocked checks. Requests use fixed endpoints and bounded sizes/timeouts, without personal accounts. Real Grafana/HA setup and LAN firewall behavior are not claimed. Web reachability cannot establish messaging, streaming, login or matchmaking availability.
-
-The A2S parser also accepts legacy single-packet GoldSource CS 1.6 replies, with truncation rejection. Rust/CS/Project Zomboid support is protocol-level, without live provider acceptance. Minecraft, PlanetSide 2 and WARDOGS adapters are not shipped; see [monitor types](MONITOR-TYPES.md).
-
-Packaging creates `ReleasePackages/v1.9.0` with the portable Windows ZIP, matching plugin/source ZIPs, manifest and SHA-256 sums. It verifies the embedded EXE/plugin against standalone files and rejects private config/history in the ZIP. No app/game/installer is launched.
-
-The full release checks passed: **58 core + 16 WPF + 15 plugin = 89 checks**. Elgato CLI validated and packaged the installer; its existing private-repository URL warning remains. A one-time public-service check on 30 October 2026 received Discord's operational report and HTTP 200 headers from Spotify, WhatsApp Web and Steam Store. These are historical source/reachability observations only, with no authentication or backend operation tested. English previews render the local session and service face as demonstration data.
-
-## Settings organization · 1.9.1
-
-The real SettingsView is rendered without constructing a Window, starting monitoring, saving user configuration or changing foreground apps. Four additional WPF checks cover sidebar/compact navigation, retained field identity/contents, visible save footer and wrapped fields on all seven pages in five languages, three palettes and 360/720/940 logical widths. Actions forward to the existing dialog controller and optional export details stay hidden/disabled while off. Rendered English pages include servers, restarts, appearance and narrow mode. These checks do not establish physical monitor/DPI acceptance or exercise the full live dialog workflow.
-
-The dialog deep-copies profile/world-clock drafts as before. Code review confirms that switching profiles validates and retains only the current profile's draft; global settings are read at the final Save. Cancel has no configuration write. Editing multiple profiles no longer requires separate Save server actions. Existing core profile edit/delete/draft-isolation checks remain in place. There are no configuration schema changes.
-
-Final checks for 1.9.1 passed: **58 core + 20 WPF + 15 plugin = 93 checks**. The new English settings renders come from the real view, with no desktop windows opened. Full live dialog interaction remains separate from the offscreen checks.
+New multi-server/session/service key workflows have not been accepted on the physical MK.2. HA/Grafana deployment and LAN firewall setup have not been tested. Rust/CS/Project Zomboid have parser-level support only; [other adapters](MONITOR-TYPES.md) remain unimplemented. Provider restart plans are unverified. A query reply alone cannot establish game login or server ownership.
