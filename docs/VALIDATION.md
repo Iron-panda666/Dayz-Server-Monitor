@@ -1,4 +1,4 @@
-# Validation · 1.6.0
+# Validation · 1.6.1
 
 The release is built for Windows x64 using .NET SDK 8.0.427. The automated checks cover the areas below. They do not establish multi-day reliability or confirm any provider's restart schedule.
 

@@ -15,18 +15,25 @@ function Invoke-DotNet([string[]]$Arguments) {
     & $DotNet @Arguments
     if ($LASTEXITCODE -ne 0) { throw "dotnet failed ($LASTEXITCODE)" }
 }
-Invoke-DotNet -Arguments @("build", "MagDeerMonitor.sln", "-c", "Release", "--configfile", "NuGet.Config")
+Invoke-DotNet -Arguments @("build", "DayzServerMonitor.sln", "-c", "Release", "--configfile", "NuGet.Config")
 if (-not $SkipTests) {
     Invoke-DotNet -Arguments @("run", "--project", "tests\MagDeer.Tests", "-c", "Release", "--no-build")
     Invoke-DotNet -Arguments @("run", "--project", "tests\MagDeer.ThemeTests", "-c", "Release", "--no-build", "--", "--render", "artifacts\previews\theme-comparison.png")
+}
+foreach ($preview in @("theme-comparison.png", "world-clocks.png", "query-chart.png")) {
+    $path = Join-Path "artifacts\previews" $preview
+    if (Test-Path -LiteralPath $path) {
+        New-Item -ItemType Directory -Path "docs\images" -Force | Out-Null
+        Copy-Item -LiteralPath $path -Destination (Join-Path "docs\images" $preview) -Force
+    }
 }
 $version = ([xml](Get-Content -LiteralPath "src\MagDeer.App\MagDeer.App.csproj" -Raw)).Project.PropertyGroup.Version
 $publish = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Join-Path $PSScriptRoot "artifacts\release-$version" }
 Invoke-DotNet -Arguments @("publish", "src\MagDeer.App", "-c", "Release", "-p:PublishProfile=Portable", "--configfile", "NuGet.Config", "--output", $publish)
 Copy-Item -LiteralPath "README.md", "README.cs.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "config.example.json" -Destination $publish -Force
 Copy-Item -LiteralPath "docs" -Destination $publish -Recurse -Force
-$portableZip = Join-Path $PSScriptRoot "artifacts\MAG-DEER-Server-Monitor-$version-win-x64.zip"
-$portableFiles = @("MagDeerMonitor.exe", "README.md", "README.cs.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "config.example.json", "docs") | ForEach-Object { Join-Path $publish $_ }
+$portableZip = Join-Path $PSScriptRoot "artifacts\Dayz-Server-Monitor-$version-win-x64.zip"
+$portableFiles = @("DayzServerMonitor.exe", "README.md", "README.cs.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "config.example.json", "docs") | ForEach-Object { Join-Path $publish $_ }
 if (Test-Path -LiteralPath "artifacts\previews\theme-comparison.png") {
     $previewCopy = Join-Path $publish "theme-comparison.png"
     Copy-Item -LiteralPath "artifacts\previews\theme-comparison.png" -Destination $previewCopy -Force
@@ -45,7 +52,7 @@ if (Test-Path -LiteralPath "artifacts\previews\query-chart.png") {
 Compress-Archive -LiteralPath $portableFiles -DestinationPath $portableZip -Force
 $sourceStage = Join-Path $PSScriptRoot ("artifacts\source-stage-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $sourceStage -Force | Out-Null
-Copy-Item -LiteralPath "MagDeerMonitor.sln", "Directory.Build.props", "global.json", "NuGet.Config", ".gitignore", "README.md", "README.cs.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "build.ps1", "config.example.json" -Destination $sourceStage
+Copy-Item -LiteralPath "DayzServerMonitor.sln", "Directory.Build.props", "global.json", "NuGet.Config", ".gitignore", "README.md", "README.cs.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "build.ps1", "config.example.json" -Destination $sourceStage
 foreach ($folder in @("src", "tests", "docs", "tools")) {
     Get-ChildItem -LiteralPath $folder -Recurse -File | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' } | ForEach-Object {
         $relative = $_.FullName.Substring($PSScriptRoot.Length + 1)
@@ -54,7 +61,7 @@ foreach ($folder in @("src", "tests", "docs", "tools")) {
         Copy-Item -LiteralPath $_.FullName -Destination $destination -Force
     }
 }
-$sourceZip = Join-Path $PSScriptRoot "artifacts\MAG-DEER-Server-Monitor-$version-source.zip"
+$sourceZip = Join-Path $PSScriptRoot "artifacts\Dayz-Server-Monitor-$version-source.zip"
 Compress-Archive -Path (Join-Path $sourceStage "*") -DestinationPath $sourceZip -Force
 Get-FileHash -LiteralPath $portableZip, $sourceZip -Algorithm SHA256 | Format-Table Hash, Path -AutoSize
 Write-Host "Ready: $portableZip"

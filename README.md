@@ -1,4 +1,4 @@
-# MAG DEER Server Monitor
+# Dayz Server Monitor
 
 ![T/R icon](docs/images/app-icon.png)
 
@@ -10,12 +10,12 @@ It started with MAG DEER, but you can select another server or save your own. Th
 
 ## Get it running
 
-Download `MAG-DEER-Server-Monitor-1.6.0-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `MagDeerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed.
+Download `Dayz-Server-Monitor-1.6.1-win-x64.zip` from Releases, unpack it into a folder you can write to, then run `DayzServerMonitor.exe`. It works on Windows 10/11 x64. No separate .NET installation, account, API key or administrator access is needed.
 
 Settings are saved beside the EXE in `config.json`. History is kept in `data`. When updating, close the old copy and keep those two items. For a separate data folder, use:
 
 ```powershell
-.\MagDeerMonitor.exe --data-dir "D:\MAG Monitor Data"
+.\DayzServerMonitor.exe --data-dir "D:\Dayz Monitor Data"
 ```
 
 The app unpacks its bundled native runtime into the user's temporary folder on first launch. If you enable startup with Windows, keep the EXE in a stable location.
@@ -56,7 +56,7 @@ Install the .NET 8 SDK on Windows, then run:
 
 The script builds the Visual Studio solution, runs the console and WPF checks, and creates a self-contained single-file Windows x64 build plus source ZIP in `artifacts`. It never launches the desktop app. The WPF checks render controls into PNG files without opening windows.
 
-To work in Visual Studio 2022, open `MagDeerMonitor.sln` with the .NET desktop development workload installed. No external NuGet package is needed beyond Microsoft's runtime/build packs. See [validation](docs/VALIDATION.md) for what has and has not been checked.
+To work in Visual Studio 2022, open `DayzServerMonitor.sln` with the .NET desktop development workload installed. No external NuGet package is needed beyond Microsoft's runtime/build packs. See [validation](docs/VALIDATION.md) for what has and has not been checked.
 
 ## Stream Deck
 

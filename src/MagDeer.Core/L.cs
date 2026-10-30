@@ -90,7 +90,7 @@ public static class L
         ["Fullscreen"] = ["Full screen", "Celá obr.", "Pełny ekran", "Vollbild", "Pantalla completa"],
         ["FullscreenTip"] = ["Full screen: F11; Escape to return", "Celá obrazovka: F11, Escape pro návrat", "Pełny ekran: F11; Escape — powrót", "Vollbild: F11; Escape zurück", "Pantalla completa: F11; Escape para volver"],
         ["Settings"] = ["Settings", "Nastavení", "Ustawienia", "Einstellungen", "Ajustes"],
-        ["SettingsTitle"] = ["Settings · MAG DEER", "Nastavení · MAG DEER", "Ustawienia · MAG DEER", "Einstellungen · MAG DEER", "Ajustes · MAG DEER"],
+        ["SettingsTitle"] = ["Settings · Dayz Server Monitor", "Nastavení · Dayz Server Monitor", "Ustawienia · Dayz Server Monitor", "Einstellungen · Dayz Server Monitor", "Ajustes · Dayz Server Monitor"],
         ["SettingsHeading"] = ["Monitor settings", "Nastavení monitoru", "Ustawienia monitora", "Monitor-Einstellungen", "Ajustes del monitor"],
         ["SettingsIntro"] = ["Changes apply after saving. Restart times always use Prague time.", "Změny se použijí po uložení. Časy restartů jsou vždy české.", "Zmiany po zapisaniu. Restarty zawsze według czasu Pragi.", "Änderungen nach dem Speichern. Neustarts immer nach Prager Zeit.", "Los cambios se aplican al guardar. Reinicios siempre en hora de Praga."],
         ["ServerTab"] = [" Server & schedule ", " Server a plán ", " Serwer i plan ", " Server & Zeitplan ", " Servidor y horario "],

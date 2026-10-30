@@ -17,10 +17,11 @@ public partial class App : Application
         var dataArg = Array.IndexOf(args, "--data-dir");
         if (dataArg >= 0 && dataArg + 1 < args.Length) DataRoot = Path.GetFullPath(args[dataArg + 1]);
         var identity = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(DataRoot.ToUpperInvariant())))[..20];
+        // Keep the existing identity so old and renamed builds cannot share one data directory.
         mutex = new Mutex(true, @"Local\MagDeerMonitor-" + identity, out ownsMutex);
         if (!ownsMutex)
         {
-            MessageBox.Show(L.Text("AlreadyRunning"), "MAG DEER", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(L.Text("AlreadyRunning"), "Dayz Server Monitor", MessageBoxButton.OK, MessageBoxImage.Information);
             Shutdown(); return;
         }
         MonitorSettings settings;
@@ -38,7 +39,7 @@ public partial class App : Application
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException)
         {
-            MessageBox.Show(L.Text("ConfigError", L.Error(ex), ConfigPath), "MAG DEER", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(L.Text("ConfigError", L.Error(ex), ConfigPath), "Dayz Server Monitor", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1); return;
         }
         if (settings.SavedServers.Count == 0) settings.SavedServers.Add(ServerProfile.From(settings));

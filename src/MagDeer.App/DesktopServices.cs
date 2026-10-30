@@ -27,6 +27,7 @@ public static class DesktopServices
     public static void OpenFolder(string path) => Process.Start(new ProcessStartInfo("explorer.exe", path) { UseShellExecute = true });
     public static void SetStartup(bool enabled)
     {
+        // Retain the registry value name to update/remove existing startup registrations.
         using var key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
         if (enabled)
         {
@@ -69,12 +70,12 @@ public sealed class Notifications : IDisposable
     private readonly Forms.NotifyIcon icon = new()
     {
         Icon = System.Drawing.SystemIcons.Information,
-        Text = "MAG DEER · Server Monitor",
+        Text = "Dayz Server Monitor",
         Visible = false
     };
     public Notifications(Window window)
     {
-        var resource = Application.GetResourceStream(new Uri("pack://application:,,,/MagDeerMonitor;component/Assets/app.ico"));
+        var resource = Application.GetResourceStream(new Uri("pack://application:,,,/DayzServerMonitor;component/Assets/app.ico"));
         if (resource is not null)
         {
             using var stream = resource.Stream;

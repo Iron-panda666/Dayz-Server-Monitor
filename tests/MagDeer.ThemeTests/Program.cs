@@ -24,7 +24,7 @@ internal static class Program
         Localization.Apply("en");
         Test("Embedded original T/R ICO contains seven usable sizes", () =>
         {
-            var resource = Application.GetResourceStream(new Uri("pack://application:,,,/MagDeerMonitor;component/Assets/app.ico"))!;
+            var resource = Application.GetResourceStream(new Uri("pack://application:,,,/DayzServerMonitor;component/Assets/app.ico"))!;
             using var stream = resource.Stream;
             var decoder = new IconBitmapDecoder(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
             Assert(decoder.Frames.Count == 7, "Missing icon sizes");
@@ -162,6 +162,7 @@ internal static class Program
 
     private static void RenderComparison(string path)
     {
+        Localization.Apply("en");
         const int width = 480, height = 400;
         var images = new List<BitmapSource>();
         foreach (var choice in ThemeManager.Choices)
@@ -169,7 +170,7 @@ internal static class Program
             ThemeManager.Apply(choice.Id);
             var stack = new StackPanel { Margin = new Thickness(22, 14, 22, 12) };
             stack.Children.Add(Text(choice.Label, "TextBrush", 21));
-            stack.Children.Add(Text("MAG / DEER   ·   THEME PREVIEW / DEMO", "MutedBrush", 11));
+            stack.Children.Add(Text("Dayz Server Monitor   ·   THEME PREVIEW / DEMO", "MutedBrush", 11));
             stack.Children.Add(Text("16:30", "MetricBrush", 55));
             var countdown = new StackPanel();
             countdown.Children.Add(Text(L.Text("Countdown"), "MutedBrush", 11));
@@ -208,7 +209,7 @@ internal static class Program
     {
         Localization.Apply("en"); ThemeManager.Apply("Dark");
         var content = new StackPanel { Margin = new Thickness(24) };
-        content.Children.Add(Text("MAG / DEER · WORLD CLOCKS · DEMO", "MutedBrush", 12));
+        content.Children.Add(Text("Dayz Server Monitor · WORLD CLOCKS · DEMO", "MutedBrush", 12));
         content.Children.Add(Text(L.Text("PragueClock"), "MutedBrush", 13));
         content.Children.Add(Text("21:59", "MetricBrush", 88));
         content.Children.Add(Text("Wednesday, 28 October 2026", "MutedBrush", 15));
@@ -223,9 +224,9 @@ internal static class Program
 
     private static void RenderChart(string path)
     {
-        Localization.Apply("cs"); ThemeManager.Apply("Dark");
+        Localization.Apply("en"); ThemeManager.Apply("Dark");
         var content = new StackPanel { Margin = new Thickness(24) };
-        content.Children.Add(Text("MAG / DEER · GRAF DOTAZŮ · DEMO", "MutedBrush", 14));
+        content.Children.Add(Text("Dayz Server Monitor · QUERY HISTORY · DEMO", "MutedBrush", 14));
         var chart = new PlayerChart { Height = 134, Margin = new Thickness(0, 12, 0, 8) };
         var t = DateTimeOffset.Parse("2026-10-29T22:50:00Z", CultureInfo.InvariantCulture);
         foreach (var (seconds, players) in new[] { (0, 71), (300, 74), (600, 77), (630, -1), (660, 80), (690, 82), (720, 79), (750, 85), (900, 88) })
@@ -235,7 +236,7 @@ internal static class Program
                 players < 0 ? null : 80, players < 0 ? QueryFailure.Timeout : QueryFailure.None, "demo") { RequestedAt = at });
         }
         content.Children.Add(chart);
-        content.Children.Add(Text("Český čas · mezera = N/A · detail dotazu po najetí myší", "MutedBrush", 12));
+        content.Children.Add(Text("Prague time · gap = N/A · hover over a sample for query details", "MutedBrush", 12));
         content.Children.Add(new Button { Content = L.Text("RefreshCooldown", 20), IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 12, 0, 0) });
         var root = new Border { Width = 820, Height = 292, Child = content }; root.SetResourceReference(Border.BackgroundProperty, "BackgroundBrush");
         Layout(root, 820, 292);

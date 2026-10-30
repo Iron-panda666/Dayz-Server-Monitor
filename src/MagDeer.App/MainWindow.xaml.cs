@@ -307,7 +307,7 @@ public partial class MainWindow : Window
             JsonStorage.Write(App.ConfigPath, next);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
-        { MessageBox.Show(this, L.Text("SaveError", L.Error(ex)), "MAG DEER", MessageBoxButton.OK, MessageBoxImage.Warning); configuring = false; UpdateRefreshButton(); return; }
+        { MessageBox.Show(this, L.Text("SaveError", L.Error(ex)), "Dayz Server Monitor", MessageBoxButton.OK, MessageBoxImage.Warning); configuring = false; UpdateRefreshButton(); return; }
         settings = next;
         ConfigureClock();
         schedule = new(settings.RestartTimes);
@@ -454,9 +454,9 @@ public partial class MainWindow : Window
             var save = Task.Run(() => JsonStorage.Write(App.ConfigPath, snapshot));
             bool finished = await ShutdownDrain.WaitAsync([pollTask, ntpTask, save], TimeSpan.FromMilliseconds(1200));
             if (!finished || save.IsFaulted)
-                Debug.WriteLine("MAG DEER shutdown: background cleanup/save exceeded budget or failed.");
+                Debug.WriteLine("Dayz Server Monitor shutdown: background cleanup/save exceeded budget or failed.");
         }
-        catch (Exception ex) { Debug.WriteLine("MAG DEER shutdown: " + ex); }
+        catch (Exception ex) { Debug.WriteLine("Dayz Server Monitor shutdown: " + ex); }
         finally
         {
             // Dispose only after any canceled consumers have finished using the token.

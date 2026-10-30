@@ -1,10 +1,10 @@
-# MAG DEER Server Monitor
+# Dayz Server Monitor
 
 Malá aplikace pro Windows, kterou si můžeš nechat otevřenou na druhém monitoru při hraní DayZ. Ukazuje počet hráčů, poslední úspěšnou odpověď a odpočet do plánovaného restartu.
 
 ## Spuštění
 
-V Releases stáhni `MAG-DEER-Server-Monitor-1.6.0-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `MagDeerMonitor.exe`. Funguje na Windows 10/11 x64. .NET je součástí balíčku, správce ani API klíč nepotřebuješ.
+V Releases stáhni `Dayz-Server-Monitor-1.6.1-win-x64.zip`, rozbal ho do zapisovatelné složky a spusť `DayzServerMonitor.exe`. Funguje na Windows 10/11 x64. .NET je součástí balíčku, správce ani API klíč nepotřebuješ.
 
 Vedle EXE se ukládá `config.json`, historie je ve složce `data`. Při aktualizaci starou aplikaci zavři a obojí si ponech. V **Settings → Display** můžeš přepnout angličtinu na češtinu a vybrat světlý, tmavý, oranžový nebo šedozelený motiv.
 
@@ -22,7 +22,7 @@ Výchozí časy 03/07/11/15/19/23 jsou příklad, který musíš ověřit pro sv
 
 ## Vlastní sestavení
 
-Na Windows nainstaluj .NET 8 SDK a spusť `./build.ps1`, případně otevři `MagDeerMonitor.sln` ve Visual Studiu 2022 s podporou desktopového .NET. Ve složce `artifacts` vznikne portable EXE, distribuční ZIP a zdrojový ZIP. Build aplikaci neotevírá. Při hraní DayZ ji pro ověření sami nespouštíme ani nepřepínáme do popředí.
+Na Windows nainstaluj .NET 8 SDK a spusť `./build.ps1`, případně otevři `DayzServerMonitor.sln` ve Visual Studiu 2022 s podporou desktopového .NET. Ve složce `artifacts` vznikne portable EXE, distribuční ZIP a zdrojový ZIP. Build aplikaci neotevírá. Při hraní DayZ ji pro ověření sami nespouštíme ani nepřepínáme do popředí.
 
 ## Jak aplikace vznikla
 
