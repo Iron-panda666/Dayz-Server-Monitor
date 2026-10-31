@@ -40,6 +40,10 @@ Motivy a pozadí se při výběru hned zobrazí jako náhled; Zrušit vrátí p�
 
 Okno se přeuspořádá podle poměru stran. Má 27 velikostních profilů pro běžné monitory, úzké pásy i displeje na výšku. F11 přepíná fullscreen, Esc ho ukončí. Křížek může program ukončit, minimalizovat na panel nebo skrýt k hodinám. Monitoring při skrytí pokračuje. [LCD a ovládání](docs/DISPLAYS.md).
 
+[![Dashboard MAG DEER s pozadím Fuji](docs/images/user-captures/yup-border-free.png)](docs/GALLERY.md)
+
+[Další screenshoty, rozložení pro LCD a fotka Stream Decku](docs/GALLERY.md).
+
 ## Hodiny a Stream Deck
 
 Světové hodiny, formát 12/24 h a NTP jsou v sekci Čas a hodiny. NTP upravuje jen čas této aplikace, nastavení Windows nemění. Posun serverového času je výpočet z českého času. [Hodiny](docs/LANGUAGES-AND-CLOCKS.md) | [NTP](docs/NTP.md).

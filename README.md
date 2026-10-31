@@ -40,9 +40,9 @@ The window reflows for wide strips and portrait displays. There are 27 size pres
 
 Double-click outside controls to toggle borderless widget mode. Drag a display area to move it; F10 or Esc brings back the title bar. Right-click opens the menu.
 
-![Wide dashboard with example values](docs/images/layout-wide.png)
+[![MAG DEER dashboard with the Fuji background](docs/images/user-captures/yup-border-free.png)](docs/GALLERY.md)
 
-![Player graph with example queries](docs/images/query-chart.png)
+[More screenshots, LCD layouts and a Stream Deck photo](docs/GALLERY.md).
 
 ## Clocks and Stream Deck
 

@@ -1,4 +1,28 @@
-# Dashboard previews
+# Screenshots and dashboard previews
+
+## App and Stream Deck in use
+
+User captures from 31 October 2026. The restart plan shown here is unconfirmed.
+
+Dashboard with the Fuji background
+
+![MAG DEER dashboard](images/user-captures/yup-border-free.png)
+
+Wide LCD layout
+
+![Wide LCD layout](images/user-captures/yup-border-free%20long.png)
+
+Portrait layout
+
+![Portrait layout](images/user-captures/yup1.png)
+
+Stream Deck MK.2
+
+![Stream Deck MK.2 displaying MAG DEER data](images/user-captures/Stream%20deck%20-visible%20all%20.jpg)
+
+[All uploaded captures](images/user-captures).
+
+## Rendered examples
 
 These are renders of the compiled WPF dashboard with English labels and demo data. The palettes and controls are the same ones used by the app. Select them under Settings -> Appearance. Native Windows glass is not captured by the offscreen renderer.
 
