@@ -30,6 +30,16 @@ Real secondary LCD and Stream Deck setup
 
 These are renders of the compiled WPF dashboard with English labels and demo data. The palettes and controls are the same ones used by the app. Select them under Settings -> Appearance. Native Windows glass is not captured by the offscreen renderer.
 
+### MAG Counter-Strike: Source
+
+Current map, occupied slots/capacity, query RTT and local game runtime. This is a rendered example with sample data; the session is Windows game runtime including menus, not a server connection timer. Without a configured and confirmed restart plan, the map takes the main countdown area.
+
+![MAG CS:S dashboard with map and local game session](images/mag-css.png)
+
+The optional Map view can be pinned to a Stream Deck key or added to a cycle. Existing seven-page cycles remain unchanged.
+
+![MAG CS:S Stream Deck map, players, query RTT and local session views](images/mag-css-keys.png)
+
 ## Palettes
 
 Light

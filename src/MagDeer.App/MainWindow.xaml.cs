@@ -30,7 +30,11 @@ public partial class MainWindow : Window
     private DeckSnapshot[] monitoredSnapshots = [];
     private MonitoringHttpServer? exporter;
     private string exporterConfiguration = "";
-    private readonly GameSessionTracker gameSession = new();
+    private readonly Dictionary<string, GameSessionTracker> gameSessions = [];
+    private GameSessionSnapshot SessionFor(MonitorSettings target) => (!settings.ShowGameSession
+        ? new GameSessionSnapshot("Disabled", null, null)
+        : gameSessions.TryGetValue(target.SessionGame, out var session) ? session.Snapshot()
+        : new GameSessionSnapshot("Unavailable", null, null)) with { Game = target.SessionGame };
     private Task gameSessionTask = Task.CompletedTask;
     private long? lastGameSessionProbe;
     private StreamDeckBridge? deckBridge;
@@ -119,8 +123,7 @@ public partial class MainWindow : Window
         if (!configuring) background.Tick(stop.Token);
         if (!configuring) services.Tick(stop.Token);
         if (background.LastError is { Length: > 0 } backgroundError) ReportStorageError("Background history: " + backgroundError);
-        if (!settings.ShowGameSession) gameSession.Observe(new(GameSessionState.Disabled));
-        else if (gameSessionTask.IsCompleted && (lastGameSessionProbe is null || Stopwatch.GetElapsedTime(lastGameSessionProbe.Value) >= TimeSpan.FromSeconds(5)))
+        if (settings.ShowGameSession && gameSessionTask.IsCompleted && (lastGameSessionProbe is null || Stopwatch.GetElapsedTime(lastGameSessionProbe.Value) >= TimeSpan.FromSeconds(5)))
             gameSessionTask = PollGameSessionAsync();
         var now = clock.UtcNow;
         long tickStamp = Stopwatch.GetTimestamp();
@@ -132,7 +135,7 @@ public partial class MainWindow : Window
         }
         lastTickUtc = now; lastTickTimestamp = tickStamp;
         UpdateDisplay(now);
-        var alert = ledger.Evaluate(now, schedule, settings.EndpointKey, settings.LogoutWarningMinutes, settings.KickWarningMinutes);
+        var alert = settings.HasRestartPlan ? ledger.Evaluate(now, schedule, settings.EndpointKey, settings.LogoutWarningMinutes, settings.KickWarningMinutes) : null;
         if (alert is not null)
         {
             SaveRuntime();
@@ -169,7 +172,7 @@ public partial class MainWindow : Window
             var elapsed = Stopwatch.GetElapsedTime(queryStamp);
             if (Math.Abs((completedAt - requestedAt - elapsed).TotalSeconds) > 5) requestedAt = completedAt - elapsed;
             result = result with { SystemAt = result.At, At = completedAt, RequestedAt = requestedAt, TimeSource = clock.Source.ToString() };
-            var recovery = tracker.Apply(result, settings.FailureThreshold, schedule);
+            var recovery = tracker.Apply(result, settings.FailureThreshold, schedule, settings.HasRestartPlan);
             Dashboard.Chart.Add(result);
             if (recovery is not null)
             {
@@ -178,14 +181,14 @@ public partial class MainWindow : Window
                 notifications.Show(settings, L.Text("RecoveredTitle"), L.Text("RecoveredBody", LocalTime(recovery.RecoveredAt)));
             }
             UpdateDisplay(clock.UtcNow);
-            try { await history.AppendAsync(settings.EndpointKey, result, tracker.Status(result.At, schedule, settings.FailureThreshold), recovery, stop.Token); }
+            try { await history.AppendAsync(settings.EndpointKey, result, tracker.Status(result.At, schedule, settings.FailureThreshold, settings.HasRestartPlan), recovery, stop.Token); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { ReportStorageError(L.Text("HistoryError", L.Error(ex))); }
         }
         catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
         catch (Exception ex)
         {
             // A failed poll must not silently stop future monitoring.
-            tracker.Apply(new(clock.UtcNow, null, null, QueryFailure.Network, ex.Message) { SystemAt = DateTimeOffset.UtcNow, TimeSource = clock.Source.ToString() }, settings.FailureThreshold, schedule);
+            tracker.Apply(new(clock.UtcNow, null, null, QueryFailure.Network, ex.Message) { SystemAt = DateTimeOffset.UtcNow, TimeSource = clock.Source.ToString() }, settings.FailureThreshold, schedule, settings.HasRestartPlan);
             if (!closing) UpdateDisplay(clock.UtcNow);
         }
         finally { polling = false; if (!closing) UpdateRefreshButton(); }
@@ -204,7 +207,7 @@ public partial class MainWindow : Window
 
     private void UpdateDisplay(DateTimeOffset now)
     {
-        var session = gameSession.Snapshot();
+        var session = SessionFor(settings);
         Dashboard.SessionText.Visibility = settings.ShowGameSession ? Visibility.Visible : Visibility.Collapsed;
         Dashboard.SessionText.Text = session.State == "Running" && session.ElapsedSeconds is { } elapsed
             ? L.Text("SessionRunning", GameSessionTracker.Format(elapsed))
@@ -220,14 +223,14 @@ public partial class MainWindow : Window
         var next = schedule.Next(now);
         var remaining = next - now;
         var since = now - schedule.Previous(now);
-        var expected = since < TimeSpan.FromMinutes(5) && (tracker.LastSuccess is null || tracker.LastSuccess < schedule.Previous(now));
+        var expected = settings.HasRestartPlan && since < TimeSpan.FromMinutes(5) && (tracker.LastSuccess is null || tracker.LastSuccess < schedule.Previous(now));
         Dashboard.CountdownLabel.Text = L.Text(expected ? "CountdownExpected" : "Countdown");
         // Recompute from UTC instants each tick, never decrement a stored counter.
         var shownRemaining = KickPlan.Remaining(settings, next, now, expected);
         var kickCountdown = settings.CountdownToKick && settings.HasKnownKick;
         var sinceKick = kickCountdown && shownRemaining < TimeSpan.Zero;
         if (kickCountdown) Dashboard.CountdownLabel.Text = L.Text(sinceKick ? "CountdownSinceKick" : "CountdownKick");
-        Dashboard.CountdownText.Text = CountdownVisuals.Format(shownRemaining);
+        if (settings.HasRestartPlan) Dashboard.SetCountdownText(CountdownVisuals.Format(shownRemaining));
         var visual = CountdownVisuals.Evaluate(shownRemaining.TotalSeconds, now);
         var accent = Dashboard.ApplyCountdownVisual(visual, ThemeManager.IsDark(visualTheme), settings.VisualAlerts);
         Dashboard.NextRestartText.Text = LocalTime(next);
@@ -243,7 +246,17 @@ public partial class MainWindow : Window
             : remaining <= TimeSpan.FromMinutes(settings.KickWarningMinutes) ? L.Text(settings.HasKnownKick ? "WarnKick" : "WarnRestartSoon", settings.KickWarningMinutes)
             : remaining <= TimeSpan.FromMinutes(settings.LogoutWarningMinutes) ? L.Text("WarnLogout", settings.LogoutWarningMinutes)
             : L.Text("WarnNormal");
-        var status = tracker.Status(now, schedule, settings.FailureThreshold);
+        if (!settings.HasRestartPlan)
+        {
+            Dashboard.CountdownLabel.Text = L.Text("MapTitle");
+            Dashboard.SetCountdownText(tracker.Latest?.Success == true ? tracker.Latest.Info!.Map : "N/A");
+            Dashboard.ApplyCountdownVisual(new(CountdownStage.Normal, 0, 1), ThemeManager.IsDark(visualTheme), settings.VisualAlerts);
+            Dashboard.NextRestartText.Text = "N/A";
+            Dashboard.NextDateText.Text = Dashboard.CompactNextRestart.Text = Dashboard.WarningText.Text = L.Text("NoRestartPlan");
+            Dashboard.LogoutText.Text = ""; Dashboard.KickText.Text = "";
+            Dashboard.WarningText.Foreground = Muted;
+        }
+        var status = tracker.Status(now, schedule, settings.FailureThreshold, settings.HasRestartPlan);
         Dashboard.StatusText.Text = status switch { ServerStatus.Online => "ONLINE", ServerStatus.Offline => "OFFLINE", ServerStatus.RestartExpected => "RESTART EXPECTED", _ => "QUERY UNAVAILABLE" };
         Dashboard.StatusDot.Fill = status == ServerStatus.Online ? Success : status == ServerStatus.Offline ? Red : Yellow;
         Dashboard.StatusText.Foreground = Dashboard.StatusDot.Fill;
@@ -287,18 +300,18 @@ public partial class MainWindow : Window
         Volatile.Write(ref deckSnapshot, new DeckSnapshot
         {
             Now = now, ServerName = settings.ServerName, Endpoint = settings.EndpointKey, Status = status.ToString(),
-            NextRestartAt = next, RestartExpected = expected, ScheduleConfirmed = settings.ScheduleConfirmed,
+            NextRestartAt = next, RestartExpected = expected, ScheduleConfirmed = settings.ScheduleConfirmed, RestartPlanEnabled = settings.HasRestartPlan,
             LogoutWarningMinutes = settings.LogoutWarningMinutes, KickWarningMinutes = settings.KickWarningMinutes,
             KickBeforeRestart = settings.HasKnownKick, CountdownToKick = settings.CountdownToKick && settings.HasKnownKick,
             Use24HourClock = settings.Use24HourClock, VisualAlerts = settings.VisualAlerts,
             LastQueryAt = latest?.At, LastSuccessAt = tracker.LastSuccess, QuerySuccess = latest?.Success == true,
             Players = info?.Players, Capacity = info?.MaxPlayers, Queue = info?.Queue, RttMs = info is null ? null : latest?.RttMs,
             GameClock = info?.GameClock, Polling = polling, RefreshRemainingSeconds = refreshGuard.RemainingSeconds,
-            GameSession = gameSession.Snapshot(),
+            GameSession = SessionFor(settings), Map = info?.Map,
             QueryIntervalSeconds = interval,
             History = Dashboard.Chart.Snapshot().Select(s => new DeckSample(QueryTimeline.TimeOf(s), s.Success ? s.Info?.Players : null, s.Success ? s.Info?.MaxPlayers : null)).ToArray()
         });
-        Volatile.Write(ref monitoredSnapshots, new[] { Volatile.Read(ref deckSnapshot) }.Concat(background.Snapshots(gameSession.Snapshot())).Concat(services.Snapshots(gameSession.Snapshot())).ToArray());
+        Volatile.Write(ref monitoredSnapshots, new[] { Volatile.Read(ref deckSnapshot) }.Concat(background.SnapshotsForGames(SessionFor)).Concat(services.Snapshots(SessionFor(settings))).ToArray());
     }
 
     private void ApplyAppearance()
@@ -516,12 +529,17 @@ public partial class MainWindow : Window
     private async Task PollGameSessionAsync()
     {
         lastGameSessionProbe = Stopwatch.GetTimestamp();
-        GameSessionObservation observation;
-        try { observation = await Task.Run(WindowsGameSessionProbe.Read); }
-        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
-        { observation = new(GameSessionState.Unavailable); }
-        if (closing) return;
-        gameSession.Observe(settings.ShowGameSession ? observation : new(GameSessionState.Disabled));
+        var games = settings.SavedServers.Where(p => p.MonitorInBackground).Select(p => p.SessionGame).Prepend(settings.SessionGame).Distinct().ToArray();
+        foreach (var game in games)
+        {
+            GameSessionObservation observation;
+            try { observation = await Task.Run(() => WindowsGameSessionProbe.Read(game)); }
+            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+            { observation = new(GameSessionState.Unavailable); }
+            if (closing) return;
+            if (!gameSessions.TryGetValue(game, out var session)) gameSessions[game] = session = new();
+            session.Observe(settings.ShowGameSession ? observation : new(GameSessionState.Disabled));
+        }
         UpdateDisplay(clock.UtcNow);
     }
     private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e) => UpdateCaption();

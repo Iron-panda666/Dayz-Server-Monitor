@@ -15,6 +15,40 @@ internal static class SessionAndProfileChecks
     private static void Reject(Action action) { try { action(); } catch (ArgumentException) { return; } throw new InvalidOperationException("Invalid edit accepted"); }
     public static IEnumerable<(string Name, Action Run)> All()
     {
+        yield return ("CS Source and Rust sessions select only the matching game while DayZ also runs", () =>
+        {
+            var at = DateTimeOffset.UtcNow.AddMinutes(-20);
+            var processes = new[] { new GameProcessCandidate(1, "DayZ_x64", 2, at), new(2, "cstrike_win64.exe", 2, at.AddMinutes(5)),
+                new(3, "RustClient", 2, at.AddMinutes(10)), new(4, "hl2", 2, at), new(5, "srcds", 2, at), new(6, "cstrike", 3, at) };
+            Assert(GameSessionProbe.Select(processes, 2).ProcessId == 1);
+            Assert(GameSessionProbe.Select(processes, 2, "CounterStrikeSource").ProcessId == 2);
+            Assert(GameSessionProbe.Select(processes, 2, "Rust").ProcessId == 3);
+            Assert(GameSessionProbe.Select(processes.Where(p => p.Id != 2), 2, "CounterStrikeSource").State == GameSessionState.NotRunning);
+            Assert(GameSessionProbe.Select(processes, 2, "Other").State == GameSessionState.Unavailable);
+            Assert(GameSessionProbe.Select(processes.Append(new(7, "cstrike", 2, at)), 2, "CounterStrikeSource").State == GameSessionState.MultipleInstances);
+        });
+        yield return ("MAG game migration adds only new presets and preserves deleted DayZ profiles and custom names", () =>
+        {
+            var s = new MonitorSettings { ServerCatalogVersion = 2, IpAddress = "57.129.39.17", GamePort = 27015, QueryPort = 27015,
+                SavedServers = [new() { Name = "My CS", IpAddress = "57.129.39.17", GamePort = 27015, QueryPort = 27015 }] };
+            Assert(ServerCatalog.MergeOnce(s) && s.SavedServers.Count == 2 && s.SessionGame == "CounterStrikeSource");
+            Assert(s.SavedServers[0].Name == "My CS" && s.SavedServers[0].SessionGame == "CounterStrikeSource");
+            Assert(s.SavedServers.All(p => p.SessionGame != "DayZ"));
+            s.SavedServers.RemoveAt(1); Assert(!ServerCatalog.MergeOnce(s) && s.SavedServers.Count == 1);
+            var copy = s.Copy(); var profile = ServerProfile.From(copy); var applied = new MonitorSettings(); profile.ApplyTo(applied);
+            Assert(applied.SessionGame == "CounterStrikeSource" && !applied.HasRestartPlan);
+            copy.SessionGame = "bad"; Reject(copy.Validate);
+        });
+        yield return ("Unconfigured non-DayZ schedules never create restart expectations or accelerated queries", () =>
+        {
+            var s = new MonitorSettings { SessionGame = "CounterStrikeSource" };
+            var plan = new RestartSchedule(s.RestartTimes); var now = plan.Next(DateTimeOffset.UtcNow).AddSeconds(1);
+            var tracker = new AvailabilityTracker();
+            for (int i = 0; i < 3; i++) tracker.Apply(new(now, null, null, QueryFailure.Timeout, "fixture"), 3, plan, s.HasRestartPlan);
+            Assert(!tracker.RestartGap && tracker.Status(now, plan, 3, s.HasRestartPlan) == ServerStatus.QueryUnavailable);
+            Assert(plan.PollInterval(s, now, true) == s.NormalIntervalSeconds);
+            s.ScheduleConfirmed = true; Assert(s.HasRestartPlan && plan.PollInterval(s, now, false) == s.RestartIntervalSeconds);
+        });
         yield return ("Game session excludes Steam, launchers, server and other Windows sessions", () =>
         {
             var at = DateTimeOffset.UtcNow.AddHours(-1);
@@ -89,9 +123,9 @@ internal static class SessionAndProfileChecks
             var settings = new MonitorSettings { ServerCatalogVersion = 1, SavedServers = new() {
                 new() { Name = "OFFICIAL MAG MiddleAgedGamers #3 Vanilla+", IpAddress = "57.129.39.17", GamePort = 2302 },
                 new() { Name = "My custom name", IpAddress = "217.182.198.57", GamePort = 2302 } } };
-            Assert(ServerCatalog.MergeOnce(settings)); Assert(settings.SavedServers.Count == 2);
+            Assert(ServerCatalog.MergeOnce(settings)); Assert(settings.SavedServers.Count == 4);
             Assert(settings.SavedServers[0].Name == "MAG MiddleAgedGamers #3 Vanilla+" && settings.SavedServers[1].Name == "My custom name");
-            settings.SavedServers.RemoveAt(0); Assert(!ServerCatalog.MergeOnce(settings) && settings.SavedServers.Count == 1);
+            settings.SavedServers.RemoveAt(0); Assert(!ServerCatalog.MergeOnce(settings) && settings.SavedServers.Count == 3);
         });
     }
 }

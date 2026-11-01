@@ -50,7 +50,7 @@ Okno se přeuspořádá podle poměru stran. Má 27 velikostních profilů pro b
 
 Světové hodiny, formát 12/24 h a NTP jsou v sekci Čas a hodiny. NTP upravuje jen čas této aplikace, nastavení Windows nemění. Posun serverového času je výpočet z českého času. [Hodiny](docs/LANGUAGES-AND-CLOCKS.md) | [NTP](docs/NTP.md).
 
-Délka session vychází ze spuštění skutečného procesu DayZ. Steam ani launcher se nepočítá, herní menu ano. Není to délka připojení k serveru ani přesný čítač Steam overlaye. Paměť hry a chat se nečtou.
+Délka session vychází ze spuštění skutečného procesu zvolené hry (DayZ, CS:S nebo Rust). Steam ani launcher se nepočítá, herní menu ano. Není to délka připojení k serveru ani přesný čítač Steam overlaye. Paměť hry a chat se nečtou.
 
 V ZIPu je instalátor .streamDeckPlugin pro MK.2. Krátký stisk střídá pohledy, podržení jednu sekundu vyžádá obnovu. Každá klávesa může sledovat jiný zapnutý server. Ukazuje herní čas, restart, hráče, graf, UDP RTT, upomínku odhlášení nebo místní session. Herní čas musí server zveřejňovat; dopočet a den/noc jsou odhady. [Instalace a význam údajů](docs/STREAM-DECK.md).
 
@@ -67,3 +67,7 @@ Na Windows s .NET SDK 10.0.403 nebo novějším v řadě 10.x a Node.js 24+ spus
 ```
 
 Nebo otevři DayzServerMonitor.sln ve Visual Studiu 2026 s desktopovým .NET. Build provede kontroly a připraví EXE, plugin a zdrojový ZIP do artifacts a ReleasePackages. Aplikaci nespouští. [Výsledky a zbývající kontroly](docs/VALIDATION.md).
+
+## MAG CS:S a Rust
+
+Od verze 1.12.0 jsou v nabídce také MAG Counter-Strike: Source a MAG Rust. Zobrazují mapu, obsazené sloty a kapacitu, historii hráčů a odezvu query. Dokud nenastavíš a nepotvrdíš restartovací plán, místo odpočtu se ukazuje mapa a dotazy běží v běžném intervalu. V nastavení profilu vyber hru pro místní session. DayZ, aktuální CS:S a Rust se měří samostatně podle času spuštění procesu ve Windows, včetně menu. Na Stream Decku je dostupná i volitelná stránka Map; výchozích sedm stránek zůstává zachováno.

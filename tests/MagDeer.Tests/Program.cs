@@ -84,7 +84,7 @@ int passed = 0, failed = 0;
 async Task Test(string name, Func<Task> test)
 {
     try { await test(); passed++; Console.WriteLine("PASS " + name); }
-    catch (Exception ex) { failed++; Console.WriteLine("FAIL " + name + ": " + ex.Message); }
+    catch (Exception ex) { failed++; Console.WriteLine("FAIL " + name + ": " + ex); }
 }
 void Assert(bool condition, string message = "Assertion failed") { if (!condition) throw new Exception(message); }
 Task Sync(Action action) { action(); return Task.CompletedTask; }
@@ -196,11 +196,11 @@ await Test("Stream Deck named pipe shares cooldown, rejects other commands and c
     finally { await bridge.DisposeAsync(); if (Directory.Exists(directory)) Directory.Delete(directory, true); }
 });
 
-await Test("Catalog contains 16 distinct valid endpoints and never confirms provider schedules", () => Sync(() =>
+await Test("Catalog contains 18 distinct valid endpoints and never confirms provider schedules", () => Sync(() =>
 {
     var catalog = ServerCatalog.Create();
-    Assert(catalog.Count == 16 && catalog.Count(p => p.Name.StartsWith("Sunnyvale")) == 12);
-    Assert(catalog.Select(p => (p.IpAddress, p.QueryPort)).Distinct().Count() == 16);
+    Assert(catalog.Count == 18 && catalog.Count(p => p.Name.StartsWith("Sunnyvale")) == 12);
+    Assert(catalog.Select(p => (p.IpAddress, p.QueryPort)).Distinct().Count() == 18);
     foreach (var profile in catalog) { profile.Validate(); Assert(!profile.ScheduleConfirmed); }
     Assert(catalog.Single(p => p.Name.StartsWith("Sunnyvale #12 ")).IpAddress == "172.111.51.80");
 }));
@@ -208,12 +208,12 @@ await Test("Catalog migration preserves active server, custom settings and delib
 {
     var settings = new MonitorSettings { ScheduleConfirmed = true, RestartTimes = ["12:15"] };
     settings.SavedServers.Add(ServerProfile.From(settings));
-    Assert(ServerCatalog.MergeOnce(settings) && settings.SavedServers.Count == 16);
+    Assert(ServerCatalog.MergeOnce(settings) && settings.SavedServers.Count == 18);
     var existing = settings.SavedServers.Single(p => p.IpAddress == settings.IpAddress && p.QueryPort == settings.QueryPort);
     Assert(existing.ScheduleConfirmed && existing.RestartTimes.SequenceEqual(new[] { "12:15" }));
     Assert(settings.ScheduleConfirmed && settings.RestartTimes[0] == "12:15");
-    settings.SavedServers.RemoveAt(0); Assert(!ServerCatalog.MergeOnce(settings) && settings.SavedServers.Count == 15);
-    var fresh = new MonitorSettings(); ServerCatalog.MergeOnce(fresh); Assert(fresh.SavedServers.Count == 16);
+    settings.SavedServers.RemoveAt(0); Assert(!ServerCatalog.MergeOnce(settings) && settings.SavedServers.Count == 17);
+    var fresh = new MonitorSettings(); ServerCatalog.MergeOnce(fresh); Assert(fresh.SavedServers.Count == 18);
     fresh.SavedServers[0].Name = "Edited"; Assert(ServerCatalog.Create()[0].Name != "Edited");
     var full = new MonitorSettings { SavedServers = Enumerable.Range(0, 50).Select(i => new ServerProfile { Name = "Custom " + i }).ToList() };
     ServerCatalog.MergeOnce(full); Assert(full.SavedServers.Count == 50 && full.SavedServers[49].Name == "Custom 49");

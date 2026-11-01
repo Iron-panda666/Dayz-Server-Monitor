@@ -33,6 +33,21 @@ test('oversized constrained arrays are rejected before validating their elements
 const state = { protocolVersion: 1, now: '2026-10-30T12:00:00Z', nextRestartAt: '2026-10-30T14:30:00Z',
   lastQueryAt: '2026-10-30T12:00:00Z', serverName: 'MAG #2', querySuccess: true, players: 39, capacity: 121, rttMs: 87,
   logoutWarningMinutes: 10, kickWarningMinutes: 5, queryIntervalSeconds: 300, scheduleConfirmed: false, history: [] };
+
+test('CS Source map and session are independent of DayZ and an unconfigured restart plan', () => {
+  const css = { ...state, map: 'de_cbble', restartPlanEnabled: false, nextRestartAt: state.now, restartExpected: true,
+    gameSession: { game: 'CounterStrikeSource', state: 'Running', elapsedSeconds: 3720 } };
+  assert.match(renderKey(css, 'map'), /de_cbble/);
+  assert.match(renderKey(css, 'session'), /CS:S \/ LOCAL/);
+  assert.match(renderKey(css, 'session'), />01:02</);
+  assert.match(renderKey(css, 'restart'), /NO PLAN SET/);
+  assert.match(renderKey(css, 'logout'), /NO PLAN SET/);
+  assert.match(renderKey({ ...css, querySuccess: false }, 'map'), />N\/A</);
+  assert.ok(!renderKey({ ...css, querySuccess: false }, 'map').includes('de_cbble'));
+  assert.match(renderKey({ ...css, map: '<script>' }, 'map'), /&lt;script&gt;/);
+  const image = new Resvg(renderKey(css, 'map'), { fitTo: { mode: 'width', value: 72 } }).render();
+  assert.equal(image.width, 72);
+});
 test('game key has no phase question mark and supports app or per-key 12/24-hour formats', () => {
   const snapshot = { ...state, use24HourClock: false, gameClock: { hour: 0, minute: 5 } };
   assert.equal(estimatedGameClock(snapshot).text, '12:05 AM');

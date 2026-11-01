@@ -45,6 +45,8 @@ public sealed class MonitorSettings
     public double ServerOffsetHours { get; set; } = -1;
     public bool ShowServerTime { get; set; } = true;
     public bool ShowGameSession { get; set; } = true;
+    public string SessionGame { get; set; } = "DayZ";
+    [JsonIgnore] public bool HasRestartPlan => SessionGame == "DayZ" || ScheduleConfirmed;
     public bool ExportEnabled { get; set; }
     public bool MonitorOnlineServices { get; set; }
     public string ExportAddress { get; set; } = "127.0.0.1";
@@ -68,6 +70,7 @@ public sealed class MonitorSettings
 
     public void Validate()
     {
+        if (SessionGame is not ("DayZ" or "CounterStrikeSource" or "Rust" or "Other")) throw new ArgumentException("SessionGameInvalid");
         if (string.IsNullOrWhiteSpace(ServerName) || ServerName.Length > 180)
             throw new ArgumentException("Název serveru musí mít 1–180 znaků.");
         if (!IPAddress.TryParse(IpAddress, out var address))

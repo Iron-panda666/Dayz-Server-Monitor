@@ -28,6 +28,7 @@
 <ComboBox x:Name="ProfilesBox" SelectionChanged="ForwardSelection" Tag="ProfileSelected"/><WrapPanel><Button Content="{DynamicResource L.NewServer}" Click="ForwardAction" Tag="NewProfileClick" Margin="0,0,8,5"/><Button x:Name="DeleteServerButton" Content="{DynamicResource L.DeleteServer}" Click="ForwardAction" Tag="DeleteProfileClick" Margin="0,0,0,5"/></WrapPanel><TextBlock Text="{DynamicResource L.SettingsProfileDraft}" Style="{StaticResource Help}"/>
 </StackPanel></Border><Border Style="{StaticResource SettingsCard}"><StackPanel><TextBlock Text="{DynamicResource L.SettingsConnection}" Style="{StaticResource SectionHeading}"/>
 <TextBlock Text="{DynamicResource L.ServerName}"/><TextBox x:Name="NameBox"/>
+<TextBlock Text="{DynamicResource L.SessionGame}"/><ComboBox x:Name="SessionGameBox" DisplayMemberPath="Label" SelectedValuePath="Id"/>
           <CheckBox x:Name="BackgroundBox" Content="{DynamicResource L.MonitorBackground}" ToolTip="{DynamicResource L.MonitorBackgroundHelp}"/>
           <local:SettingsFields MaxColumns="3"><StackPanel><TextBlock Text="{DynamicResource L.IpAddress}"/><TextBox x:Name="IpBox"/></StackPanel><StackPanel><TextBlock Text="{DynamicResource L.GamePort}"/><TextBox x:Name="GamePortBox"/></StackPanel><StackPanel><TextBlock Text="{DynamicResource L.QueryPort}"/><TextBox x:Name="QueryPortBox"/></StackPanel></local:SettingsFields><Button Content="{DynamicResource L.SettingsGoRestarts}" HorizontalAlignment="Left" Click="GoToRestarts"/>
 </StackPanel></Border>

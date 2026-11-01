@@ -32,7 +32,7 @@ public sealed class AvailabilityTracker
     public void ConfirmOffline() { if (Failures > 0) ManualOffline = true; }
     public void ClearOffline() => ManualOffline = false;
 
-    public Recovery? Apply(QueryResult result, int failureThreshold, RestartSchedule schedule)
+    public Recovery? Apply(QueryResult result, int failureThreshold, RestartSchedule schedule, bool planEnabled = true)
     {
         Recovery? recovery = null;
         if (result.Success)
@@ -58,17 +58,17 @@ public sealed class AvailabilityTracker
             ConfirmedQueryGap |= Failures >= failureThreshold;
             var until = schedule.Next(result.At) - result.At;
             var since = result.At - schedule.Previous(result.At);
-            RestartGap |= until <= TimeSpan.FromMinutes(15) || since < TimeSpan.FromMinutes(5);
+            RestartGap |= planEnabled && (until <= TimeSpan.FromMinutes(15) || since < TimeSpan.FromMinutes(5));
         }
         Latest = result;
         return recovery;
     }
 
-    public ServerStatus Status(DateTimeOffset now, RestartSchedule schedule, int threshold)
+    public ServerStatus Status(DateTimeOffset now, RestartSchedule schedule, int threshold, bool planEnabled = true)
     {
         if (Latest?.Success == true) return ServerStatus.Online;
         if (ManualOffline) return ServerStatus.Offline;
-        if (now - schedule.Previous(now) < TimeSpan.FromMinutes(5) || RestartGap && ConfirmedQueryGap)
+        if (planEnabled && (now - schedule.Previous(now) < TimeSpan.FromMinutes(5) || RestartGap && ConfirmedQueryGap))
             return ServerStatus.RestartExpected;
         // One missed query keeps a previously verified server online, but its metrics are unavailable.
         if (LastSuccess is not null && Failures < threshold) return ServerStatus.Online;

@@ -7,6 +7,7 @@ public sealed class ServerProfile
     public int GamePort { get; set; } = 2302;
     public int QueryPort { get; set; } = 2303;
     public bool MonitorInBackground { get; set; }
+    public string SessionGame { get; set; } = "DayZ";
     public string[] RestartTimes { get; set; } = ["03:00", "07:00", "11:00", "15:00", "19:00", "23:00"];
     public bool ScheduleConfirmed { get; set; }
     public int RestartEveryHours { get; set; } = 4;
@@ -21,6 +22,7 @@ public sealed class ServerProfile
     public void ApplyTo(MonitorSettings settings)
     {
         settings.ServerName = Name; settings.IpAddress = IpAddress; settings.GamePort = GamePort; settings.QueryPort = QueryPort;
+        settings.SessionGame = SessionGame;
         settings.RestartTimes = (string[])RestartTimes.Clone(); settings.ScheduleConfirmed = ScheduleConfirmed;
         settings.RestartEveryHours = RestartEveryHours; settings.RestartAnchor = RestartAnchor; settings.ServerOffsetHours = ServerOffsetHours;
         settings.LogoutWarningMinutes = LogoutWarningMinutes; settings.KickWarningMinutes = KickWarningMinutes;
@@ -29,6 +31,7 @@ public sealed class ServerProfile
     public static ServerProfile From(MonitorSettings settings) => new()
     {
         Name = settings.ServerName, IpAddress = settings.IpAddress, GamePort = settings.GamePort, QueryPort = settings.QueryPort,
+        SessionGame = settings.SessionGame,
         RestartTimes = (string[])settings.RestartTimes.Clone(), ScheduleConfirmed = settings.ScheduleConfirmed,
         RestartEveryHours = settings.RestartEveryHours, RestartAnchor = settings.RestartAnchor, ServerOffsetHours = settings.ServerOffsetHours,
         LogoutWarningMinutes = settings.LogoutWarningMinutes, KickWarningMinutes = settings.KickWarningMinutes,

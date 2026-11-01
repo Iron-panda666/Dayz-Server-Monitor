@@ -48,6 +48,7 @@ public sealed class RestartSchedule
 
     public int PollInterval(MonitorSettings settings, DateTimeOffset now, bool restartGap)
     {
+        if (!settings.HasRestartPlan) return settings.NormalIntervalSeconds;
         if (restartGap || now - Previous(now) < TimeSpan.FromMinutes(5)) return settings.RestartIntervalSeconds;
         if (Next(now) - now <= TimeSpan.FromMinutes(15)) return settings.BeforeRestartIntervalSeconds;
         return settings.NormalIntervalSeconds;

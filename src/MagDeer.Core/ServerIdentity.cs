@@ -5,12 +5,14 @@ public sealed record PublishedServerAddress(string Ip, int GamePort, string Sour
 /// <summary>Address provenance from MAG-owned pages, checked 2026-10-30; not a cryptographic identity guarantee.</summary>
 public static class ServerIdentity
 {
-    public const string CheckedOn = "2026-10-30";
+    public const string CheckedOn = "2026-11-01";
     public static IReadOnlyList<PublishedServerAddress> MagAddresses { get; } = new[]
     {
         new PublishedServerAddress("54.36.109.179", 2302, "https://www.middleagedgamers.co.uk/forum/index.php?topic=16729.0"),
         new PublishedServerAddress("217.182.198.57", 2302, "https://www.middleagedgamers.co.uk/forum/index.php?topic=16729.0"),
         new PublishedServerAddress("57.129.39.17", 2302, "https://www.middleagedgamers.co.uk/forum/index.php?topic=16729.0"),
+        new PublishedServerAddress("57.129.39.17", 27015, "https://www.middleagedgamers.co.uk/forum/index.php?topic=16729.0"),
+        new PublishedServerAddress("57.129.39.17", 28015, "https://www.middleagedgamers.co.uk/forum/index.php?topic=16729.0"),
         new PublishedServerAddress("5.252.100.201", 2602, "https://www.middleagedgamers.co.uk/new/dayz-direct-connect/")
     };
     public static PublishedServerAddress? MagSource(string ip, int gamePort) => MagAddresses.FirstOrDefault(x => x.Ip == ip && x.GamePort == gamePort);

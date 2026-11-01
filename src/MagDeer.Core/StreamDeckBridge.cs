@@ -18,6 +18,7 @@ public sealed record DeckSnapshot
     public DateTimeOffset NextRestartAt { get; init; }
     public bool RestartExpected { get; init; }
     public bool ScheduleConfirmed { get; init; }
+    public bool RestartPlanEnabled { get; init; } = true;
     public int LogoutWarningMinutes { get; init; }
     public int KickWarningMinutes { get; init; }
     public bool KickBeforeRestart { get; init; }
@@ -28,6 +29,7 @@ public sealed record DeckSnapshot
     public DateTimeOffset? LastSuccessAt { get; init; }
     public bool QuerySuccess { get; init; }
     public int? Players { get; init; }
+    public string? Map { get; init; }
     public int? Capacity { get; init; }
     public int? Queue { get; init; }
     public double? RttMs { get; init; }
@@ -103,6 +105,8 @@ public sealed class StreamDeckBridge : IAsyncDisposable
     private async Task ServeWithSlotAsync(NamedPipeServerStream pipe, CancellationToken ct)
     {
         try { await ServeAsync(pipe, ct).ConfigureAwait(false); }
+        // A disconnected client can also fail the writer's final flush during disposal.
+        catch (IOException) { }
         finally { slots.Release(); }
     }
     private async Task ServeAsync(NamedPipeServerStream pipe, CancellationToken ct)

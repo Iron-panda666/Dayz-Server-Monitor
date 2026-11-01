@@ -14,8 +14,8 @@ Version 1.9.1 queries A2S endpoints directly. Other protocols need their own ada
 | WARDOGS | Not implemented | [BULKHEAD/Team17 game](https://store.steampowered.com/app/1867240/). A supported direct-query interface has not been verified here |
 | Discord, Spotify, WhatsApp and Steam | Optional service checks | Operator report or local web reachability, depending on service. [Setup](INTEGRATIONS.md) |
 
-DayZ has live MAG/Sunnyvale query checks as well as fixtures. Rust, CS and Project Zomboid have protocol/parser support but no live server acceptance recorded here. WARDOGS third-party listings have not been treated as an official API.
+DayZ has live MAG/Sunnyvale query checks as well as fixtures. MAG Rust and CS:S also returned successful A2S_INFO responses on 1 November 2026. Project Zomboid has protocol/parser support but no live server acceptance recorded here. WARDOGS third-party listings have not been treated as an official API.
 
-Saved profiles sort by name. Each restart plan is user configuration, not a game default. Unsupported game clock/queue fields stay N/A. The local session counter tracks DayZ only.
+Saved profiles sort by name. Each restart plan is user configuration, not a game default. Non-DayZ plans are inactive until confirmed. Unsupported game clock/queue fields stay N/A. The local session counter tracks DayZ, current CS:S and Rust independently using Windows process start metadata. Legacy generic hl2 clients are excluded to avoid counting another Source game as CS:S.
 
 A future adapter needs its own transport label, validation and timeout handling. Minecraft TCP timing must not be labelled UDP RTT. An API failure or blocked query cannot establish a game-server outage.

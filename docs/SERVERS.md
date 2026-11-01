@@ -1,6 +1,6 @@
-# DayZ server presets
+# Game server presets
 
-The default catalog has 16 entries. UDP observations below date from 29 October 2026; MAG address references were checked against the operator's pages on 30 October. The catalog is embedded, so runtime queries do not depend on a server-list website.
+The default catalog has 18 entries. DayZ UDP observations date from 29 October 2026. MAG CS:S and Rust were checked directly through the app's A2S client on 1 November 2026; their query ports were obtained from Steam's public GetServersAtAddress endpoint. The catalog is embedded, so runtime queries do not depend on a server-list website.
 
 | Server | Game address | UDP query port |
 |---|---|---:|
@@ -8,6 +8,8 @@ The default catalog has 16 entries. UDP observations below date from 29 October 
 | MAG #2 PVE Deer Isle | 217.182.198.57:2302 | 2303 |
 | MAG #3 Vanilla+ | 57.129.39.17:2302 | 2303 |
 | MAG Test | 5.252.100.201:2602 | 2603 |
+| MAG Counter-Strike: Source | 57.129.39.17:27015 | 27015 |
+| MAG Rust PVE 5X | 57.129.39.17:28015 | 28017 |
 | Sunnyvale #1 Livonia / PvP Clans | 172.111.51.75:2302 | 2303 |
 | Sunnyvale #2 Chernarus / PvP Solo/Duo/Trio | 172.111.51.75:2402 | 2403 |
 | Sunnyvale #3 Chernarus / PvE / PvP zones | 172.111.51.90:2302 | 2303 |
@@ -31,12 +33,12 @@ Badlands at `57.129.39.17:2802`, query `2803`, replied on 29 October, but that p
 
 The old Namalsk address `57.129.39.17:2402` was retired according to the June announcement. Its query port and the old Alteria query at `57.129.39.17:2603` did not reply during the check. No replacement MAG #4 address was verified.
 
-MAG address listed means the exact IP/game-port pair appears in the four-entry reference checked on 30 October. Other MAG-like names get an unverified note. This is a dated address reference, not authenticated ownership or a live provider lookup.
+MAG address listed means the exact IP/game-port pair appears in the six-entry reference checked on 1 November. Other MAG-like names get an unverified note. This is a dated address reference, not authenticated ownership or a live provider lookup.
 
-Sunnyvale names/maps follow the recorded UDP replies where website labels differed. MAG Test and Sunnyvale #8 are test/development entries. The catalog covers DayZ, not the operators' other games.
+Sunnyvale names/maps follow the recorded UDP replies where website labels differed. MAG Test and Sunnyvale #8 are test/development entries. The CS:S reply reported de_cbble, 16/28 slots and Rust reported Procedural Map, 1/50 slots during the 1 November check. These are snapshots, not live counts. Both game addresses also appear in the MAG June 2026 announcement. Restart plans for these two games remain inactive until configured and confirmed; the DayZ kick lead is not copied.
 
 ## Profiles
 
 Only the selected server and profiles enabled for background monitoring are queried. A successful reply confirms that query endpoint at that time; it does not confirm game login or a restart plan. Included schedules are unverified examples.
 
-Catalog migration adds missing IP/query-port pairs once, preserving custom names and plans. Removing a preset after migration does not restore it at the next launch. The limit is 50 saved profiles; a full list is not overwritten. Selectors sort by name without changing profile identity.
+Catalog migration adds missing IP/query-port pairs once, preserving custom names and plans. Catalog version 3 introduces only the two new non-DayZ presets to existing installations and corrects their local session game for matching legacy custom profiles. Removing a preset after migration does not restore it at the next launch. The limit is 50 saved profiles; a full list is not overwritten. Selectors sort by name without changing profile identity.

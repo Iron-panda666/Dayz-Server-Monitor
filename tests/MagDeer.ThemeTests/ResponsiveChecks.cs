@@ -216,6 +216,34 @@ internal static class ResponsiveChecks
         Console.WriteLine($"Rendered {index} countdown frames from the real WPF dashboard. No windows or server queries.");
     }
 
+    public static void RenderCssPreview(string path)
+    {
+        var css = Demo("Dark");
+        ((TextBlock)css.FindName("CountdownLabel")).Text = L.Text("MapTitle");
+        ((TextBlock)css.FindName("CountdownText")).Text = "de_cbble";
+        ((TextBlock)css.FindName("NextRestartText")).Text = "N/A";
+        ((TextBlock)css.FindName("NextDateText")).Text = L.Text("NoRestartPlan");
+        ((TextBlock)css.FindName("SessionText")).Text = L.Text("SessionRunning", "01:02:00");
+        ((TextBlock)css.FindName("PlanBadgeText")).Text = "CS:S - DEMO";
+        ((TextBlock)css.FindName("ServerNameText")).Text = "MAG Counter-Strike: Source";
+        ((TextBlock)css.FindName("EndpointText")).Text = "57.129.39.17:27015 - DEMO VALUES";
+        ((TextBlock)css.FindName("DetailText")).Text = L.Text("MapDetail", "de_cbble");
+        var cssSelector = (ComboBox)css.FindName("ServerSelector");
+        cssSelector.ItemsSource = new[] { ServerCatalog.Create().Single(p => p.SessionGame == "CounterStrikeSource") }; cssSelector.SelectedIndex = 0;
+        ((PlayerCountDisplay)css.FindName("PlayerCounts")).Update(new(DateTimeOffset.UtcNow, new("MAG CS:S", "de_cbble", "Counter-Strike: Source", 16, 28, "demo"), 95, QueryFailure.None, "demo"));
+        ((TextBlock)css.FindName("RttText")).Text = "95 ms";
+        var chart = (PlayerChart)css.FindName("Chart"); chart.Clear();
+        var sampleTime = new DateTimeOffset(2026, 10, 30, 15, 25, 28, TimeSpan.Zero);
+        foreach (var (players, index) in new[] { 5, 7, 8, 10, 12, 14, 15, 16 }.Select((players, index) => (players, index)))
+            chart.Add(new(sampleTime.AddMinutes(-35 + index * 5), new("Demo CS:S", "de_cbble", "Counter-Strike: Source", (byte)players, 28, "demo"), 95, QueryFailure.None, "demo"));
+        var root = new Border { Child = css }; root.SetResourceReference(Border.BackgroundProperty, "BackgroundBrush");
+        Layout(root, 1100, 450);
+        var bitmap = new RenderTargetBitmap(1100, 450, 96, 96, PixelFormats.Pbgra32); bitmap.Render(root);
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        using var file = File.Create(path);
+        var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap)); png.Save(file);
+    }
+
     public static void Render(string directory)
     {
         Directory.CreateDirectory(directory);
@@ -244,6 +272,7 @@ internal static class ResponsiveChecks
         ((TextBlock)elapsedKick.FindName("CompactNextRestart")).Text = L.Text("ScheduledRestartIn", "00:02:45");
         elapsedKick.ApplyCountdownVisual(CountdownVisuals.Evaluate(-135, DateTimeOffset.FromUnixTimeSeconds(1001)), true, true);
         Save(elapsedKick, "countdown-after-kick", 1100, 450);
+        RenderCssPreview(Path.Combine(directory, "mag-css.png"));
         ThemeManager.Apply("Dark");
         var strip = new System.Windows.Controls.Primitives.UniformGrid { Columns = 6, Width = 1200, Height = 160 };
         foreach (int seconds in new[] { 901, 900, 600, 300, 165, 30 })

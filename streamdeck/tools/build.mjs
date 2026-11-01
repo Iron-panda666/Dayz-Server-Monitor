@@ -44,3 +44,14 @@ for (let i = 0; i < names.length; i++) {
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="548" height="570"><rect width="548" height="570" fill="#202833"/><text x="22" y="27" fill="#f5f8fc" font-size="15" font-family="Segoe UI,Arial">Dayz Server Monitor · MK.2 key designs · DEMO</text>${children}</svg>`;
 await fs.writeFile(path.join(root, 'docs/images/stream-deck-keys.png'), new Resvg(svg, { font: { loadSystemFonts: true } }).render().asPng());
 console.log('Built official-SDK plugin, runtime notices, icons and English demo keys. No desktop windows opened.');
+
+const cssDemo = { ...demo, serverName: 'MAG Counter-Strike: Source', restartPlanEnabled: false, map: 'de_cbble',
+  players: 16, capacity: 28, queue: null, rttMs: 95,
+  gameSession: { game: 'CounterStrikeSource', state: 'Running', elapsedSeconds: 3720 } };
+let cssKeys = '';
+for (const [index, view] of ['map', 'players', 'rtt', 'session'].entries()) {
+  const key = renderKey(cssDemo, view, { autoWarnings: false, label: 'MAG CS:S' });
+  cssKeys += `<g transform="translate(${22 + index * 168},48)">${key}<text x="72" y="164" text-anchor="middle" fill="#c7d3e0" font-size="12">${view.toUpperCase()}</text></g>`;
+}
+const cssSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="716" height="232"><rect width="716" height="232" fill="#202833"/><g font-family="Segoe UI,Arial"><text x="22" y="27" fill="#f5f8fc" font-size="15">MAG CS:S - Stream Deck - DEMO VALUES</text>${cssKeys}</g></svg>`;
+await fs.writeFile(path.join(root, 'docs/images/mag-css-keys.png'), new Resvg(cssSvg, { font: { loadSystemFonts: true } }).render().asPng());

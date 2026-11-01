@@ -6,13 +6,14 @@ namespace MagDeer.App;
 /// <summary>Windows process metadata only. No memory reads, game handles with VM rights, or Steam access.</summary>
 internal static class WindowsGameSessionProbe
 {
-    public static GameSessionObservation Read()
+    public static GameSessionObservation Read(string game = "DayZ")
     {
+        if (GameSessionProbe.NamesFor(game).Count == 0) return new(GameSessionState.Unavailable);
         var candidates = new List<GameProcessCandidate>();
         bool unavailable = false;
         using var current = Process.GetCurrentProcess();
         int session = current.SessionId;
-        foreach (var name in GameSessionProbe.ProcessNames)
+        foreach (var name in GameSessionProbe.NamesFor(game))
         {
             Process[] processes;
             try { processes = Process.GetProcessesByName(name); }
@@ -32,6 +33,6 @@ internal static class WindowsGameSessionProbe
                 catch (Win32Exception) { unavailable = true; }
             }
         }
-        return unavailable ? new(GameSessionState.Unavailable) : GameSessionProbe.Select(candidates, session);
+        return unavailable ? new(GameSessionState.Unavailable) : GameSessionProbe.Select(candidates, session, game);
     }
 }

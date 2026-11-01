@@ -22,6 +22,11 @@ internal static class Program
         var app = new App();
         app.InitializeComponent();
         Localization.Apply("en");
+        if (args.Length == 2 && args[0] == "--css-preview")
+        {
+            ResponsiveChecks.RenderCssPreview(args[1]);
+            return 0;
+        }
         if (args.Length == 2 && args[0] == "--countdown-frames")
         {
             ResponsiveChecks.RenderCountdownFrames(args[1]);

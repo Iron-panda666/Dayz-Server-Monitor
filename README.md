@@ -22,7 +22,9 @@ The single-file build extracts its native runtime into the user's temp folder on
 
 ## Using the monitor
 
-Select a server at the top of the window. The default list has four MAG addresses and twelve Sunnyvale DayZ servers. Address sources and dated query results are in [SERVERS.md](docs/SERVERS.md).
+Select a server at the top of the window. The default list has four MAG DayZ addresses, MAG Counter-Strike: Source, MAG Rust and twelve Sunnyvale DayZ servers. Address sources and dated query results are in [SERVERS.md](docs/SERVERS.md).
+
+CS:S and Rust show the current map, occupied slots/capacity, player history and UDP query RTT. Their restart plans are disabled until you configure and confirm a plan in Settings. Until then the desktop shows the map in place of the countdown and keeps the normal query interval. The Game selector in each server profile chooses its local session timer. Existing profiles and deliberate preset removals are preserved during migration.
 
 A2S_INFO requests run every 300 s, every 30 s during the last 15 minutes before a restart and every 15 s in the restart window. Manual refresh has a 20 s cooldown shared with Stream Deck. Only the selected server and profiles enabled for background monitoring are queried. Up to 16 saved profiles can run in the background.
 
@@ -50,7 +52,7 @@ Double-click outside controls to toggle borderless widget mode. Drag a display a
 
 World clocks and 12/24-hour format are under Settings -> Time & clocks. Optional NTP changes this app's time source, not Windows time. The offset clock is calculated from Prague time. [Clock setup](docs/LANGUAGES-AND-CLOCKS.md) | [NTP details](docs/NTP.md).
 
-The local session counter uses the actual DayZ process start time. It excludes Steam and launchers but includes the game's menus. It is not a server-connection timer or Steam overlay counter. No game memory or chat is read.
+The local session counter uses the selected game's process start time reported by Windows: DayZ, current CS:S (`cstrike`/`cstrike_win64`) or Rust (`RustClient`). It excludes Steam, launchers, dedicated servers and ambiguous legacy `hl2` processes but includes the game's menus. Each monitored server receives the timer for its configured game, including when games run simultaneously. It is not a server-connection timer or Steam overlay counter. No game memory or chat is read.
 
 The ZIP includes the .streamDeckPlugin installer for Stream Deck MK.2. A short press cycles views; a one-second hold requests a refresh. Each key can follow the desktop selection or a separate monitored server. Views include game time, restart countdown, players, history, UDP RTT, logout reminder and local session. The game clock supports 12/24-hour format. Extrapolated time and day/night are marked as estimates. [Plugin installation and display details](docs/STREAM-DECK.md).
 

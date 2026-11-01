@@ -24,6 +24,7 @@ public partial class SettingsWindow : Window
         public override string ToString() => Label;
     }
     private sealed record CloseOption(string Id, string Label);
+    private sealed record SessionGameOption(string Id, string Label);
 
     public SettingsWindow(MonitorSettings settings, bool canConfirmOffline, bool isOffline, Func<DeckSnapshot[]>? snapshots = null)
     {
@@ -36,6 +37,8 @@ public partial class SettingsWindow : Window
         SourceInitialized += (_, _) => DesktopServices.TitleBarTheme(this, ThemeManager.IsDark(settings.Theme));
         Loaded += (_, _) => DesktopServices.PlaceSettingsWindow(this, Owner);
         Editor.NameBox.Text = settings.ServerName; Editor.IpBox.Text = settings.IpAddress;
+        Editor.SessionGameBox.ItemsSource = new[] { new SessionGameOption("DayZ", "DayZ"), new("CounterStrikeSource", "Counter-Strike: Source"), new("Rust", "Rust"), new("Other", L.Text("SessionGameOther")) };
+        Editor.SessionGameBox.SelectedValue = settings.SessionGame;
         Editor.GamePortBox.Text = settings.GamePort.ToString(); Editor.QueryPortBox.Text = settings.QueryPort.ToString();
         Editor.ScheduleBox.Text = string.Join(", ", settings.RestartTimes);
         Editor.ConfirmedBox.IsChecked = settings.ScheduleConfirmed;
@@ -239,6 +242,7 @@ public partial class SettingsWindow : Window
         return new()
         {
             Name = Editor.NameBox.Text.Trim(), IpAddress = Editor.IpBox.Text.Trim(),
+            SessionGame = Editor.SessionGameBox.SelectedValue as string ?? "Other",
             GamePort = Number(Editor.GamePortBox, "GamePort"), QueryPort = Number(Editor.QueryPortBox, "QueryPort"),
             RestartTimes = Editor.ScheduleBox.Text.Split([',', ';', '\r', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Order().ToArray(),
             ScheduleConfirmed = Editor.ConfirmedBox.IsChecked == true, RestartEveryHours = Number(Editor.EveryHoursBox, "EveryHours"), RestartAnchor = Editor.AnchorBox.Text.Trim(),
@@ -260,6 +264,7 @@ public partial class SettingsWindow : Window
         editedProfile = p;
         Editor.BackgroundBox.IsChecked = p.MonitorInBackground;
         Editor.NameBox.Text = p.Name; Editor.IpBox.Text = p.IpAddress; Editor.GamePortBox.Text = p.GamePort.ToString(); Editor.QueryPortBox.Text = p.QueryPort.ToString();
+        Editor.SessionGameBox.SelectedValue = p.SessionGame;
         Editor.ScheduleBox.Text = string.Join(", ", p.RestartTimes); Editor.EveryHoursBox.Text = p.RestartEveryHours.ToString(); Editor.AnchorBox.Text = p.RestartAnchor;
         Editor.OffsetBox.Text = p.ServerOffsetHours.ToString(CultureInfo.CurrentCulture);
         Editor.LogoutMinutesBox.Text = p.LogoutWarningMinutes.ToString(); Editor.KickMinutesBox.Text = p.KickWarningMinutes.ToString();
@@ -275,6 +280,7 @@ public partial class SettingsWindow : Window
         editedProfile = null;
         Editor.DeleteServerButton.IsEnabled = false;
         Editor.BackgroundBox.IsChecked = false;
+        Editor.SessionGameBox.SelectedValue = "DayZ";
         Editor.KickKnownBox.IsChecked = false; Editor.KickTargetBox.IsChecked = false;
         Editor.NameBox.Text = ""; Editor.IpBox.Text = ""; Editor.GamePortBox.Text = "2302"; Editor.QueryPortBox.Text = "2303";
         Editor.ConfirmedBox.IsChecked = false; Editor.OfflineBox.IsChecked = false; Editor.NameBox.Focus();

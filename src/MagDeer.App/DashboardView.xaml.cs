@@ -33,6 +33,12 @@ public partial class DashboardView : UserControl
         CountdownText.Opacity = enabled ? visual.Opacity : 1;
         return color;
     }
+    public void SetCountdownText(string text)
+    {
+        bool resize = CountdownText.Text.Length != text.Length;
+        CountdownText.Text = text;
+        if (resize && Surface.Slots.Count > 0) ApplyDensity(Surface.Mode);
+    }
     private void ApplyDensity(DashboardMode mode)
     {
         bool tiny = mode == DashboardMode.Ribbon;
@@ -75,7 +81,7 @@ public partial class DashboardView : UserControl
         double countdownWidth = sideRestart ? restart.Width - NextRestartPanel.Width - 14 : restart.Width;
         double countdownHeight = restart.Height - (RestartExtras.Visibility == Visibility.Visible
             ? ReminderTimes.Visibility == Visibility.Visible ? 120 : 70 : sideRestart || tiny ? 30 : 52);
-        CountdownText.FontSize = Math.Clamp(Math.Min(countdownWidth / 4.9, Math.Max(14, countdownHeight) / 1.2), 14, 96);
+        CountdownText.FontSize = Math.Clamp(Math.Min(countdownWidth / Math.Max(4.9, CountdownText.Text.Length * .6), Math.Max(14, countdownHeight) / 1.2), 14, 96);
 
         var status = Inner("Status");
         StatusDesign.Width = tiny ? 100 : status.Width;

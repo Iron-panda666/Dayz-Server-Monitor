@@ -6,20 +6,29 @@ public sealed record GameSessionObservation(GameSessionState State, int? Process
 public sealed record GameSessionSnapshot(string State, DateTimeOffset? StartedAt, long? ElapsedSeconds)
 {
     public string Source { get; init; } = "WindowsProcess";
+    public string Game { get; init; } = "DayZ";
 }
 
 public static class GameSessionProbe
 {
     // Exact executable names: never Steam, DayZLauncher, DayZ_BE or DayZServer.
     public static IReadOnlyList<string> ProcessNames { get; } = Array.AsReadOnly(new[] { "DayZ_x64", "DayZ" });
-    public static bool IsGame(string name) => ProcessNames.Contains(Path.GetFileNameWithoutExtension(name), StringComparer.OrdinalIgnoreCase);
-    public static GameSessionObservation Select(IEnumerable<GameProcessCandidate> processes, int currentWindowsSession)
+    public static IReadOnlyList<string> NamesFor(string game) => game switch
     {
-        var games = processes.Where(p => IsGame(p.Name) && p.WindowsSession == currentWindowsSession).ToArray();
+        "DayZ" => ProcessNames,
+        "CounterStrikeSource" => new[] { "cstrike_win64", "cstrike" },
+        "Rust" => new[] { "RustClient" },
+        _ => Array.Empty<string>()
+    };
+    public static bool IsGame(string name, string game = "DayZ") => NamesFor(game).Contains(Path.GetFileNameWithoutExtension(name), StringComparer.OrdinalIgnoreCase);
+    public static GameSessionObservation Select(IEnumerable<GameProcessCandidate> processes, int currentWindowsSession, string game = "DayZ")
+    {
+        if (NamesFor(game).Count == 0) return new(GameSessionState.Unavailable);
+        var games = processes.Where(p => IsGame(p.Name, game) && p.WindowsSession == currentWindowsSession).ToArray();
         if (games.Length == 0) return new(GameSessionState.NotRunning);
         if (games.Length > 1) return new(GameSessionState.MultipleInstances);
-        var game = games[0];
-        return game.StartedAt is null || game.Id <= 0 ? new(GameSessionState.Unavailable) : new(GameSessionState.Running, game.Id, game.StartedAt);
+        var process = games[0];
+        return process.StartedAt is null || process.Id <= 0 ? new(GameSessionState.Unavailable) : new(GameSessionState.Running, process.Id, process.StartedAt);
     }
 }
 

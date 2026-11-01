@@ -12,8 +12,11 @@ Recorded release results for Windows x64. Versions through 1.9.2 used .NET SDK 8
 | 1.10.1 | 58 | 21 | 17 | 96 |
 | 1.11.0 | 61 | 24 | 20 | 105 |
 | 1.11.1 | 62 | 24 | 21 | 107 |
+| 1.12.0 | 66 | 24 | 22 | 112 |
 
 These are automated check counts. The outstanding physical/live checks are listed at the end.
+
+Version 1.12.0 adds MAG CS:S and Rust presets, per-profile local session games and optional Stream Deck maps. Checks cover simultaneous game processes, mismatched and legacy Source executables, background target session/map isolation, migration without reviving deleted DayZ presets, stale map values, escaped map text and disabled unconfigured non-DayZ restart plans. The pipe tests also verify clean client disconnect after the expanded snapshot. Both new MAG endpoints returned successful live A2S_INFO responses on 1 November 2026. Real CS:S/Rust process start detection and the new map key still require physical game/Stream Deck acceptance; process selection and compiled UI rendering were checked with fixtures.
 
 Version 1.11.1 verifies the known-kick countdown immediately before the kick, at zero, during negative elapsed time and at the next scheduled restart. The next kick countdown starts even if the query outage continues. Desktop and Stream Deck use steady orange for negative time, preserve the existing pre-kick color stages and stop pulsing after zero. Disabled alerts restore the theme color. The WPF preview uses the real compiled dashboard; physical LCD and Stream Deck checks for this new transition remain outstanding. The build and Elgato plugin validation pass. The dependency audit has no High/Critical findings and reports five Moderate findings in the development-only Elgato CLI dependency chain.
 

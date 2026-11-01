@@ -30,7 +30,7 @@ public static class MonitoringExport
         Metric("queue", "Published queue length; absent if unknown.", s => s.QuerySuccess ? s.Queue : null);
         Metric("query_rtt_seconds", "UDP query RTT including challenge; not ICMP ping.", s => s.QuerySuccess ? s.RttMs / 1000 : null);
         Metric("last_success_timestamp_seconds", "Unix timestamp of last successful UDP query.", s => s.LastSuccessAt?.ToUnixTimeSeconds());
-        Metric("next_restart_timestamp_seconds", "Next configured restart; schedule may be unconfirmed.", s => s.NextRestartAt.ToUnixTimeSeconds());
+        Metric("next_restart_timestamp_seconds", "Next configured restart; schedule may be unconfirmed.", s => s.RestartPlanEnabled ? s.NextRestartAt.ToUnixTimeSeconds() : null);
         Metric("schedule_confirmed", "User confirmed the restart schedule.", s => s.ScheduleConfirmed ? 1 : 0);
         output.Append("# HELP dayz_monitor_service_ok Provider report or web reachability only; not proof of global availability.\n# TYPE dayz_monitor_service_ok gauge\n");
         foreach (var s in all.Where(s => s.Service is not null))

@@ -1,14 +1,14 @@
-export const views = ['game', 'restart', 'players', 'history', 'rtt', 'logout', 'session'];
+export const views = ['game', 'restart', 'players', 'history', 'rtt', 'logout', 'session', 'map'];
 // Stream Deck's wire API needs an image data URL, not the raw SVG markup.
 export const keyImageDataUrl = svg => 'data:image/svg+xml;base64,' + Buffer.from(svg, 'utf8').toString('base64');
 export function normalizeSettings(value = {}) {
-  const pages = Array.isArray(value.pages) ? [...new Set(value.pages.filter(p => views.includes(p)))] : [...views];
+  const pages = Array.isArray(value.pages) ? [...new Set(value.pages.filter(p => views.includes(p)))] : views.slice(0, 7);
   if (!(value.settingsVersion >= 2) && pages.length === 6 && views.slice(0, 6).every(p => pages.includes(p))) pages.push('session');
   const number = (v, fallback) => Number.isFinite(Number(v)) ? Math.max(0, Math.min(23, Math.trunc(Number(v)))) : fallback;
   let sunrise = number(value.sunrise ?? 6, 6), sunset = number(value.sunset ?? 18, 18);
   if (sunrise >= sunset) { sunrise = 6; sunset = 18; }
   return {
-    settingsVersion: 2, view: views.includes(value.view) ? value.view : 'restart', pages: pages.length ? pages : [...views],
+    settingsVersion: 2, view: views.includes(value.view) ? value.view : 'restart', pages: pages.length ? pages : views.slice(0, 7),
     label: typeof value.label === 'string' ? value.label.slice(0, 12) : '',
     dataDirectory: typeof value.dataDirectory === 'string' ? value.dataDirectory.slice(0, 1024) : '',
     endpoint: typeof value.endpoint === 'string' && value.endpoint.length <= 80 ? value.endpoint.trim() : '',
@@ -79,7 +79,7 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '',
   const targetKick = state?.countdownToKick === true && state?.kickBeforeRestart === true;
   const remaining = !targetKick && state?.restartExpected ? 0 : untilRestart - (targetKick ? state.kickWarningMinutes * 60 : 0);
   const sinceKick = targetKick && remaining < 0 && untilRestart > 0;
-  const warning = state && !state.service && ((!targetKick && state.restartExpected) || remaining <= state.logoutWarningMinutes * 60);
+  const warning = state && !state.service && state.restartPlanEnabled !== false && ((!targetKick && state.restartExpected) || remaining <= state.logoutWarningMinutes * 60);
   const view = settings.autoWarnings && warning ? 'restart' : requestedView;
   const appearance = state?.visualAlerts === false ? { color: '#90e8ff', opacity: 1 } : restartAppearance(remaining, now);
   const accent = !state ? '#b8cbd4' : appearance.color;
@@ -89,7 +89,8 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '',
   let body = '';
   const text = (value, y, size = 8, color = '#b8cbd4') => `<text x="36" y="${y}" fill="${color}" font-size="${size}" text-anchor="middle">${escapeXml(value)}</text>`;
   const metric = (value, color = '#f4f8fb', size = 18, opacity = 1) => `<g opacity="${opacity}">${text(value, 46, size, color)}</g>`;
-  body += text(view === 'session' ? 'DAYZ / LOCAL' : label, 10, 7);
+  const sessionLabel = { DayZ: 'DAYZ', CounterStrikeSource: 'CS:S', Rust: 'RUST', Other: 'GAME' }[state?.gameSession?.game ?? 'DayZ'] ?? 'GAME';
+  body += text(view === 'session' ? `${sessionLabel} / LOCAL` : label, 10, 7);
   if (!state) {
     body += connectionIssue === 'server-not-monitored'
       ? text('SERVER', 28, 9) + metric('N/A', '#ffdb7e') + text('CHECK SELECTION', 62, 6)
@@ -108,9 +109,16 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '',
     const age = Math.max(0, Math.floor((now - Date.parse(state.lastQueryAt)) / 1000));
     const ageLabel = Number.isFinite(age) ? age < 60 ? `${age}s OLD` : `${Math.floor(age / 60)}m OLD` : 'NO QUERY';
     const footer = feedback || (state.refreshRemainingSeconds > 0 ? `WAIT ${state.refreshRemainingSeconds}s` : stale ? 'STALE' : '');
-    if (['game', 'players', 'history', 'rtt'].includes(view) && !available) {
+    if (['game', 'players', 'history', 'rtt', 'map'].includes(view) && !available) {
       body += text(state.status === 'Offline' ? 'OFFLINE' : 'QUERY', 26, 9) + metric('N/A', '#ffdb7e')
         + (view === 'players' ? text('QUEUE N/A', 60, 8) + text(footer || ageLabel, 70, 6) : text(footer || ageLabel, 64, 7));
+    } else if (view === 'map') {
+      const map = typeof state.map === 'string' && state.map.trim() ? state.map.slice(0, 24) : 'N/A';
+      body += text('MAP', 24) + (map.length <= 12 ? metric(map, '#f4f8fb', 12)
+        : text(map.slice(0, 12), 40, 9, '#f4f8fb') + text(map.slice(12), 52, 9, '#f4f8fb'))
+        + text(footer || ageLabel, 68, 6);
+    } else if (state.restartPlanEnabled === false && ['restart', 'logout'].includes(view)) {
+      body += text(view === 'restart' ? 'RESTART' : 'LOGOUT', 24) + metric('N/A') + text('NO PLAN SET', 63, 7);
     } else if (view === 'game') {
       const game = estimatedGameClock(state, settings);
       body += text('GAME TIME', 24) + metric(game?.displayTime ?? 'N/A', '#f4f8fb', 17)

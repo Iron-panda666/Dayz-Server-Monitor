@@ -8,7 +8,7 @@ The plugin uses Elgato's SDK and renders for 72 x 72-pixel MK.2 keys. It needs W
 
 1. Unpack the Windows ZIP. Keep `config.json` and `data` when upgrading.
 2. Start `DayzServerMonitor.exe` and select a server. It can stay minimized.
-3. Install `Dayz-Server-Monitor-1.11.2.streamDeckPlugin`, included in the ZIP and ReleasePackages folder.
+3. Install `Dayz-Server-Monitor-1.12.0.streamDeckPlugin`, included in the ZIP and ReleasePackages folder.
 4. Drag Cycle server information or Pinned server information from the Dayz Server Monitor action list onto a key.
 
 Direct installation needs no Marketplace account or extra driver. Run both apps under the same Windows account, without elevation. The plugin does not launch the monitor. A custom key image/title can cover its generated display.
@@ -23,7 +23,8 @@ Cycle changes view on a short press. Pinned keeps one view. Both request a refre
 | History | Up to one hour of samples from this app run, including gaps |
 | UDP RTT | Query RTT and sample age |
 | Logout | Reminder countdown or LOG OUT NOW |
-| Local DayZ session | Local game runtime, HH:mm; OFF when stopped/disabled, N/A when unknown |
+| Local game session | Local runtime for the target profile's DayZ, CS:S or Rust game; HH:mm, OFF when stopped and N/A when unknown |
+| Map | Current published map; failed/stale replies show N/A |
 | Service target | SERVICE with OK, ISSUE, WEB OK or an unknown result |
 
 Restart warnings can override a game view. This is on by default and configurable per key. Yellow uses the logout threshold, red the kick threshold. NOW? means a scheduled restart is expected.
@@ -32,7 +33,9 @@ A player result `121/121 +21 IN QUEUE` keeps 21 waiting players separate from oc
 
 Choose Server for this key or leave Follow desktop selection. For a separate server, enable background monitoring in the app, save and use Reload monitored servers in the key settings. A short label can be entered, up to 12 characters. Service targets show SERVICE automatically. [Multiple servers and export](INTEGRATIONS.md).
 
-The session page is local DayZ process runtime, including menus. It is the same on every server key, not proof that the player joined that server. Steam/launchers are excluded and no memory/chat/account is read. Existing default six-page cycles gain the session page once; custom subsets stay unchanged.
+The session page is local game process runtime, including menus. Each key uses its target profile's Game setting and is labeled DAYZ, CS:S or RUST. Servers for the same game share that game's local runtime; different games remain separate. This is not proof that the player joined that server. Steam/launchers are excluded and no memory/chat/account is read. Existing default six-page cycles gain the session page once; custom subsets stay unchanged. Map is an optional eighth view; the default seven-page cycle is unchanged. Select Map as a pinned view or enable it in a cycle.
+
+MAG CS:S and Rust have no active restart plan until one is configured and confirmed. Their restart/logout pages show NO PLAN SET and automatic restart overrides are disabled. The normal five-minute query interval applies. Game time/queue are N/A unless supported data is available; CS:S player counts can include bots.
 
 ## Game clock
 

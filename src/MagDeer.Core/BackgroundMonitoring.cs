@@ -30,7 +30,7 @@ public sealed class BackgroundMonitoring
         Func<string, int, TimeSpan, CancellationToken, Task<QueryResult>>? query = null, Func<string, QueryRefreshGuard>? getGuard = null)
     { this.utcNow = utcNow; this.query = query ?? new A2sClient().QueryAsync; this.getGuard = getGuard ?? (_ => new()); }
 
-    private static string SignatureOf(MonitorSettings s) => JsonSerializer.Serialize(new { s.ServerName, s.RestartTimes, s.ScheduleConfirmed, s.LogoutWarningMinutes, s.KickWarningMinutes, s.KickBeforeRestart, s.CountdownToKick, s.Use24HourClock, s.VisualAlerts });
+    private static string SignatureOf(MonitorSettings s) => JsonSerializer.Serialize(new { s.SessionGame, s.ServerName, s.RestartTimes, s.ScheduleConfirmed, s.LogoutWarningMinutes, s.KickWarningMinutes, s.KickBeforeRestart, s.CountdownToKick, s.Use24HourClock, s.VisualAlerts });
     public void Configure(MonitorSettings settings, HistoryStore history)
     {
         historyStore = history;
@@ -83,17 +83,18 @@ public sealed class BackgroundMonitoring
             if (Math.Abs((now - requested - elapsed).TotalSeconds) > 5) requested = now - elapsed;
             result = result with { SystemAt = result.At, At = now, RequestedAt = requested, TimeSource = "MonitorClock" };
             var schedule = new RestartSchedule(s.RestartTimes);
-            var recovery = e.Tracker.Apply(result, s.FailureThreshold, schedule);
+            var recovery = e.Tracker.Apply(result, s.FailureThreshold, schedule, s.HasRestartPlan);
             e.History.Add(new(QueryTimeline.TimeOf(result), result.Success ? result.Info?.Players : null, result.Success ? result.Info?.MaxPlayers : null));
             if (e.History.Count > 120) e.History.RemoveAt(0);
-            if (historyStore is not null) await historyStore.AppendAsync(s.EndpointKey, result, e.Tracker.Status(now, schedule, s.FailureThreshold), recovery, ct);
+            if (historyStore is not null) await historyStore.AppendAsync(s.EndpointKey, result, e.Tracker.Status(now, schedule, s.FailureThreshold, s.HasRestartPlan), recovery, ct);
             LastError = null;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { LastError = ex.Message; }
         finally { busy = e.Polling = false; }
     }
-    public DeckSnapshot[] Snapshots(GameSessionSnapshot session)
+    public DeckSnapshot[] Snapshots(GameSessionSnapshot session) => SnapshotsForGames(_ => session);
+    public DeckSnapshot[] SnapshotsForGames(Func<MonitorSettings, GameSessionSnapshot> sessionFor)
     {
         var now = utcNow();
         return entries.Values.Select(e =>
@@ -102,14 +103,14 @@ public sealed class BackgroundMonitoring
             var info = r?.Success == true ? r.Info : null;
             return new DeckSnapshot
             {
-                Now = now, ServerName = s.ServerName, Endpoint = s.EndpointKey, Status = e.Tracker.Status(now, schedule, s.FailureThreshold).ToString(),
-                NextRestartAt = schedule.Next(now), ScheduleConfirmed = s.ScheduleConfirmed,
-                RestartExpected = now - schedule.Previous(now) < TimeSpan.FromMinutes(5) && (e.Tracker.LastSuccess is null || e.Tracker.LastSuccess < schedule.Previous(now)),
+                Now = now, ServerName = s.ServerName, Endpoint = s.EndpointKey, Status = e.Tracker.Status(now, schedule, s.FailureThreshold, s.HasRestartPlan).ToString(),
+                NextRestartAt = schedule.Next(now), ScheduleConfirmed = s.ScheduleConfirmed, RestartPlanEnabled = s.HasRestartPlan,
+                RestartExpected = s.HasRestartPlan && now - schedule.Previous(now) < TimeSpan.FromMinutes(5) && (e.Tracker.LastSuccess is null || e.Tracker.LastSuccess < schedule.Previous(now)),
                 LogoutWarningMinutes = s.LogoutWarningMinutes, KickWarningMinutes = s.KickWarningMinutes,
                 KickBeforeRestart = s.HasKnownKick, CountdownToKick = s.CountdownToKick && s.HasKnownKick, Use24HourClock = s.Use24HourClock, VisualAlerts = s.VisualAlerts,
                 LastQueryAt = r?.At, LastSuccessAt = e.Tracker.LastSuccess, QuerySuccess = r?.Success == true,
                 Players = info?.Players, Capacity = info?.MaxPlayers, Queue = info?.Queue, RttMs = info is null ? null : r?.RttMs,
-                GameClock = info?.GameClock, GameSession = session, Polling = e.Polling,
+                GameClock = info?.GameClock, Map = info?.Map, GameSession = sessionFor(s), Polling = e.Polling,
                 RefreshRemainingSeconds = e.Guard.RemainingSeconds, QueryIntervalSeconds = Interval(e, now), History = e.History.ToArray()
             };
         }).OrderBy(s => s.ServerName, StringComparer.CurrentCultureIgnoreCase).ToArray();

@@ -10,6 +10,25 @@ internal static class MultiMonitoringChecks
     static void Assert(bool value, [System.Runtime.CompilerServices.CallerLineNumber] int line = 0) { if (!value) throw new Exception("Multi-monitor/export assertion failed at line " + line); }
     public static IEnumerable<(string Name, Func<Task> Run)> All()
     {
+        yield return ("Background maps and local sessions follow each target game independently", async () =>
+        {
+            var directory = Path.Combine(Path.GetTempPath(), "DayzGames-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                var now = DateTimeOffset.UtcNow;
+                var settings = new MonitorSettings { SavedServers = [new() { Name = "CS", QueryPort = 27015, GamePort = 27015, SessionGame = "CounterStrikeSource", MonitorInBackground = true },
+                    new() { Name = "DayZ", QueryPort = 2403, MonitorInBackground = true }] };
+                var monitor = new BackgroundMonitoring(() => now, (_, port, _, _) => Task.FromResult(new QueryResult(now,
+                    new("fixture", port == 27015 ? "de_cbble" : "deerisle", "fixture", 16, 28, "fixture"), 40, QueryFailure.None, "fixture")));
+                monitor.Configure(settings, new HistoryStore(directory, 90));
+                for (int i = 0; i < 2; i++) { monitor.Tick(CancellationToken.None); await monitor.CurrentTask; }
+                var snapshots = monitor.SnapshotsForGames(s => new("Running", now.AddMinutes(-5), s.SessionGame == "CounterStrikeSource" ? 300 : 600) { Game = s.SessionGame });
+                var css = snapshots.Single(s => s.ServerName == "CS"); var dayz = snapshots.Single(s => s.ServerName == "DayZ");
+                Assert(css.Map == "de_cbble" && css.GameSession?.Game == "CounterStrikeSource" && css.GameSession.ElapsedSeconds == 300 && !css.RestartPlanEnabled);
+                Assert(dayz.Map == "deerisle" && dayz.GameSession?.Game == "DayZ" && dayz.GameSession.ElapsedSeconds == 600 && dayz.RestartPlanEnabled);
+            }
+            finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+        });
         yield return ("Background monitoring is opt-in, deduplicates endpoints and isolates failures/history", async () =>
         {
             var directory = Path.Combine(Path.GetTempPath(), "DayzMulti-" + Guid.NewGuid().ToString("N"));
