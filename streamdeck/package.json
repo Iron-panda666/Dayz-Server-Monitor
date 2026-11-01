@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "node tools/build.mjs",
+    "preview:countdown": "node tools/countdown-animations.mjs",
     "audit": "npm audit --audit-level=high",
     "test": "node --test test/*.test.mjs",
     "validate": "streamdeck validate com.iron-panda666.dayz-server-monitor.sdPlugin",
@@ -25,6 +26,8 @@
   "devDependencies": {
     "@elgato/cli": "1.10.4",
     "@resvg/resvg-js": "2.6.2",
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "gifenc": "1.0.3",
+    "pngjs": "7.0.0"
   }
 }

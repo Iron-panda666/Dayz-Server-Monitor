@@ -168,6 +168,54 @@ internal static class ResponsiveChecks
         for (int i = 0; i < 8; i++) chart.Add(new(at.AddMinutes(-35 + i * 5), info with { Players = (byte)(87 + i * 4) }, 87, QueryFailure.None, "demo"));
         return view;
     }
+    public static void RenderCountdownFrames(string manifestPath)
+    {
+        using var manifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(manifestPath));
+        var directory = Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
+        var settings = new MonitorSettings { Theme = "Dark", CountdownToKick = true };
+        var view = Demo("Dark");
+        void Text(string name, string value) => ((TextBlock)view.FindName(name)).Text = value;
+        Text("StatusText", "DEMO"); Text("StatusHint", "Simulated data - no server queries");
+        Text("LastUpdateText", "Simulated player data"); Text("PollText", "ACCELERATED PREVIEW");
+        var root = new Grid { Width = 1100, Height = 522 };
+        root.SetResourceReference(Panel.BackgroundProperty, "BackgroundBrush");
+        root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(44) });
+        root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(450) });
+        root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(28) });
+        root.Children.Add(new TextBlock { Text = "APP - ACCELERATED COUNTDOWN DEMO", FontSize = 20, Margin = new Thickness(12, 10, 0, 0) });
+        Grid.SetRow(view, 1); root.Children.Add(view);
+        var caption = new TextBlock { Text = "Configured schedule only - kick and restart events are not confirmed by this timer", FontSize = 13, Margin = new Thickness(12, 4, 0, 0) };
+        Grid.SetRow(caption, 2); root.Children.Add(caption);
+        int index = 0;
+        foreach (var frame in manifest.RootElement.EnumerateArray())
+        {
+            var now = frame.GetProperty("now").GetDateTimeOffset();
+            var next = frame.GetProperty("nextRestart").GetDateTimeOffset();
+            var remaining = KickPlan.Remaining(settings, next, now, false);
+            bool sinceKick = remaining < TimeSpan.Zero;
+            var local = RestartSchedule.CzechTime(now);
+            Text("ClockText", local.ToString("HH:mm"));
+            Text("DateText", local.ToString("dddd, d MMMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("en")));
+            Text("ServerClockText", "Offset clock " + local.AddHours(-1).ToString("HH:mm"));
+            Text("CountdownLabel", L.Text(sinceKick ? "CountdownSinceKick" : "CountdownKick"));
+            Text("CountdownText", CountdownVisuals.Format(remaining));
+            Text("NextRestartText", RestartSchedule.CzechTime(next).ToString("HH:mm"));
+            Text("NextDateText", sinceKick ? L.Text("ScheduledRestartIn", CountdownVisuals.Format(next - now)) : local.ToString("d MMM · zzz"));
+            Text("CompactNextRestart", sinceKick ? L.Text("ScheduledRestartIn", CountdownVisuals.Format(next - now)) : "NEXT RESTART - " + RestartSchedule.CzechTime(next).ToString("HH:mm"));
+            Text("LogoutText", "Log out by " + RestartSchedule.CzechTime(next.AddMinutes(-10)).ToString("HH:mm"));
+            Text("KickText", "Expected kick " + RestartSchedule.CzechTime(next.AddMinutes(-5)).ToString("HH:mm"));
+            Text("WarningText", sinceKick ? L.Text("ScheduledRestartIn", CountdownVisuals.Format(next - now)) : L.Text("WarnNormal"));
+            view.ApplyCountdownVisual(CountdownVisuals.Evaluate(remaining.TotalSeconds, now), true, true);
+            var chart = (PlayerChart)view.FindName("Chart"); chart.Clear();
+            for (int point = 0; point < 8; point++) chart.Add(new(now.AddMinutes(-35 + point * 5), new ServerInfo("DEMO", "deerisle", "DayZ", (byte)(93 + point * 4), 121, "demo"), 87, QueryFailure.None, "demo"));
+            Layout(root, 1100, 522);
+            var bitmap = new RenderTargetBitmap(1100, 522, 96, 96, PixelFormats.Pbgra32); bitmap.Render(root);
+            using var file = File.Create(Path.Combine(directory, $"app-{index++:000}.png"));
+            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap)); encoder.Save(file);
+        }
+        Console.WriteLine($"Rendered {index} countdown frames from the real WPF dashboard. No windows or server queries.");
+    }
+
     public static void Render(string directory)
     {
         Directory.CreateDirectory(directory);

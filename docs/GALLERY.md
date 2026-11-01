@@ -80,6 +80,22 @@ Mount Fuji by Clay Banks, used under the [Unsplash License](licenses/FUJI-PHOTO.
 
 ## Countdown colors
 
+### Accelerated animations
+
+These looping demos use the actual WPF dashboard and Stream Deck plugin renderer with simulated data. Each loop takes about 19 seconds: it shows the normal countdown, yellow and orange warnings, the fade to red, the digits-only pulse in the last 30 seconds, steady orange negative time after the planned kick and the countdown to the next kick at the scheduled restart. Timing is accelerated unevenly so the final seconds stay visible. All event times come from a configured schedule, not confirmed server events.
+
+Windows app
+
+![Accelerated app countdown from warnings through the restart window to the next planned kick](images/countdown-app.gif)
+
+Stream Deck key (enlarged)
+
+![Accelerated Stream Deck countdown with the final pulse and negative kick timer](images/countdown-stream-deck.gif)
+
+To regenerate on Windows, build `tests/MagDeer.ThemeTests` in Release, install the plugin's development dependencies and run `npm run preview:countdown` from `streamdeck`. Set `DOTNET_EXE` if the SDK is not in `.tools/dotnet`.
+
+### Static examples
+
 Normal, 15 minutes, 10 minutes, 5 minutes, 2:45 and 30 seconds. The last 30 seconds also have a small alternating opacity change on the digits; the rest of the window stays steady. A static PNG cannot show the pulse.
 
 ![Countdown color stages](images/countdown-stages.png)

@@ -22,6 +22,11 @@ internal static class Program
         var app = new App();
         app.InitializeComponent();
         Localization.Apply("en");
+        if (args.Length == 2 && args[0] == "--countdown-frames")
+        {
+            ResponsiveChecks.RenderCountdownFrames(args[1]);
+            return 0;
+        }
         Test("Player card keeps queue separate from capacity and distinguishes zero from unavailable", () =>
         {
             var card = new PlayerCountDisplay();
