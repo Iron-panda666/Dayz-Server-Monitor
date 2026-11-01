@@ -122,6 +122,29 @@ await Test("Known MAG DEER kick is per endpoint and never changes the actual res
     ServerProfile.From(other).ApplyTo(copy); Assert(copy.KickWarningMinutes == 7 && copy.CountdownToKick);
     mag.KickBeforeRestart = false; Assert(!mag.HasKnownKick && KickPlan.Target(mag, restart) == restart);
 }));
+await Test("Kick countdown turns negative until restart and rolls forward even when queries remain unavailable", () => Sync(() =>
+{
+    var settings = new MonitorSettings { CountdownToKick = true };
+    var plan = new RestartSchedule(settings.RestartTimes);
+    var restart = Utc("2026-10-31T02:00:00Z");
+    var kick = restart.AddMinutes(-5);
+    TimeSpan RemainingAt(DateTimeOffset at, bool expected = false) => KickPlan.Remaining(settings, plan.Next(at), at, expected);
+    Assert(CountdownVisuals.Format(RemainingAt(kick.AddSeconds(-1))) == "00:00:01");
+    Assert(CountdownVisuals.Format(RemainingAt(kick)) == "00:00:00");
+    Assert(CountdownVisuals.Format(RemainingAt(kick.AddSeconds(1))) == "-00:00:01");
+    Assert(CountdownVisuals.Format(RemainingAt(restart.AddSeconds(-1))) == "-00:04:59");
+    var elapsedVisual = CountdownVisuals.Evaluate(-299, kick.AddSeconds(1));
+    Assert(elapsedVisual.Stage == CountdownStage.Orange && elapsedVisual.Opacity == 1);
+    Assert(CountdownVisuals.Color(elapsedVisual, true) == "#FF9A3D");
+    Assert(CountdownVisuals.Color(elapsedVisual, false) == "#B95200");
+    Assert(RemainingAt(restart, true) == TimeSpan.FromMinutes(235));
+    Assert(RemainingAt(restart.AddSeconds(1), true) == TimeSpan.FromSeconds(14099));
+    settings.CountdownToKick = false;
+    Assert(RemainingAt(restart, true) == TimeSpan.Zero);
+    Assert(RemainingAt(kick.AddSeconds(1)) == TimeSpan.FromSeconds(299));
+    settings.CountdownToKick = true; settings.KickBeforeRestart = false;
+    Assert(RemainingAt(kick.AddSeconds(1)) == TimeSpan.FromSeconds(299));
+}));
 await Test("Appearance options persist without leaking private wallpaper paths to exported snapshots", () => Sync(() =>
 {
     var s = new MonitorSettings { WidgetMode = true, BackgroundStyle = "Custom", BackgroundImagePath = "C:/Private/wallpaper.png", AeroGlass = false };

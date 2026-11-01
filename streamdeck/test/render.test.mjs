@@ -60,6 +60,30 @@ test('restart key colors and gentle pulse have the same boundaries as the deskto
   assert.match(renderKey(pulse, 'restart'), /<g opacity="0.78">/);
   assert.ok(!renderKey({ ...pulse, visualAlerts: false }, 'restart').includes('opacity="0.78"'));
 });
+
+test('kick view shows steady orange elapsed time until restart then starts the next countdown', () => {
+  const at = now => ({ ...state, now, nextRestartAt: '2026-10-30T12:05:00Z', kickBeforeRestart: true, countdownToKick: true });
+  assert.equal(countdown(-1), '-00:01');
+  assert.equal(countdown(-299), '-04:59');
+  assert.match(renderKey(at('2026-10-30T11:59:59Z'), 'restart'), />00:01</);
+  assert.match(renderKey(at('2026-10-30T12:00:00Z'), 'restart'), />00:00</);
+  const svg = renderKey(at('2026-10-30T12:00:01Z'), 'restart');
+  assert.match(svg, /SINCE PLAN KICK/);
+  assert.match(svg, />-00:01</);
+  assert.match(svg, /RESTART 04:59/);
+  assert.match(svg, /fill="#ff9a3d"/);
+  assert.ok(!svg.includes('opacity="0.78"'));
+  assert.deepEqual(restartAppearance(-1, 1001000), { color: '#ff9a3d', opacity: 1 });
+  assert.match(renderKey(at('2026-10-30T12:04:59Z'), 'restart'), />-04:59</);
+  assert.ok(!renderKey({ ...at('2026-10-30T12:00:01Z'), visualAlerts: false }, 'restart').includes('#ff9a3d'));
+  const rollover = { ...at('2026-10-30T12:05:00Z'), nextRestartAt: '2026-10-30T16:05:00Z', restartExpected: true };
+  assert.match(renderKey(rollover, 'restart'), />3h55m</);
+  assert.ok(!renderKey(rollover, 'restart').includes('>NOW<'));
+  assert.match(renderKey(rollover, 'session'), /SESSION/);
+  const unknown = renderKey({ ...at('2026-10-30T12:00:01Z'), kickBeforeRestart: false }, 'restart');
+  assert.match(unknown, />04:59</);
+  assert.ok(!unknown.includes('SINCE PLAN KICK'));
+});
 test('service keys distinguish provider report, web reachability and an unknown check without restart overrides', () => {
   const service = { state: 'Degraded', scope: 'ProviderStatus' };
   const snapshot = { ...state, serverName: 'Discord', service, nextRestartAt: state.now, restartExpected: true };
@@ -113,7 +137,7 @@ test('restart warning overrides are optional and use configured thresholds', () 
   const urgent = { ...state, nextRestartAt: '2026-10-30T12:04:00Z' };
   assert.match(renderKey(urgent, 'players'), /RESTART/); assert.match(renderKey(urgent, 'players'), /#ff8c42/);
   assert.match(renderKey(urgent, 'players', { autoWarnings: false }), /PLAYERS/);
-  assert.equal(countdown(9000), '2h30m'); assert.equal(countdown(65), '01:05'); assert.equal(countdown(-5), '00:00');
+  assert.equal(countdown(9000), '2h30m'); assert.equal(countdown(65), '01:05'); assert.equal(countdown(-5), '-00:05');
 });
 test('SVG is escaped, settings are bounded and every face rasterizes at MK.2 resolution', () => {
   const settings = normalizeSettings({ label: '<script>&"', pages: ['bad'], view: 'bad', sunrise: 20, sunset: 1 });

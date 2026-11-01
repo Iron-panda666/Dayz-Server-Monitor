@@ -223,20 +223,23 @@ public partial class MainWindow : Window
         var expected = since < TimeSpan.FromMinutes(5) && (tracker.LastSuccess is null || tracker.LastSuccess < schedule.Previous(now));
         Dashboard.CountdownLabel.Text = L.Text(expected ? "CountdownExpected" : "Countdown");
         // Recompute from UTC instants each tick, never decrement a stored counter.
-        var target = KickPlan.Target(settings, next);
-        var shownRemaining = expected ? TimeSpan.Zero : target - now;
-        if (!expected && settings.CountdownToKick && settings.HasKnownKick) Dashboard.CountdownLabel.Text = L.Text("CountdownKick");
-        var seconds = Math.Max(0, (long)Math.Ceiling(shownRemaining.TotalSeconds));
-        Dashboard.CountdownText.Text = $"{seconds / 3600:00}:{seconds / 60 % 60:00}:{seconds % 60:00}";
+        var shownRemaining = KickPlan.Remaining(settings, next, now, expected);
+        var kickCountdown = settings.CountdownToKick && settings.HasKnownKick;
+        var sinceKick = kickCountdown && shownRemaining < TimeSpan.Zero;
+        if (kickCountdown) Dashboard.CountdownLabel.Text = L.Text(sinceKick ? "CountdownSinceKick" : "CountdownKick");
+        Dashboard.CountdownText.Text = CountdownVisuals.Format(shownRemaining);
         var visual = CountdownVisuals.Evaluate(shownRemaining.TotalSeconds, now);
         var accent = Dashboard.ApplyCountdownVisual(visual, ThemeManager.IsDark(visualTheme), settings.VisualAlerts);
         Dashboard.NextRestartText.Text = LocalTime(next);
-        Dashboard.CompactNextRestart.Text = L.Text("NextRestart") + " · " + LocalTime(next);
-        Dashboard.NextDateText.Text = RestartSchedule.CzechTime(next).ToString("d MMM · zzz", L.Culture);
+        Dashboard.CompactNextRestart.Text = sinceKick ? L.Text("ScheduledRestartIn", CountdownVisuals.Format(remaining))
+            : L.Text("NextRestart") + " · " + LocalTime(next);
+        Dashboard.NextDateText.Text = sinceKick ? L.Text("ScheduledRestartIn", CountdownVisuals.Format(remaining))
+            : RestartSchedule.CzechTime(next).ToString("d MMM · zzz", L.Culture);
         Dashboard.LogoutText.Text = L.Text("LogoutAt", LocalTime(next.AddMinutes(-settings.LogoutWarningMinutes)));
         Dashboard.KickText.Text = settings.HasKnownKick ? L.Text("KickAt", LocalTime(next.AddMinutes(-settings.KickWarningMinutes))) : L.Text("KickUnknown");
         Dashboard.WarningText.Foreground = settings.VisualAlerts ? accent : Muted;
-        Dashboard.WarningText.Text = expected ? L.Text("WarnExpected")
+        Dashboard.WarningText.Text = sinceKick ? L.Text("ScheduledRestartIn", CountdownVisuals.Format(remaining))
+            : expected ? L.Text("WarnExpected")
             : remaining <= TimeSpan.FromMinutes(settings.KickWarningMinutes) ? L.Text(settings.HasKnownKick ? "WarnKick" : "WarnRestartSoon", settings.KickWarningMinutes)
             : remaining <= TimeSpan.FromMinutes(settings.LogoutWarningMinutes) ? L.Text("WarnLogout", settings.LogoutWarningMinutes)
             : L.Text("WarnNormal");

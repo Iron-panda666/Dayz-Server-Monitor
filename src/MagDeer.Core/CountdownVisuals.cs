@@ -8,10 +8,17 @@ public static class CountdownVisuals
     public static CountdownVisual Evaluate(double seconds, DateTimeOffset now)
     {
         if (!double.IsFinite(seconds) || seconds > 900) return new(CountdownStage.Normal, 0, 1);
+        if (seconds < 0) return new(CountdownStage.Orange, 0, 1);
         if (seconds > 600) return new(CountdownStage.Yellow, 0, 1);
         if (seconds > 300) return new(CountdownStage.Orange, 0, 1);
         if (seconds > 30) return new(CountdownStage.FadeToRed, (300 - seconds) / 270, 1);
         return new(CountdownStage.Red, 1, seconds > 0 && now.ToUnixTimeSeconds() % 2 != 0 ? .78 : 1);
+    }
+
+    public static string Format(TimeSpan remaining)
+    {
+        var seconds = (long)Math.Ceiling(Math.Abs(remaining.TotalSeconds));
+        return $"{(remaining < TimeSpan.Zero ? "-" : "")}{seconds / 3600:00}:{seconds / 60 % 60:00}:{seconds % 60:00}";
     }
 
     public static string Color(CountdownVisual visual, bool dark)
@@ -38,4 +45,8 @@ public static class KickPlan
         (ip == "217.182.198.57" && gamePort == 2302 && queryPort == 2303);
     public static DateTimeOffset Target(MonitorSettings settings, DateTimeOffset restart) =>
         settings.CountdownToKick && settings.HasKnownKick ? restart.AddMinutes(-settings.KickWarningMinutes) : restart;
+
+    public static TimeSpan Remaining(MonitorSettings settings, DateTimeOffset nextRestart, DateTimeOffset now, bool restartExpected) =>
+        settings.CountdownToKick && settings.HasKnownKick ? Target(settings, nextRestart) - now
+            : restartExpected ? TimeSpan.Zero : nextRestart - now;
 }

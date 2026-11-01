@@ -19,9 +19,10 @@ export function normalizeSettings(value = {}) {
 export const escapeXml = text => String(text).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c]);
 export function countdown(seconds) {
   if (!Number.isFinite(seconds)) return 'N/A';
-  seconds = Math.max(0, Math.ceil(seconds));
-  return seconds >= 3600 ? `${Math.floor(seconds / 3600)}h${String(Math.floor(seconds / 60) % 60).padStart(2, '0')}m`
-    : `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  const sign = seconds < 0 ? '-' : '';
+  seconds = Math.ceil(Math.abs(seconds));
+  return sign + (seconds >= 3600 ? `${Math.floor(seconds / 3600)}h${String(Math.floor(seconds / 60) % 60).padStart(2, '0')}m`
+    : `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`);
 }
 export function sessionDuration(seconds) {
   if (!Number.isSafeInteger(seconds) || seconds < 0 || seconds > 315360000) return 'N/A';
@@ -60,6 +61,7 @@ export function estimatedGameClock(state, settings = normalizeSettings()) {
 }
 export function restartAppearance(seconds, now) {
   if (!Number.isFinite(seconds) || seconds > 900) return { color: '#90e8ff', opacity: 1 };
+  if (seconds < 0) return { color: '#ff9a3d', opacity: 1 };
   if (seconds > 600) return { color: '#ffda58', opacity: 1 };
   if (seconds > 300) return { color: '#ff9a3d', opacity: 1 };
   const mix = Math.max(0, Math.min(1, (300 - seconds) / 270));
@@ -75,8 +77,9 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '',
   const settings = normalizeSettings(rawSettings), now = Date.parse(state?.now);
   const untilRestart = (Date.parse(state?.nextRestartAt) - now) / 1000;
   const targetKick = state?.countdownToKick === true && state?.kickBeforeRestart === true;
-  const remaining = state?.restartExpected ? 0 : untilRestart - (targetKick ? state.kickWarningMinutes * 60 : 0);
-  const warning = state && !state.service && (state.restartExpected || remaining <= state.logoutWarningMinutes * 60);
+  const remaining = !targetKick && state?.restartExpected ? 0 : untilRestart - (targetKick ? state.kickWarningMinutes * 60 : 0);
+  const sinceKick = targetKick && remaining < 0 && untilRestart > 0;
+  const warning = state && !state.service && ((!targetKick && state.restartExpected) || remaining <= state.logoutWarningMinutes * 60);
   const view = settings.autoWarnings && warning ? 'restart' : requestedView;
   const appearance = state?.visualAlerts === false ? { color: '#90e8ff', opacity: 1 } : restartAppearance(remaining, now);
   const accent = !state ? '#b8cbd4' : appearance.color;
@@ -114,8 +117,9 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '',
         + (game?.period ? text(game.period, 55, 7) : '')
         + text(footer || (game ? `${game.phase} ${game.speed == null ? 'N/A' : Number(game.speed.toFixed(2)) + 'x'} · EST` : 'NOT PUBLISHED'), game?.period ? 69 : 63, 6);
     } else if (view === 'restart') {
-      body += text(targetKick ? 'PLAYER KICK' : 'RESTART', 24) + metric(state.restartExpected ? 'NOW' : countdown(remaining), accent, 18, appearance.opacity)
-        + text(footer || (!state.scheduleConfirmed ? 'UNCONFIRMED' : 'CONFIRMED'), 63, 6);
+      body += text(sinceKick ? 'SINCE PLAN KICK' : targetKick ? 'PLAYER KICK' : 'RESTART', 24, sinceKick ? 7 : 8)
+        + metric(!targetKick && state.restartExpected ? 'NOW' : countdown(remaining), accent, 18, appearance.opacity)
+        + text(footer || (sinceKick ? `RESTART ${countdown(untilRestart)}` : !state.scheduleConfirmed ? 'UNCONFIRMED' : 'CONFIRMED'), 63, 6);
     } else if (view === 'players') {
       const players = Number.isInteger(state.players) && Number.isInteger(state.capacity) ? `${state.players}/${state.capacity}` : 'N/A';
       const waiting = Number.isInteger(state.queue) && state.queue >= 0 && state.queue <= 10000 ? state.queue : null;

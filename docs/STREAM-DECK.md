@@ -8,7 +8,7 @@ The plugin uses Elgato's SDK and renders for 72 x 72-pixel MK.2 keys. It needs W
 
 1. Unpack the Windows ZIP. Keep `config.json` and `data` when upgrading.
 2. Start `DayzServerMonitor.exe` and select a server. It can stay minimized.
-3. Install `Dayz-Server-Monitor-1.11.0.streamDeckPlugin`, included in the ZIP and ReleasePackages folder.
+3. Install `Dayz-Server-Monitor-1.11.1.streamDeckPlugin`, included in the ZIP and ReleasePackages folder.
 4. Drag Cycle server information or Pinned server information from the Dayz Server Monitor action list onto a key.
 
 Direct installation needs no Marketplace account or extra driver. Run both apps under the same Windows account, without elevation. The plugin does not launch the monitor. A custom key image/title can cover its generated display.
@@ -43,6 +43,8 @@ The plugin extrapolates between replies and marks that time with ~. DAY/NIGHT wi
 Restart digits turn yellow at 15 minutes and orange at 10 minutes. During the last 5 minutes the color moves towards red, reaching red at 30 seconds. Only the digits gently pulse in the last 30 seconds. Disabling visual alerts in the app also disables these colors and pulse on the key.
 
 The key follows the chosen countdown target for its server. Known player kick can be a separate target without changing the real restart plan. The MAG DEER endpoint has a user-reported 5-minute kick lead. Other community servers remain unknown until configured. Logout reminders stay anchored to the real restart time.
+
+After the planned kick time, the kick countdown becomes negative (for example -00:01 through -04:59 for a five-minute lead). It stays orange without pulsing and is labeled SINCE PLAN KICK; the footer shows the remaining scheduled restart countdown. At the scheduled restart, it moves to the next planned kick instead of waiting at NOW for a query reply. These labels describe the configured schedule, not observed kick events.
 
 A missing multiplier leaves the published time without extrapolation. A missing game clock gives N/A. The desktop offset clock is calculated separately. [Bohemia server configuration](https://community.bohemia.net/wiki/DayZ:Server_Configuration).
 

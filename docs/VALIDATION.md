@@ -11,8 +11,11 @@ Recorded release results for Windows x64. Versions through 1.9.2 used .NET SDK 8
 | 1.10.0 | 58 | 20 | 17 | 95 |
 | 1.10.1 | 58 | 21 | 17 | 96 |
 | 1.11.0 | 61 | 24 | 20 | 105 |
+| 1.11.1 | 62 | 24 | 21 | 107 |
 
 These are automated check counts. The outstanding physical/live checks are listed at the end.
+
+Version 1.11.1 verifies the known-kick countdown immediately before the kick, at zero, during negative elapsed time and at the next scheduled restart. The next kick countdown starts even if the query outage continues. Desktop and Stream Deck use steady orange for negative time, preserve the existing pre-kick color stages and stop pulsing after zero. Disabled alerts restore the theme color. The WPF preview uses the real compiled dashboard; physical LCD and Stream Deck checks for this new transition remain outstanding. The build and Elgato plugin validation pass. The dependency audit has no High/Critical findings and reports five Moderate findings in the development-only Elgato CLI dependency chain.
 
 Version 1.10.0 moves all four projects to .NET 10 and updates the portable runtime to 10.0.14. C# remains at version 12. Settings, history and the plugin pipe protocol are unchanged. The solution builds with warnings treated as errors.
 

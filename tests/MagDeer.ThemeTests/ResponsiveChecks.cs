@@ -32,6 +32,13 @@ internal static class ResponsiveChecks
             view.ApplyCountdownVisual(visual, true, true);
             assert(digits.Opacity == .78 && view.Opacity == 1 && ((TextBlock)view.FindName("StatusText")).Opacity == 1, "Pulse leaked outside digits");
             view.ApplyCountdownVisual(visual, true, false); assert(digits.Opacity == 1, "Pulse continued with alerts disabled");
+            var elapsed = CountdownVisuals.Evaluate(-25, DateTimeOffset.FromUnixTimeSeconds(1001));
+            view.ApplyCountdownVisual(elapsed, true, true);
+            digits.Text = CountdownVisuals.Format(TimeSpan.FromSeconds(-25));
+            assert(digits.Text == "-00:00:25" && digits.Opacity == 1, "Elapsed kick time was clamped or kept pulsing");
+            assert(((SolidColorBrush)digits.Foreground).Color == (Color)ColorConverter.ConvertFromString("#FF9A3D"), "Elapsed time must be orange");
+            view.ApplyCountdownVisual(elapsed, true, false);
+            assert(digits.Foreground == (Brush)Application.Current.FindResource("AccentBrush") && digits.Opacity == 1, "Disabled alerts did not restore the theme color");
         });
         test("Appearance preview cancels cleanly, loads licensed wallpaper and respects interactive drag targets", () =>
         {
@@ -181,6 +188,14 @@ internal static class ResponsiveChecks
         foreach (var theme in ThemeManager.Choices) Save(Demo(theme.Id), "theme-" + theme.Id.ToLowerInvariant(), 1120, 700);
         var fuji = Demo("Dark"); DashboardArtwork.Apply(fuji, new MonitorSettings { Theme = "Dark", BackgroundStyle = "Fuji" });
         Save(fuji, "wallpaper-fuji", 1120, 700);
+        var elapsedKick = Demo("Dark");
+        ((TextBlock)elapsedKick.FindName("CountdownLabel")).Text = L.Text("CountdownSinceKick");
+        ((TextBlock)elapsedKick.FindName("CountdownText")).Text = CountdownVisuals.Format(TimeSpan.FromSeconds(-135));
+        ((TextBlock)elapsedKick.FindName("WarningText")).Text = L.Text("ScheduledRestartIn", "00:02:45");
+        ((TextBlock)elapsedKick.FindName("NextDateText")).Text = L.Text("ScheduledRestartIn", "00:02:45");
+        ((TextBlock)elapsedKick.FindName("CompactNextRestart")).Text = L.Text("ScheduledRestartIn", "00:02:45");
+        elapsedKick.ApplyCountdownVisual(CountdownVisuals.Evaluate(-135, DateTimeOffset.FromUnixTimeSeconds(1001)), true, true);
+        Save(elapsedKick, "countdown-after-kick", 1100, 450);
         ThemeManager.Apply("Dark");
         var strip = new System.Windows.Controls.Primitives.UniformGrid { Columns = 6, Width = 1200, Height = 160 };
         foreach (int seconds in new[] { 901, 900, 600, 300, 165, 30 })

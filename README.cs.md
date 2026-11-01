@@ -36,6 +36,8 @@ Plán restartů je v sekci Restarty a upozornění. Výchozí příklad je 03:00
 
 Kick je oddělený od restartu a nastavený pro konkrétní server. U MAG DEER počítáme s uživatelem hlášeným kickem 5 minut před restartem. U ostatních serverů je čas neznámý, dokud ho nenastavíš. Odpočet lze přepnout na známý kick bez posunutí restartu. V 15 minutách číslice zežloutnou, v 10 minutách jsou oranžové a posledních 5 minut přecházejí do červené. Posledních 30 sekund jemně pulzují jen číslice.
 
+Po plánovaném kicku se při odpočtu do kicku zobrazí záporný čas oranžově bez blikání. Popisek upřesní, že jde o dobu od plánovaného kicku, a pod ním zůstane čas do plánovaného restartu. V okamžiku restartu se aplikace i Stream Deck přepnou na odpočet k dalšímu kicku, i když server neodpovídá. Jde o časy podle nastaveného rozvrhu, nikoli o potvrzení skutečného kicku nebo restartu. Barevná upozornění lze vypnout v nastavení.
+
 Motivy a pozadí se při výběru hned zobrazí jako náhled; Zrušit vrátí původní vzhled. Dvojklik mimo ovládací prvky skryje horní lištu. Widget přesuneš tažením za zobrazovací plochu; F10 nebo Esc lištu vrátí. Pravé tlačítko otevře nabídku.
 
 Okno se přeuspořádá podle poměru stran. Má 27 velikostních profilů pro běžné monitory, úzké pásy i displeje na výšku. F11 přepíná fullscreen, Esc ho ukončí. Křížek může program ukončit, minimalizovat na panel nebo skrýt k hodinám. Monitoring při skrytí pokračuje. [LCD a ovládání](docs/DISPLAYS.md).
