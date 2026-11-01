@@ -40,7 +40,7 @@ public static class L
     public static readonly IReadOnlyDictionary<string, string[]> Texts = new Dictionary<string, string[]>
     {
         ["CountdownKick"] = ["UNTIL EXPECTED PLAYER KICK", "DO OČEKÁVANÉHO KICKU", "DO PRZEWIDYWANEGO WYRZUCENIA", "BIS ZUM ERWARTETEN KICK", "HASTA LA EXPULSIÓN PREVISTA"],
-        ["CountdownSinceKick"] = ["SINCE SCHEDULED PLAYER KICK", "OD PLÁNOVANÉHO KICKU", "OD PLANOWANEGO WYRZUCENIA", "SEIT GEPLANTEM KICK", "DESDE LA EXPULSIÓN PREVISTA"],
+        ["CountdownSinceKick"] = ["RESTART WINDOW", "RESTARTOVACÍ OKNO", "OKNO RESTARTU", "NEUSTARTFENSTER", "VENTANA DE REINICIO"],
         ["ScheduledRestartIn"] = ["Scheduled restart in {0}", "Plánovaný restart za {0}", "Planowany restart za {0}", "Geplanter Neustart in {0}", "Reinicio previsto en {0}"],
         ["KickUnknown"] = ["Player kick time: unknown", "Čas kicku hráčů: neznámý", "Czas wyrzucenia: nieznany", "Kick-Zeit: unbekannt", "Hora de expulsión: desconocida"],
         ["KickKnownOption"] = ["This server kicks players before restarting", "Tento server vykopne hráče před restartem", "Ten serwer wyrzuca graczy przed restartem", "Dieser Server kickt Spieler vor dem Neustart", "Este servidor expulsa jugadores antes del reinicio"],

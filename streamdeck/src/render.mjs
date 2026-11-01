@@ -117,9 +117,11 @@ export function renderKey(state, requestedView, rawSettings = {}, feedback = '',
         + (game?.period ? text(game.period, 55, 7) : '')
         + text(footer || (game ? `${game.phase} ${game.speed == null ? 'N/A' : Number(game.speed.toFixed(2)) + 'x'} · EST` : 'NOT PUBLISHED'), game?.period ? 69 : 63, 6);
     } else if (view === 'restart') {
-      body += text(sinceKick ? 'SINCE PLAN KICK' : targetKick ? 'PLAYER KICK' : 'RESTART', 24, sinceKick ? 7 : 8)
+      body += text(sinceKick ? 'RESTART WINDOW' : targetKick ? 'PLAYER KICK' : 'RESTART', 24, sinceKick ? 7 : 8)
         + metric(!targetKick && state.restartExpected ? 'NOW' : countdown(remaining), accent, 18, appearance.opacity)
-        + text(footer || (sinceKick ? `RESTART ${countdown(untilRestart)}` : !state.scheduleConfirmed ? 'UNCONFIRMED' : 'CONFIRMED'), 63, 6);
+        + (footer ? text(footer, 63, 6) : sinceKick
+          ? text('Scheduled restart in', 57, 5.5) + text(countdown(untilRestart), 69, 9)
+          : text(!state.scheduleConfirmed ? 'UNCONFIRMED' : 'CONFIRMED', 63, 6));
     } else if (view === 'players') {
       const players = Number.isInteger(state.players) && Number.isInteger(state.capacity) ? `${state.players}/${state.capacity}` : 'N/A';
       const waiting = Number.isInteger(state.queue) && state.queue >= 0 && state.queue <= 10000 ? state.queue : null;

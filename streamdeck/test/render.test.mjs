@@ -68,9 +68,10 @@ test('kick view shows steady orange elapsed time until restart then starts the n
   assert.match(renderKey(at('2026-10-30T11:59:59Z'), 'restart'), />00:01</);
   assert.match(renderKey(at('2026-10-30T12:00:00Z'), 'restart'), />00:00</);
   const svg = renderKey(at('2026-10-30T12:00:01Z'), 'restart');
-  assert.match(svg, /SINCE PLAN KICK/);
+  assert.match(svg, /RESTART WINDOW/);
   assert.match(svg, />-00:01</);
-  assert.match(svg, /RESTART 04:59/);
+  assert.match(svg, /Scheduled restart in/);
+  assert.match(svg, />04:59</);
   assert.match(svg, /fill="#ff9a3d"/);
   assert.ok(!svg.includes('opacity="0.78"'));
   assert.deepEqual(restartAppearance(-1, 1001000), { color: '#ff9a3d', opacity: 1 });
@@ -82,7 +83,7 @@ test('kick view shows steady orange elapsed time until restart then starts the n
   assert.match(renderKey(rollover, 'session'), /SESSION/);
   const unknown = renderKey({ ...at('2026-10-30T12:00:01Z'), kickBeforeRestart: false }, 'restart');
   assert.match(unknown, />04:59</);
-  assert.ok(!unknown.includes('SINCE PLAN KICK'));
+  assert.ok(!unknown.includes('RESTART WINDOW'));
 });
 test('service keys distinguish provider report, web reachability and an unknown check without restart overrides', () => {
   const service = { state: 'Degraded', scope: 'ProviderStatus' };

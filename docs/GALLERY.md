@@ -100,7 +100,7 @@ Normal, 15 minutes, 10 minutes, 5 minutes, 2:45 and 30 seconds. The last 30 seco
 
 ![Countdown color stages](images/countdown-stages.png)
 
-After a scheduled player kick, the negative timer stays orange without pulsing until the scheduled restart. The smaller timer shows how long remains until restart. At restart, the countdown moves to the next planned kick. This render uses demo data, not a confirmed kick event.
+After a scheduled player kick, the negative timer stays orange without pulsing until the scheduled restart. RESTART WINDOW labels this schedule-based interval; Scheduled restart in shows how long remains until restart. At restart, the countdown moves to the next planned kick. This render uses demo data, not a confirmed kick event.
 
 ![Real WPF dashboard rendering of the negative kick countdown](images/countdown-after-kick.png)
 

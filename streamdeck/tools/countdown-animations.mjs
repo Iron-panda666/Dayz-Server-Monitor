@@ -29,6 +29,7 @@ const dll = path.join(root, 'tests/MagDeer.ThemeTests/bin/Release/net10.0-window
 const capture = spawnSync(dotnet, [dll, '--countdown-frames', manifest], { cwd: root, windowsHide: true, encoding: 'utf8' });
 if (capture.status !== 0) throw new Error(capture.stderr || capture.stdout);
 console.log(capture.stdout.trim());
+await fs.copyFile(path.join(framesDir, 'app-059.png'), path.join(output, 'countdown-after-kick.png'));
 const appGif = GIFEncoder(), deckGif = GIFEncoder();
 function add(gif, rgba, width, height, delay) {
   const palette = quantize(rgba, 256);
