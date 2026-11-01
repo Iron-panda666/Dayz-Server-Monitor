@@ -2,7 +2,7 @@
 
 ## App and Stream Deck in use
 
-User captures from 31 October 2026. The restart plan shown here is unconfirmed.
+User captures from 31 October 2026. Restart plans shown in these captures are user-configured. A confirmation label reflects manual confirmation in the app.
 
 Dashboard with the Fuji background
 
@@ -19,6 +19,10 @@ Portrait layout
 Stream Deck MK.2
 
 ![Stream Deck MK.2 displaying MAG DEER data](images/user-captures/Stream%20deck%20-visible%20all%20.jpg)
+
+Real secondary LCD and Stream Deck setup
+
+![Real photo of Dayz Server Monitor on a secondary LCD beside a Stream Deck MK.2](images/user-captures/real-lcd-and-stream-deck.jpg)
 
 [All uploaded captures](images/user-captures).
 
