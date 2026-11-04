@@ -1,5 +1,12 @@
 # Dayz Server Monitor
 
+[![Nejnovější verze](https://img.shields.io/github/v/release/Iron-panda666/Dayz-Server-Monitor)](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/latest)
+[![Licence: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
+![Windows 10/11 x64](https://img.shields.io/badge/Windows-10%2F11_x64-0078D4)
+![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4)
+
+[![Dayz Server Monitor se stavem serveru, odpočtem restartu a historií hráčů](docs/images/user-captures/dashboard-overview.png)](docs/GALLERY.md)
+
 Monitor DayZ serverů pro Windows 10/11 x64. Vznikl pro druhý displej při hraní. Posílá UDP dotazy, ukládá počty hráčů a ukazuje odpočet do nastaveného restartu. C# / .NET 10, WPF.
 
 [English](README.md) | [Stažení](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/latest)
@@ -42,7 +49,9 @@ Motivy a pozadí se při výběru hned zobrazí jako náhled; Zrušit vrátí p�
 
 Okno se přeuspořádá podle poměru stran. Má 27 velikostních profilů pro běžné monitory, úzké pásy i displeje na výšku. F11 přepíná fullscreen, Esc ho ukončí. Křížek může program ukončit, minimalizovat na panel nebo skrýt k hodinám. Monitoring při skrytí pokračuje. [LCD a ovládání](docs/DISPLAYS.md).
 
-[![Dashboard MAG DEER s pozadím Fuji](docs/images/user-captures/yup-border-free.png)](docs/GALLERY.md)
+[![Animovaná ukázka odpočtu do kicku a restartu](docs/images/countdown-app.gif)](docs/GALLERY.md)
+
+Zrychlená ukázka se simulovanými daty. Odpočet vychází z nastaveného rozvrhu.
 
 [Další screenshoty, rozložení pro LCD a fotka Stream Decku](docs/GALLERY.md).
 

@@ -1,6 +1,11 @@
 # Dayz Server Monitor
 
-![T/R icon](docs/images/app-icon.png)
+[![Latest release](https://img.shields.io/github/v/release/Iron-panda666/Dayz-Server-Monitor)](https://github.com/Iron-panda666/Dayz-Server-Monitor/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
+![Windows 10/11 x64](https://img.shields.io/badge/Windows-10%2F11_x64-0078D4)
+![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4)
+
+[![Dayz Server Monitor dashboard with server status, restart countdown and player history](docs/images/user-captures/dashboard-overview.png)](docs/GALLERY.md)
 
 Windows monitor for DayZ servers, built for a second screen. It queries the server over UDP, logs player counts and shows the time left before a configured restart. C# / .NET 10, WPF. Runs on Windows 10/11 x64.
 
@@ -44,7 +49,9 @@ The window reflows for wide strips and portrait displays. There are 27 size pres
 
 Double-click outside controls to toggle borderless widget mode. Drag a display area to move it; F10 or Esc brings back the title bar. Right-click opens the menu.
 
-[![MAG DEER dashboard with the Fuji background](docs/images/user-captures/yup-border-free.png)](docs/GALLERY.md)
+[![Animated restart and kick countdown demo](docs/images/countdown-app.gif)](docs/GALLERY.md)
+
+Accelerated demo with simulated data. The countdown follows the configured schedule.
 
 [More screenshots, LCD layouts and a Stream Deck photo](docs/GALLERY.md).
 
